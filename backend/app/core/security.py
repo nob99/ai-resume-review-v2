@@ -241,6 +241,7 @@ class TokenManager:
         """Initialize token manager."""
         self.secret_key = secret_key
         self.algorithm = algorithm
+        self._redis_client = None
     
     def create_access_token(self, data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
         """
@@ -289,6 +290,76 @@ class TokenManager:
         except Exception as e:
             logger.error(f"Token verification error: {str(e)}")
             return None
+    
+    def set_redis_client(self, redis_client):
+        """Set Redis client for token blacklisting."""
+        self._redis_client = redis_client
+    
+    async def blacklist_token(self, token: str) -> bool:
+        """
+        Add token to blacklist using Redis.
+        
+        Args:
+            token: JWT token to blacklist
+            
+        Returns:
+            True if successfully blacklisted
+        """
+        if not self._redis_client:
+            logger.warning("Redis client not available for token blacklisting")
+            return False
+            
+        try:
+            # Decode token to get expiration time
+            payload = self.verify_token(token)
+            if not payload:
+                return False
+            
+            exp_timestamp = payload.get("exp")
+            if not exp_timestamp:
+                return False
+            
+            # Calculate TTL (time to live) for Redis key
+            exp_time = datetime.fromtimestamp(exp_timestamp)
+            current_time = datetime.utcnow()
+            
+            if exp_time <= current_time:
+                # Token already expired, no need to blacklist
+                return True
+            
+            ttl_seconds = int((exp_time - current_time).total_seconds())
+            
+            # Store token in Redis blacklist with expiration
+            blacklist_key = f"blacklisted_token:{token}"
+            await self._redis_client.setex(blacklist_key, ttl_seconds, "1")
+            
+            logger.info("Token successfully added to blacklist")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to blacklist token: {str(e)}")
+            return False
+    
+    async def is_token_blacklisted(self, token: str) -> bool:
+        """
+        Check if token is blacklisted.
+        
+        Args:
+            token: JWT token to check
+            
+        Returns:
+            True if token is blacklisted
+        """
+        if not self._redis_client:
+            return False
+            
+        try:
+            blacklist_key = f"blacklisted_token:{token}"
+            result = await self._redis_client.exists(blacklist_key)
+            return bool(result)
+        except Exception as e:
+            logger.error(f"Failed to check token blacklist: {str(e)}")
+            return False
 
 
 # Global instances
@@ -320,3 +391,18 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
 def verify_token(token: str) -> Optional[Dict[str, Any]]:
     """Verify token using global token manager."""
     return token_manager.verify_token(token)
+
+
+async def blacklist_token(token: str) -> bool:
+    """Blacklist token using global token manager."""
+    return await token_manager.blacklist_token(token)
+
+
+async def is_token_blacklisted(token: str) -> bool:
+    """Check if token is blacklisted using global token manager."""
+    return await token_manager.is_token_blacklisted(token)
+
+
+def set_redis_client_for_tokens(redis_client):
+    """Set Redis client for token blacklisting."""
+    token_manager.set_redis_client(redis_client)

@@ -19,7 +19,10 @@ from app.core.security import (
     verify_token, 
     SecurityError,
     PasswordValidationResult,
-    validate_password
+    validate_password,
+    blacklist_token,
+    is_token_blacklisted,
+    set_redis_client_for_tokens
 )
 from app.core.rate_limiter import (
     check_login_rate_limit,
@@ -53,6 +56,22 @@ security = HTTPBearer()
 
 # JWT token expiration (Sprint 2 requirement: 15 minutes)
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
+
+# Initialize Redis for token blacklisting
+async def initialize_redis_for_tokens():
+    """Initialize Redis client for token blacklisting."""
+    try:
+        # Ensure rate limiter is connected
+        if not rate_limiter.redis_client:
+            await rate_limiter.connect()
+        
+        if rate_limiter.redis_client:
+            set_redis_client_for_tokens(rate_limiter.redis_client)
+            logger.info("Redis client initialized for token blacklisting")
+        else:
+            logger.warning("Redis client not available for token blacklisting")
+    except Exception as e:
+        logger.error(f"Failed to initialize Redis for tokens: {e}")
 
 
 class TokenData(BaseModel):
@@ -99,6 +118,11 @@ async def get_current_user(
     )
     
     try:
+        # Check if token is blacklisted
+        if await is_token_blacklisted(credentials.credentials):
+            logger.warning("Attempt to use blacklisted token")
+            raise credentials_exception
+        
         # Verify and decode token
         payload = verify_token(credentials.credentials)
         if payload is None:
@@ -325,6 +349,49 @@ async def login(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Login failed"
+        )
+
+
+@router.post("/logout")
+async def logout(
+    current_user: User = Depends(get_current_user),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """
+    Logout current user and invalidate JWT token.
+    
+    Args:
+        current_user: Current authenticated user
+        credentials: JWT token from Authorization header
+        
+    Returns:
+        Success message
+        
+    Raises:
+        HTTPException: If logout fails
+    """
+    try:
+        # Initialize Redis if not already done
+        await initialize_redis_for_tokens()
+        
+        # Blacklist the current token
+        token_blacklisted = await blacklist_token(credentials.credentials)
+        
+        if not token_blacklisted:
+            logger.warning(f"Failed to blacklist token for user: {current_user.email}")
+            # Still return success to user for security reasons
+        else:
+            logger.info(f"User {current_user.email} logged out successfully")
+        
+        return {"message": "Successfully logged out"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Logout error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Logout failed"
         )
 
 
