@@ -12,13 +12,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from fastapi.testclient import TestClient
 
-# Set test environment
+# Set test environment to use existing dev database
 os.environ["ENVIRONMENT"] = "test"
 os.environ["DB_HOST"] = "localhost"
 os.environ["DB_PORT"] = "5432"
-os.environ["DB_NAME"] = "ai_resume_review_test"
+os.environ["DB_NAME"] = "ai_resume_review_dev"
 os.environ["DB_USER"] = "postgres"
-os.environ["DB_PASSWORD"] = "test_password"
+os.environ["DB_PASSWORD"] = "dev_password_123"
 os.environ["DB_ECHO"] = "false"
 
 from app.models.user import Base, User
@@ -36,16 +36,20 @@ def event_loop():
 
 @pytest.fixture(scope="session")
 def test_engine():
-    """Create test database engine."""
-    # Use in-memory SQLite for tests to avoid PostgreSQL dependency
+    """Create test database engine using existing dev database."""
+    # Use existing development PostgreSQL database
+    database_url = f"postgresql://{os.environ['DB_USER']}:{os.environ['DB_PASSWORD']}@{os.environ['DB_HOST']}:{os.environ['DB_PORT']}/{os.environ['DB_NAME']}"
+    
     engine = create_engine(
-        "sqlite:///:memory:",
+        database_url,
         echo=False,
-        connect_args={"check_same_thread": False}
+        pool_pre_ping=True
     )
     
-    # Create all tables
-    Base.metadata.create_all(bind=engine)
+    # Test connection
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        conn.execute(text("SELECT 1"))
     
     yield engine
     
@@ -135,8 +139,17 @@ def test_admin_data():
 
 
 @pytest.fixture
+def client():
+    """Create FastAPI test client using real app and database."""
+    from app.main import app
+    return TestClient(app)
+
+
+@pytest.fixture
 def create_test_user(test_db):
-    """Factory to create test users."""
+    """Factory to create test users with cleanup."""
+    created_users = []
+    
     def _create_user(**kwargs):
         user_data = {
             "email": "test@example.com",
@@ -150,9 +163,20 @@ def create_test_user(test_db):
         test_db.add(user)
         test_db.commit()
         test_db.refresh(user)
+        created_users.append(user)
         return user
     
-    return _create_user
+    yield _create_user
+    
+    # Cleanup: remove test users after test completes
+    for user in created_users:
+        try:
+            test_db.delete(user)
+            test_db.commit()
+        except Exception:
+            # If user already deleted, continue
+            test_db.rollback()
+            pass
 
 
 @pytest.fixture

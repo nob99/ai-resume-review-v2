@@ -51,8 +51,8 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 # Security scheme
 security = HTTPBearer()
 
-# JWT token expiration
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+# JWT token expiration (Sprint 2 requirement: 15 minutes)
+ACCESS_TOKEN_EXPIRE_MINUTES = 15
 
 
 class TokenData(BaseModel):

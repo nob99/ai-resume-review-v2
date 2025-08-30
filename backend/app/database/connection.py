@@ -145,8 +145,9 @@ class DatabaseManager:
     def _test_connection(self) -> None:
         """Test database connection."""
         try:
+            from sqlalchemy import text
             with self.engine.connect() as connection:
-                result = connection.execute("SELECT 1")
+                result = connection.execute(text("SELECT 1"))
                 result.fetchone()
                 logger.info("Database connection test successful")
         except Exception as e:
@@ -277,7 +278,8 @@ def get_db_health() -> dict:
     try:
         with db_manager.get_session_context() as session:
             # Simple health check query
-            result = session.execute("SELECT 1 as health_check, NOW() as timestamp")
+            from sqlalchemy import text
+            result = session.execute(text("SELECT 1 as health_check, NOW() as timestamp"))
             row = result.fetchone()
             
             return {

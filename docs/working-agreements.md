@@ -13,6 +13,21 @@ All new team members MUST read the following documents in order:
 4. **Current Sprint Backlog** (`docs/backlog/sprint-backlog-XXX.md`) - Understand current work
 5. **This Working Agreements document** - Understand team practices
 
+### Sprint 1 Deliverables Available 
+**🏗️ Infrastructure Ready to Use**:
+- **Database**: PostgreSQL + Redis setup via Docker (`./database/scripts/setup-dev-db.sh`)
+- **Schema**: Complete user authentication tables with migrations
+- **Backend**: FastAPI with JWT authentication, rate limiting, password security
+- **AI Framework**: LangChain integration ready for resume analysis
+- **Terraform**: GCP infrastructure as code setup
+- **Documentation**: Complete database ER diagrams and API specifications
+
+**📋 What This Means**:
+- No need to set up basic infrastructure from scratch
+- Database schema and authentication already working
+- Focus on building features, not foundational setup
+- All Sprint 1 code is production-ready and tested
+
 ### Documentation Maintenance
 - Keep documentation up-to-date as the system evolves
 - Document decisions in Architecture Decision Records (ADRs)
@@ -43,6 +58,9 @@ A story is ready for development when:
 ### API Development
 - **MUST follow OpenAPI 3.0 specification**
 - All APIs must be documented in `docs/api/openapi.yaml` BEFORE implementation
+- **📄 Current API Documentation**: Complete OpenAPI specification exists at `docs/api/openapi.yaml`
+  - View at: http://localhost:8000/docs (when backend is running)
+  - Updated through Sprint 2 with authentication endpoints
 - Use consistent naming conventions:
   - REST endpoints: `/api/v1/resource-name`
   - Use kebab-case for URLs
@@ -53,6 +71,25 @@ A story is ready for development when:
 - Store diagrams in `docs/database/` directory
 - Use migration scripts for all schema changes
 - Never modify database directly in production
+
+### Database Testing Setup (Sprint 1 Infrastructure)
+- **🗄️ Database Infrastructure Available**: Complete PostgreSQL + Redis setup from Sprint 1
+- **Quick Start for Testing**: 
+  ```bash
+  # Start database and Redis (required for integration tests)
+  ./database/scripts/setup-dev-db.sh
+  
+  # Verify database is running
+  psql -h localhost -p 5432 -U postgres -d ai_resume_review_dev
+  ```
+- **Database Connection Details**:
+  - Host: localhost, Port: 5432
+  - Database: `ai_resume_review_dev` 
+  - Username: postgres, Password: dev_password_123
+  - Redis: localhost:6379 (no password)
+- **Integration Tests**: Use real `ai_resume_review_dev` database (not separate test DB)
+- **Test Data Management**: Tests create and clean up their own data
+- **Required Services**: Both PostgreSQL AND Redis must be running for integration tests
 
 ### Infrastructure as Code
 - **MUST use Terraform** for all infrastructure
@@ -86,6 +123,34 @@ A story is ready for development when:
 - Use ESLint + Prettier
 - Follow React best practices
 - Write unit tests for logic, integration tests for components
+
+### Testing Standards
+#### Unit Tests
+- **Coverage**: Minimum 80% test coverage for new code
+- **Python**: Use pytest with comprehensive mocking
+- **TypeScript**: Use Jest + React Testing Library
+- **Fast Execution**: Unit tests should run without external dependencies
+
+#### Integration Tests  
+- **Database Required**: Must start database infrastructure before running
+- **Setup Command**: `./database/scripts/setup-dev-db.sh` (starts PostgreSQL + Redis)
+- **Real Database**: Use `ai_resume_review_dev` database (not mocked)
+- **Test Isolation**: Each test cleans up its own data
+- **API Testing**: Test full HTTP request/response cycle with real FastAPI app
+
+#### Running Tests
+```bash
+# Unit tests only (fast, no database needed)
+python -m pytest tests/test_*_unit.py -v
+
+# Integration tests (requires database)
+./database/scripts/setup-dev-db.sh  # Start database first
+python -m pytest tests/test_*_integration.py -v
+
+# All tests (requires database)
+./database/scripts/setup-dev-db.sh
+python -m pytest tests/ -v
+```
 
 ### Code Review Process
 - All code requires review before merge
@@ -231,5 +296,5 @@ By joining the team, all members agree to follow these working agreements. These
 
 ---
 
-*Last Updated: November 2024*  
+*Last Updated: December 2024 (Sprint 2 - Added database testing and API documentation details)*  
 *Next Review: End of Sprint 3*

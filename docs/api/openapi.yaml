@@ -1,0 +1,406 @@
+openapi: 3.0.3
+info:
+  title: AI Resume Review System API
+  description: |
+    REST API for the AI Resume Review System that allows users to upload resumes,
+    get AI-powered analysis, and manage their review history with secure authentication.
+  version: 1.0.0
+  contact:
+    name: AI Resume Review Team
+    email: support@resumereview.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Local development server
+  - url: https://api-dev.resumereview.com/api/v1
+    description: Development environment
+  - url: https://api.resumereview.com/api/v1
+    description: Production environment
+
+security:
+  - BearerAuth: []
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: |
+        Authenticate user with email and password, returns JWT access token.
+        - Rate limited: 5 attempts per minute per IP
+        - Account lockout after multiple failed attempts
+        - Secure password verification with bcrypt
+      operationId: loginUser
+      security: []  # No auth required for login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: "user@example.com"
+              password: "securePassword123!"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              example:
+                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                tokenType: "bearer"
+                expiresIn: 1800
+                user:
+                  id: "550e8400-e29b-41d4-a716-446655440000"
+                  email: "user@example.com"
+                  firstName: "John"
+                  lastName: "Doe"
+                  role: "consultant"
+                  isActive: true
+                  createdAt: "2024-01-15T10:30:00Z"
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "Invalid email or password"
+        '423':
+          description: Account locked due to multiple failed attempts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "Account is temporarily locked due to multiple failed login attempts"
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "Too many login attempts. Please try again later."
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: User logout
+      description: |
+        Logout user and invalidate JWT token.
+        - Clears server-side session if applicable
+        - Client should remove token from storage
+      operationId: logoutUser
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Logged out successfully"
+        '401':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: |
+        Refresh expired access token using refresh token.
+        - Access tokens expire in 15 minutes
+        - Refresh tokens expire in 7 days
+        - Implements token rotation for security
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+                  description: Valid refresh token
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Invalid or expired refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user info
+      description: Get information about the currently authenticated user
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: Current user information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token obtained from /auth/login endpoint.
+        Format: "Bearer <jwt_token>"
+
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "user@example.com"
+          maxLength: 255
+        password:
+          type: string
+          format: password
+          description: User's password
+          minLength: 8
+          maxLength: 128
+          example: "securePassword123!"
+
+    LoginResponse:
+      type: object
+      required:
+        - accessToken
+        - tokenType
+        - expiresIn
+        - user
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        tokenType:
+          type: string
+          enum: ["bearer"]
+          description: Token type
+          example: "bearer"
+        expiresIn:
+          type: integer
+          description: Token expiration time in seconds
+          example: 1800
+        user:
+          $ref: '#/components/schemas/UserResponse'
+
+    TokenResponse:
+      type: object
+      required:
+        - accessToken
+        - tokenType
+        - expiresIn
+      properties:
+        accessToken:
+          type: string
+          description: New JWT access token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        tokenType:
+          type: string
+          enum: ["bearer"]
+          description: Token type
+          example: "bearer"
+        expiresIn:
+          type: integer
+          description: Token expiration time in seconds
+          example: 900
+        refreshToken:
+          type: string
+          description: New refresh token (rotated for security)
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    UserResponse:
+      type: object
+      required:
+        - id
+        - email
+        - firstName
+        - lastName
+        - role
+        - isActive
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique user identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "user@example.com"
+        firstName:
+          type: string
+          description: User's first name
+          example: "John"
+          maxLength: 100
+        lastName:
+          type: string
+          description: User's last name
+          example: "Doe"
+          maxLength: 100
+        role:
+          type: string
+          enum: ["consultant", "admin"]
+          description: User's role in the system
+          example: "consultant"
+        isActive:
+          type: boolean
+          description: Whether the user account is active
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+          example: "2024-01-15T10:30:00Z"
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Error message describing what went wrong
+          example: "Invalid email or password"
+        code:
+          type: string
+          description: Optional error code for programmatic handling
+          example: "AUTH_INVALID_CREDENTIALS"
+        errors:
+          type: array
+          description: Optional list of validation errors
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: Field that caused the error
+                example: "email"
+              message:
+                type: string
+                description: Specific error message
+                example: "Invalid email format"
+
+  responses:
+    UnauthorizedError:
+      description: Invalid or missing authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            detail: "Could not validate credentials"
+
+    ForbiddenError:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            detail: "Admin privileges required"
+
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            detail: "Resource not found"
+
+    ValidationError:
+      description: Request validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            detail: "Validation error"
+            errors:
+              - field: "email"
+                message: "Invalid email format"
+              - field: "password"
+                message: "Password must be at least 8 characters"
+
+    RateLimitError:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            detail: "Too many requests. Please try again later."
+
+tags:
+  - name: Authentication
+    description: |
+      User authentication and session management endpoints.
+      
+      **Security Features:**
+      - JWT-based authentication with short-lived access tokens (15 min)
+      - Refresh token rotation for enhanced security
+      - Rate limiting to prevent brute force attacks
+      - Account lockout mechanism for suspicious activity
+      - Secure password hashing with bcrypt
+      
+      **Token Management:**
+      - Access tokens expire in 15 minutes for security
+      - Refresh tokens expire in 7 days
+      - Maximum 3 concurrent sessions per user
+      - Tokens include user ID, email, role, and expiration claims
