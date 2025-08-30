@@ -322,6 +322,7 @@ async def login(
             
             # Update database with login attempt result
             db.commit()
+            db.refresh(user)  # Refresh user to get updated timestamps and ensure all fields are loaded
         
         if not user or not password_valid:
             # Log failed login attempt
@@ -369,12 +370,25 @@ async def login(
         
         logger.info(f"Successful login for user: {user.email} with session: {session_id}")
         
+        # Build response carefully to catch any serialization issues
+        try:
+            user_data = UserResponse.from_orm(user).model_dump()
+        except Exception as e:
+            logger.error(f"Error serializing user data: {str(e)}")
+            # Return basic user info if serialization fails
+            user_data = {
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "role": user.role
+            }
+        
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,
             "token_type": "bearer",
             "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # Convert to seconds
-            "user": UserResponse.from_orm(user).dict()
+            "user": user_data
         }
         
     except HTTPException:

@@ -21,6 +21,19 @@ erDiagram
         TIMESTAMP locked_until
     }
     
+    refresh_tokens {
+        UUID id PK
+        UUID user_id FK
+        VARCHAR token_hash UK
+        VARCHAR session_id
+        VARCHAR status
+        TEXT device_info
+        VARCHAR ip_address
+        TIMESTAMP expires_at
+        TIMESTAMP created_at
+        TIMESTAMP last_used_at
+    }
+    
     analysis_requests {
         UUID id PK
         UUID user_id FK
@@ -76,6 +89,7 @@ erDiagram
     }
 
     users ||--o{ analysis_requests : "creates"
+    users ||--o{ refresh_tokens : "has"
     analysis_requests ||--|| analysis_results : "generates"
     users ||--o{ prompts : "creates"
     prompts ||--o{ prompt_history : "tracks"
@@ -92,6 +106,16 @@ erDiagram
   - Email verification tracking
   - Soft delete via is_active flag
   - Password security tracking (failed attempts, lockout, change history)
+
+### refresh_tokens
+- **Purpose**: Manage JWT refresh tokens for secure session management
+- **Key Features**:
+  - SHA-256 hashed token storage for security
+  - Session tracking with device and IP information
+  - Automatic expiration after 7 days
+  - Status tracking (active, expired, revoked)
+  - Concurrent session limiting (max 3 per user)
+  - Token rotation support for enhanced security
 
 ### analysis_requests
 - **Purpose**: Track resume analysis requests and metadata
@@ -127,10 +151,11 @@ erDiagram
 ## Relationships
 
 1. **users → analysis_requests**: One-to-many (users can submit multiple requests)
-2. **analysis_requests → analysis_results**: One-to-one (each request generates one result)
-3. **users → prompts**: One-to-many (users can create custom prompts)
-4. **prompts → prompt_history**: One-to-many (prompts track usage history)
-5. **analysis_requests → prompt_history**: One-to-many (requests use multiple prompts)
+2. **users → refresh_tokens**: One-to-many (users can have multiple active sessions)
+3. **analysis_requests → analysis_results**: One-to-one (each request generates one result)
+4. **users → prompts**: One-to-many (users can create custom prompts)
+5. **prompts → prompt_history**: One-to-many (prompts track usage history)
+6. **analysis_requests → prompt_history**: One-to-many (requests use multiple prompts)
 
 ## Security Considerations
 

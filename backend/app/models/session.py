@@ -139,7 +139,8 @@ class RefreshToken(Base):
         Returns:
             True if token is expired, False otherwise
         """
-        return datetime.utcnow() >= self.expires_at
+        from datetime import timezone
+        return datetime.now(timezone.utc) >= self.expires_at
     
     def is_active(self) -> bool:
         """

@@ -75,7 +75,7 @@ class TestSessionManagementIntegration:
     def test_login_creates_session(self):
         """Test that login creates a session with refresh token."""
         # Login
-        login_response = client.post("/auth/login", json={
+        login_response = client.post("/api/v1/auth/login", json={
             "email": self.test_email,
             "password": self.test_password
         })
@@ -102,7 +102,7 @@ class TestSessionManagementIntegration:
     def test_refresh_token_endpoint(self):
         """Test the token refresh endpoint."""
         # Login to get initial tokens
-        login_response = client.post("/auth/login", json={
+        login_response = client.post("/api/v1/auth/login", json={
             "email": self.test_email,
             "password": self.test_password
         })
@@ -115,7 +115,7 @@ class TestSessionManagementIntegration:
         time.sleep(0.1)
         
         # Refresh tokens
-        refresh_response = client.post("/auth/refresh", json={
+        refresh_response = client.post("/api/v1/auth/refresh", json={
             "refresh_token": refresh_token
         })
         
@@ -133,7 +133,7 @@ class TestSessionManagementIntegration:
         assert refresh_data["refresh_token"] != refresh_token
         
         # Original refresh token should no longer work
-        old_refresh_response = client.post("/auth/refresh", json={
+        old_refresh_response = client.post("/api/v1/auth/refresh", json={
             "refresh_token": refresh_token
         })
         
@@ -142,7 +142,7 @@ class TestSessionManagementIntegration:
     def test_refresh_token_with_invalid_token(self):
         """Test refresh endpoint with invalid tokens."""
         # Test with completely invalid token
-        invalid_response = client.post("/auth/refresh", json={
+        invalid_response = client.post("/api/v1/auth/refresh", json={
             "refresh_token": "invalid.jwt.token"
         })
         
@@ -150,14 +150,14 @@ class TestSessionManagementIntegration:
         assert "Invalid refresh token" in invalid_response.json()["detail"]
         
         # Test with access token instead of refresh token
-        login_response = client.post("/auth/login", json={
+        login_response = client.post("/api/v1/auth/login", json={
             "email": self.test_email,
             "password": self.test_password
         })
         
         access_token = login_response.json()["access_token"]
         
-        wrong_type_response = client.post("/auth/refresh", json={
+        wrong_type_response = client.post("/api/v1/auth/refresh", json={
             "refresh_token": access_token
         })
         
@@ -166,7 +166,7 @@ class TestSessionManagementIntegration:
     def test_session_listing(self):
         """Test listing user sessions."""
         # Login to create a session
-        login_response = client.post("/auth/login", json={
+        login_response = client.post("/api/v1/auth/login", json={
             "email": self.test_email,
             "password": self.test_password
         })
@@ -175,7 +175,7 @@ class TestSessionManagementIntegration:
         
         # List sessions
         sessions_response = client.get(
-            "/auth/sessions",
+            "/api/v1/auth/sessions",
             headers={"Authorization": f"Bearer {access_token}"}
         )
         
@@ -202,7 +202,7 @@ class TestSessionManagementIntegration:
         for i in range(3):
             # Use different user agent for each session
             login_response = client.post(
-                "/auth/login", 
+                "/api/v1/auth/login", 
                 json={
                     "email": self.test_email,
                     "password": self.test_password
@@ -216,7 +216,7 @@ class TestSessionManagementIntegration:
         # List sessions using the last created session
         last_access_token = sessions[-1]["access_token"]
         sessions_response = client.get(
-            "/auth/sessions",
+            "/api/v1/auth/sessions",
             headers={"Authorization": f"Bearer {last_access_token}"}
         )
         
@@ -227,7 +227,7 @@ class TestSessionManagementIntegration:
         assert sessions_data["total_sessions"] == 3
         
         # Create 4th session - should revoke oldest
-        fourth_login = client.post("/auth/login", json={
+        fourth_login = client.post("/api/v1/auth/login", json={
             "email": self.test_email,
             "password": self.test_password
         })
@@ -237,7 +237,7 @@ class TestSessionManagementIntegration:
         # Check that we still have only 3 sessions total
         new_access_token = fourth_login.json()["access_token"]
         final_sessions_response = client.get(
-            "/auth/sessions",
+            "/api/v1/auth/sessions",
             headers={"Authorization": f"Bearer {new_access_token}"}
         )
         
@@ -247,12 +247,12 @@ class TestSessionManagementIntegration:
     def test_session_revocation(self):
         """Test revoking specific sessions."""
         # Create 2 sessions
-        login1 = client.post("/auth/login", json={
+        login1 = client.post("/api/v1/auth/login", json={
             "email": self.test_email,
             "password": self.test_password
         })
         
-        login2 = client.post("/auth/login", json={
+        login2 = client.post("/api/v1/auth/login", json={
             "email": self.test_email,
             "password": self.test_password
         })
@@ -262,7 +262,7 @@ class TestSessionManagementIntegration:
         
         # List sessions from second session
         sessions_response = client.get(
-            "/auth/sessions",
+            "/api/v1/auth/sessions",
             headers={"Authorization": f"Bearer {access_token2}"}
         )
         
@@ -280,7 +280,7 @@ class TestSessionManagementIntegration:
         
         # Revoke the other session
         revoke_response = client.delete(
-            f"/auth/sessions/{other_session['session_id']}",
+            f"/api/v1/auth/sessions/{other_session['session_id']}",
             headers={"Authorization": f"Bearer {access_token2}"}
         )
         
@@ -290,12 +290,12 @@ class TestSessionManagementIntegration:
         
         # Verify first session's token no longer works
         test_response = client.get(
-            "/auth/me",
+            "/api/v1/auth/me",
             headers={"Authorization": f"Bearer {access_token1}"}
         )
         
         # The access token might still work briefly, but refresh should fail
-        refresh_response = client.post("/auth/refresh", json={
+        refresh_response = client.post("/api/v1/auth/refresh", json={
             "refresh_token": login1.json()["refresh_token"]
         })
         
@@ -306,7 +306,7 @@ class TestSessionManagementIntegration:
         # Create 3 sessions
         sessions = []
         for i in range(3):
-            login = client.post("/auth/login", json={
+            login = client.post("/api/v1/auth/login", json={
                 "email": self.test_email,
                 "password": self.test_password
             })
@@ -316,7 +316,7 @@ class TestSessionManagementIntegration:
         current_access_token = sessions[-1]["access_token"]
         
         revoke_all_response = client.post(
-            "/auth/sessions/revoke-all",
+            "/api/v1/auth/sessions/revoke-all",
             headers={"Authorization": f"Bearer {current_access_token}"}
         )
         
@@ -328,7 +328,7 @@ class TestSessionManagementIntegration:
         
         # Verify only current session remains
         sessions_response = client.get(
-            "/auth/sessions",
+            "/api/v1/auth/sessions",
             headers={"Authorization": f"Bearer {current_access_token}"}
         )
         
@@ -338,7 +338,7 @@ class TestSessionManagementIntegration:
         
         # Verify other sessions' refresh tokens don't work
         for i in range(2):  # First 2 sessions should be revoked
-            refresh_response = client.post("/auth/refresh", json={
+            refresh_response = client.post("/api/v1/auth/refresh", json={
                 "refresh_token": sessions[i]["refresh_token"]
             })
             assert refresh_response.status_code == 401
@@ -346,7 +346,7 @@ class TestSessionManagementIntegration:
     def test_prevent_current_session_revocation(self):
         """Test that users cannot revoke their current session."""
         # Login
-        login_response = client.post("/auth/login", json={
+        login_response = client.post("/api/v1/auth/login", json={
             "email": self.test_email,
             "password": self.test_password
         })
@@ -355,7 +355,7 @@ class TestSessionManagementIntegration:
         
         # Get current session ID
         sessions_response = client.get(
-            "/auth/sessions",
+            "/api/v1/auth/sessions",
             headers={"Authorization": f"Bearer {access_token}"}
         )
         
@@ -363,7 +363,7 @@ class TestSessionManagementIntegration:
         
         # Try to revoke current session
         revoke_response = client.delete(
-            f"/auth/sessions/{current_session_id}",
+            f"/api/v1/auth/sessions/{current_session_id}",
             headers={"Authorization": f"Bearer {access_token}"}
         )
         
@@ -375,7 +375,7 @@ class TestSessionManagementIntegration:
     def test_expired_session_cleanup(self):
         """Test that expired sessions are properly handled."""
         # Create a session
-        login_response = client.post("/auth/login", json={
+        login_response = client.post("/api/v1/auth/login", json={
             "email": self.test_email,
             "password": self.test_password
         })
@@ -392,7 +392,7 @@ class TestSessionManagementIntegration:
         
         # List sessions - should automatically mark as expired
         sessions_response = client.get(
-            "/auth/sessions",
+            "/api/v1/auth/sessions",
             headers={"Authorization": f"Bearer {access_token}"}
         )
         
@@ -421,12 +421,12 @@ class TestSessionManagementIntegration:
         self.db.commit()
         
         # Login both users
-        login1 = client.post("/auth/login", json={
+        login1 = client.post("/api/v1/auth/login", json={
             "email": self.test_email,
             "password": self.test_password
         })
         
-        login2 = client.post("/auth/login", json={
+        login2 = client.post("/api/v1/auth/login", json={
             "email": other_user_email,
             "password": "OtherPassword123!"
         })
@@ -436,12 +436,12 @@ class TestSessionManagementIntegration:
         
         # Get sessions for both users
         sessions1 = client.get(
-            "/auth/sessions",
+            "/api/v1/auth/sessions",
             headers={"Authorization": f"Bearer {token1}"}
         ).json()
         
         sessions2 = client.get(
-            "/auth/sessions",
+            "/api/v1/auth/sessions",
             headers={"Authorization": f"Bearer {token2}"}
         ).json()
         
@@ -455,7 +455,7 @@ class TestSessionManagementIntegration:
         
         # User 1 tries to revoke User 2's session
         cross_revoke_response = client.delete(
-            f"/auth/sessions/{user2_session_id}",
+            f"/api/v1/auth/sessions/{user2_session_id}",
             headers={"Authorization": f"Bearer {token1}"}
         )
         
@@ -487,7 +487,7 @@ class TestSessionManagementEdgeCases:
         ]
         
         for malformed_token in test_cases:
-            response = client.post("/auth/refresh", json={
+            response = client.post("/api/v1/auth/refresh", json={
                 "refresh_token": malformed_token
             })
             assert response.status_code == 401
@@ -495,15 +495,15 @@ class TestSessionManagementEdgeCases:
     def test_sessions_without_authentication(self):
         """Test session endpoints without authentication."""
         # Test sessions listing
-        response = client.get("/auth/sessions")
+        response = client.get("/api/v1/auth/sessions")
         assert response.status_code == 401
         
         # Test session revocation
-        response = client.delete("/auth/sessions/fake-session-id")
+        response = client.delete("/api/v1/auth/sessions/fake-session-id")
         assert response.status_code == 401
         
         # Test revoke all sessions
-        response = client.post("/auth/sessions/revoke-all")
+        response = client.post("/api/v1/auth/sessions/revoke-all")
         assert response.status_code == 401
     
     def test_revoke_nonexistent_session(self):
@@ -520,7 +520,7 @@ class TestSessionManagementEdgeCases:
         self.db.add(test_user)
         self.db.commit()
         
-        login_response = client.post("/auth/login", json={
+        login_response = client.post("/api/v1/auth/login", json={
             "email": test_email,
             "password": "TestPassword123!"
         })
@@ -529,7 +529,7 @@ class TestSessionManagementEdgeCases:
         
         # Try to revoke non-existent session
         response = client.delete(
-            "/auth/sessions/non-existent-session-id",
+            "/api/v1/auth/sessions/non-existent-session-id",
             headers={"Authorization": f"Bearer {access_token}"}
         )
         
