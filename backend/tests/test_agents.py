@@ -42,6 +42,7 @@ class TestAgentConfiguration:
         assert "openai" in providers
         assert "anthropic" in providers
     
+    @patch.dict(os.environ, {}, clear=True)
     def test_config_validation_without_api_keys(self):
         """Test config validation when API keys are not available."""
         config = AgentConfig(
@@ -56,6 +57,22 @@ class TestAgentConfiguration:
         is_valid, error_message = config_manager.validate_config(config)
         assert not is_valid
         assert "not available" in error_message.lower()
+    
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "fake-key-for-testing"})
+    def test_config_validation_with_api_keys(self):
+        """Test config validation when API keys are available."""
+        config = AgentConfig(
+            agent_type=AgentType.TEST,
+            name="test_agent",
+            description="Test agent",
+            model_provider="openai",
+            model_name="gpt-3.5-turbo"
+        )
+        
+        # This should succeed with API key present
+        is_valid, error_message = config_manager.validate_config(config)
+        assert is_valid
+        assert error_message is None
 
 
 class TestAgentFactory:
@@ -83,6 +100,7 @@ class TestAgentFactory:
         assert agent.name == "test_agent"
         assert agent.agent_type == AgentType.TEST
     
+    @patch.dict(os.environ, {}, clear=True) 
     def test_agent_creation_without_api_key_fails(self):
         """Test that agent creation fails without API keys."""
         with pytest.raises(ValueError, match="not available"):
