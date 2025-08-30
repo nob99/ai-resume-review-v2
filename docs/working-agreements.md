@@ -97,12 +97,43 @@ A story is ready for development when:
   - [ ] No security vulnerabilities
   - [ ] Performance considered
 
-## 5. Git Workflow
+## 5. Sprint Management
+
+### Sprint Planning
+- **Sprint planning is MANDATORY** before starting any new sprint
+- **NEVER start a new sprint without proper planning**
+- Sprint planning includes:
+  - Review previous sprint completion
+  - Select stories for new sprint
+  - Team capacity planning
+  - Risk identification
+  - Sprint goal definition
+
+### Sprint Branch Strategy
+- **Create a new branch for each sprint**: `sprint-XXX` (e.g., `sprint-001`, `sprint-002`)
+- All development for the sprint happens on the sprint branch
+- Individual features branch off from the sprint branch
+- **Sprint completion process**:
+  1. Team and Product Owner agree on sprint completion
+  2. All acceptance criteria verified
+  3. Sprint branch is merged to main
+  4. Tag the release (e.g., `sprint-001-complete`)
+  5. Delete the sprint branch after successful merge
+
+### Sprint Ceremonies
+- **Sprint Planning**: First day of sprint (mandatory)
+- **Daily Standup**: Every working day at 9:30 AM
+- **Sprint Review**: Last day of sprint with PO
+- **Sprint Retrospective**: After sprint review
+- **NO development between sprints** - use time for planning and technical debt
+
+## 6. Git Workflow
 
 ### Branch Naming
-- Feature: `feature/STORY-ID-short-description`
+- Sprint: `sprint-XXX` (main development branch for the sprint)
+- Feature: `feature/STORY-ID-short-description` (branches from sprint branch)
 - Bugfix: `bugfix/STORY-ID-short-description`
-- Hotfix: `hotfix/description`
+- Hotfix: `hotfix/description` (only for production issues)
 
 ### Commit Messages
 - Use conventional commits format
@@ -118,7 +149,7 @@ A story is ready for development when:
 - Fill out PR template completely
 - Ensure CI passes before requesting review
 
-## 6. Communication
+## 7. Communication
 
 ### Daily Standup
 - Be on time (9:30 AM)
@@ -141,7 +172,7 @@ A story is ready for development when:
 - Document decisions and action items
 - Record meetings when appropriate
 
-## 7. Definition of Done
+## 8. Definition of Done
 
 A story/task is DONE when:
 - [ ] Code is complete and follows standards
@@ -153,14 +184,14 @@ A story/task is DONE when:
 - [ ] Acceptance criteria verified by PO
 - [ ] No known bugs or tech debt introduced
 
-## 8. Technical Debt Management
+## 9. Technical Debt Management
 
 - Document tech debt in backlog
 - Allocate 20% of sprint capacity for tech debt
 - Prioritize security and performance debt
 - Regular refactoring during development
 
-## 9. Security Practices
+## 10. Security Practices
 
 - Never commit secrets or credentials
 - Use environment variables for configuration
@@ -168,18 +199,18 @@ A story/task is DONE when:
 - Regular dependency updates
 - Security review for sensitive features
 
-## 10. Performance Standards
+## 11. Performance Standards
 
 - Page load time < 3 seconds
 - API response time < 500ms (p95)
 - Regular performance testing
 - Monitor and alert on degradation
 
-## 11. On-Call Responsibilities
+## 12. On-Call Responsibilities
 
 (To be defined when we reach production)
 
-## 12. Continuous Improvement
+## 13. Continuous Improvement
 
 - Sprint retrospectives are mandatory
 - Act on retrospective action items
