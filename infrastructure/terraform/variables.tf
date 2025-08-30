@@ -71,3 +71,16 @@ variable "qa_engineer_email" {
   type        = string
   default     = ""
 }
+
+# Database configuration
+variable "db_tier" {
+  description = "Cloud SQL instance tier"
+  type        = string
+  default     = "db-f1-micro"
+}
+
+variable "db_password" {
+  description = "Database password for app user"
+  type        = string
+  sensitive   = true
+}

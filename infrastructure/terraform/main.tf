@@ -122,6 +122,113 @@ resource "google_artifact_registry_repository" "docker_repo" {
   }
 }
 
+# Cloud SQL PostgreSQL instance
+resource "google_sql_database_instance" "main" {
+  name             = "ai-resume-review-${var.environment}"
+  database_version = "POSTGRES_15"
+  region           = var.region
+  project          = var.project_id
+
+  settings {
+    tier              = var.db_tier
+    availability_type = "ZONAL"
+    disk_type         = "PD_SSD"
+    disk_size         = 20
+    disk_autoresize   = true
+
+    backup_configuration {
+      enabled                        = true
+      start_time                     = "02:00"
+      point_in_time_recovery_enabled = true
+      backup_retention_settings {
+        retained_backups = 7
+        retention_unit   = "COUNT"
+      }
+    }
+
+    ip_configuration {
+      ipv4_enabled                                  = false
+      private_network                               = google_compute_network.vpc_network.id
+      enable_private_path_for_google_cloud_services = true
+    }
+
+    database_flags {
+      name  = "log_statement"
+      value = "all"
+    }
+
+    database_flags {
+      name  = "log_min_duration_statement"
+      value = "1000"
+    }
+
+    database_flags {
+      name  = "max_connections"
+      value = "100"
+    }
+
+    database_flags {
+      name  = "shared_preload_libraries"
+      value = "pg_stat_statements"
+    }
+  }
+
+  deletion_protection = true
+
+  depends_on = [
+    google_service_networking_connection.private_vpc_connection,
+    google_project_service.required_apis
+  ]
+}
+
+# Create database
+resource "google_sql_database" "app_database" {
+  name     = "ai_resume_review"
+  instance = google_sql_database_instance.main.name
+  project  = var.project_id
+}
+
+# Create database user
+resource "google_sql_user" "app_user" {
+  name     = "app_user"
+  instance = google_sql_database_instance.main.name
+  password = var.db_password
+  project  = var.project_id
+}
+
+# VPC Network for private database access
+resource "google_compute_network" "vpc_network" {
+  name                    = "ai-resume-review-vpc-${var.environment}"
+  auto_create_subnetworks = false
+  project                 = var.project_id
+}
+
+# Subnet for the VPC
+resource "google_compute_subnetwork" "subnet" {
+  name          = "ai-resume-review-subnet-${var.environment}"
+  ip_cidr_range = "10.0.0.0/16"
+  region        = var.region
+  network       = google_compute_network.vpc_network.id
+  project       = var.project_id
+}
+
+# Reserve IP range for private services
+resource "google_compute_global_address" "private_ip_address" {
+  name          = "private-ip-address-${var.environment}"
+  purpose       = "VPC_PEERING"
+  address_type  = "INTERNAL"
+  prefix_length = 16
+  network       = google_compute_network.vpc_network.id
+  project       = var.project_id
+}
+
+# Create private connection
+resource "google_service_networking_connection" "private_vpc_connection" {
+  network                 = google_compute_network.vpc_network.id
+  service                 = "servicenetworking.googleapis.com"
+  reserved_peering_ranges = [google_compute_global_address.private_ip_address.name]
+}
+
 # IAM configuration
 module "iam" {
   source = "./modules/iam"
