@@ -16,6 +16,7 @@ from pydantic import BaseModel, EmailStr
 
 from app.core.security import (
     create_access_token, 
+    create_refresh_token,
     verify_token, 
     SecurityError,
     PasswordValidationResult,
@@ -43,6 +44,15 @@ from app.models.user import (
     LoginResponse,
     UserRole
 )
+from app.models.session import (
+    RefreshToken,
+    TokenRefreshRequest,
+    TokenRefreshResponse,
+    SessionInfo,
+    SessionListResponse,
+    SessionRevokeRequest,
+    SessionRevokeResponse
+)
 from app.database.connection import get_db
 
 # Configure logging
@@ -54,8 +64,8 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 # Security scheme
 security = HTTPBearer()
 
-# JWT token expiration (Sprint 2 requirement: 15 minutes)
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
+# JWT token expiration (30 minutes for access tokens)
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # Initialize Redis for token blacklisting
 async def initialize_redis_for_tokens():
@@ -322,25 +332,50 @@ async def login(
                 detail="Invalid email or password"
             )
         
+        # Generate unique session ID for this login
+        import uuid
+        session_id = str(uuid.uuid4())
+        
+        # Get device info from request headers
+        device_info = request.headers.get("User-Agent", "Unknown")
+        ip_address = request.client.host if request.client else "Unknown"
+        
         # Create access token
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
             data={
                 "sub": str(user.id),
                 "email": user.email,
-                "role": user.role
+                "role": user.role,
+                "session_id": session_id
             },
             expires_delta=access_token_expires
         )
         
-        logger.info(f"Successful login for user: {user.email}")
+        # Create refresh token
+        refresh_token = create_refresh_token(str(user.id), session_id)
         
-        return LoginResponse(
-            access_token=access_token,
-            token_type="bearer",
-            expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # Convert to seconds
-            user=UserResponse.from_orm(user)
+        # Store refresh token in database
+        refresh_token_record = RefreshToken(
+            user_id=user.id,
+            token=refresh_token,
+            session_id=session_id,
+            device_info=device_info,
+            ip_address=ip_address
         )
+        
+        db.add(refresh_token_record)
+        db.commit()
+        
+        logger.info(f"Successful login for user: {user.email} with session: {session_id}")
+        
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # Convert to seconds
+            "user": UserResponse.from_orm(user).dict()
+        }
         
     except HTTPException:
         raise
@@ -711,4 +746,313 @@ async def get_user_rate_limit_status(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to check rate limit status"
+        )
+
+
+@router.post("/refresh", response_model=TokenRefreshResponse)
+async def refresh_token(
+    refresh_request: TokenRefreshRequest,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """
+    Refresh access token using refresh token.
+    
+    Args:
+        refresh_request: Refresh token request
+        request: FastAPI request object  
+        db: Database session
+        
+    Returns:
+        New access and refresh tokens
+        
+    Raises:
+        HTTPException: If refresh fails
+    """
+    try:
+        # Verify refresh token
+        payload = verify_token(refresh_request.refresh_token)
+        if not payload or payload.get("type") != "refresh":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token"
+            )
+        
+        user_id = payload.get("user_id")
+        session_id = payload.get("session_id")
+        
+        if not user_id or not session_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token payload"
+            )
+        
+        # Find refresh token in database
+        refresh_token_record = db.query(RefreshToken).filter(
+            RefreshToken.user_id == user_id,
+            RefreshToken.session_id == session_id,
+            RefreshToken.status == "active"
+        ).first()
+        
+        if not refresh_token_record or not refresh_token_record.verify_token(refresh_request.refresh_token):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired refresh token"
+            )
+        
+        if not refresh_token_record.is_active():
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Refresh token has expired"
+            )
+        
+        # Get user
+        user = db.query(User).filter(
+            User.id == user_id,
+            User.is_active == True
+        ).first()
+        
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found or inactive"
+            )
+        
+        # Create new access token
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        new_access_token = create_access_token(
+            data={
+                "sub": str(user.id),
+                "email": user.email,
+                "role": user.role,
+                "session_id": session_id
+            },
+            expires_delta=access_token_expires
+        )
+        
+        # Create new refresh token (token rotation for security)
+        new_refresh_token = create_refresh_token(str(user.id), session_id)
+        
+        # Update refresh token in database (rotate for security)
+        refresh_token_record.rotate_token(new_refresh_token)
+        
+        db.commit()
+        
+        logger.info(f"Token refreshed for user: {user.email} session: {session_id}")
+        
+        return TokenRefreshResponse(
+            access_token=new_access_token,
+            refresh_token=new_refresh_token,
+            token_type="bearer",
+            expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Token refresh error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Token refresh failed"
+        )
+
+
+@router.get("/sessions", response_model=SessionListResponse)
+async def list_user_sessions(
+    current_user: User = Depends(get_current_user),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+):
+    """
+    List all active sessions for the current user.
+    
+    Args:
+        current_user: Current authenticated user
+        credentials: JWT token from Authorization header
+        db: Database session
+        
+    Returns:
+        List of active sessions with metadata
+        
+    Raises:
+        HTTPException: If session listing fails
+    """
+    try:
+        # Get current session ID from token
+        payload = verify_token(credentials.credentials)
+        current_session_id = payload.get("session_id") if payload else None
+        
+        # Get all active refresh tokens for the user
+        active_sessions = db.query(RefreshToken).filter(
+            RefreshToken.user_id == current_user.id,
+            RefreshToken.status == "active"
+        ).order_by(RefreshToken.last_used_at.desc()).all()
+        
+        # Filter out expired sessions and build response
+        session_list = []
+        for session in active_sessions:
+            if session.is_active():
+                session_info = SessionInfo(
+                    session_id=session.session_id,
+                    device_info=session.device_info,
+                    ip_address=session.ip_address,
+                    created_at=session.created_at,
+                    last_used_at=session.last_used_at,
+                    is_current=(session.session_id == current_session_id)
+                )
+                session_list.append(session_info)
+            else:
+                # Mark expired sessions as expired in database
+                session.status = "expired"
+        
+        # Commit any status updates
+        db.commit()
+        
+        logger.info(f"Listed {len(session_list)} active sessions for user: {current_user.email}")
+        
+        return SessionListResponse(
+            sessions=session_list,
+            total_sessions=len(session_list),
+            max_sessions=3
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Session listing error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to list sessions"
+        )
+
+
+@router.delete("/sessions/{session_id}", response_model=SessionRevokeResponse)
+async def revoke_session(
+    session_id: str,
+    current_user: User = Depends(get_current_user),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+):
+    """
+    Revoke a specific session for the current user.
+    
+    Args:
+        session_id: Session ID to revoke
+        current_user: Current authenticated user
+        credentials: JWT token from Authorization header
+        db: Database session
+        
+    Returns:
+        Success message
+        
+    Raises:
+        HTTPException: If session revocation fails
+    """
+    try:
+        # Get current session ID from token
+        payload = verify_token(credentials.credentials)
+        current_session_id = payload.get("session_id") if payload else None
+        
+        # Prevent users from revoking their current session
+        if session_id == current_session_id:
+            return SessionRevokeResponse(
+                success=False,
+                message="Cannot revoke current session. Use logout instead."
+            )
+        
+        # Find the session to revoke
+        session_to_revoke = db.query(RefreshToken).filter(
+            RefreshToken.user_id == current_user.id,
+            RefreshToken.session_id == session_id,
+            RefreshToken.status == "active"
+        ).first()
+        
+        if not session_to_revoke:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Session not found or already revoked"
+            )
+        
+        # Revoke the session
+        session_to_revoke.revoke()
+        db.commit()
+        
+        logger.info(f"Session {session_id} revoked for user: {current_user.email}")
+        
+        return SessionRevokeResponse(
+            success=True,
+            message=f"Session {session_id[:8]}... revoked successfully"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Session revocation error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to revoke session"
+        )
+
+
+@router.post("/sessions/revoke-all")
+async def revoke_all_other_sessions(
+    current_user: User = Depends(get_current_user),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+):
+    """
+    Revoke all sessions except the current one.
+    
+    Args:
+        current_user: Current authenticated user
+        credentials: JWT token from Authorization header
+        db: Database session
+        
+    Returns:
+        Success message with count of revoked sessions
+        
+    Raises:
+        HTTPException: If session revocation fails
+    """
+    try:
+        # Get current session ID from token
+        payload = verify_token(credentials.credentials)
+        current_session_id = payload.get("session_id") if payload else None
+        
+        if not current_session_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot determine current session"
+            )
+        
+        # Find all active sessions except current one
+        sessions_to_revoke = db.query(RefreshToken).filter(
+            RefreshToken.user_id == current_user.id,
+            RefreshToken.session_id != current_session_id,
+            RefreshToken.status == "active"
+        ).all()
+        
+        # Revoke all other sessions
+        revoked_count = 0
+        for session in sessions_to_revoke:
+            session.revoke()
+            revoked_count += 1
+        
+        db.commit()
+        
+        logger.info(f"Revoked {revoked_count} sessions for user: {current_user.email}")
+        
+        return {
+            "message": f"Successfully revoked {revoked_count} other sessions",
+            "revoked_sessions": revoked_count,
+            "current_session_preserved": True
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Bulk session revocation error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to revoke sessions"
         )

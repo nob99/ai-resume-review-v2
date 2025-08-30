@@ -6,6 +6,7 @@ Implements bcrypt for secure password hashing with comprehensive validation.
 import re
 import secrets
 import logging
+import uuid
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 from passlib.context import CryptContext
@@ -30,6 +31,7 @@ COMMON_PASSWORDS = {
 SECRET_KEY = "your-secret-key-change-in-production"  # TODO: Move to environment config
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 
 class PasswordPolicy(BaseModel):
@@ -272,6 +274,41 @@ class TokenManager:
         except Exception as e:
             logger.error(f"Token creation failed: {str(e)}")
             raise SecurityError("Failed to create access token")
+
+    def create_refresh_token(self, user_id: str, session_id: Optional[str] = None) -> str:
+        """
+        Create JWT refresh token.
+        
+        Args:
+            user_id: User ID to encode in token
+            session_id: Optional session ID for tracking
+            
+        Returns:
+            JWT refresh token string
+        """
+        # Generate unique session ID if not provided
+        if not session_id:
+            session_id = str(uuid.uuid4())
+        
+        now = datetime.utcnow()
+        expire = now + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        
+        to_encode = {
+            "user_id": user_id,
+            "session_id": session_id,
+            "exp": expire,
+            "iat": now,  # Issued at timestamp
+            "jti": str(uuid.uuid4()),  # Unique JWT ID for each token
+            "type": "refresh"
+        }
+        
+        try:
+            encoded_jwt = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
+            logger.info(f"Refresh token created successfully for user {user_id}")
+            return encoded_jwt
+        except Exception as e:
+            logger.error(f"Refresh token creation failed: {str(e)}")
+            raise SecurityError("Failed to create refresh token")
     
     def verify_token(self, token: str) -> Optional[Dict[str, Any]]:
         """
@@ -428,6 +465,11 @@ def validate_password(password: str) -> PasswordValidationResult:
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
     """Create access token using global token manager."""
     return token_manager.create_access_token(data, expires_delta)
+
+
+def create_refresh_token(user_id: str, session_id: Optional[str] = None) -> str:
+    """Create refresh token using global token manager."""
+    return token_manager.create_refresh_token(user_id, session_id)
 
 
 def verify_token(token: str) -> Optional[Dict[str, Any]]:
