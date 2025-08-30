@@ -152,13 +152,22 @@ async def validation_error_handler(request: Request, exc: RequestValidationError
     """Handle request validation errors."""
     client_ip = request.client.host if request.client else "unknown"
     logger.warning(f"Validation error: {exc.errors()} - IP: {client_ip}")
+    
+    # Ensure error details are JSON serializable
+    errors = []
+    for error in exc.errors():
+        serializable_error = {}
+        for key, value in error.items():
+            if isinstance(value, bytes):
+                serializable_error[key] = value.decode('utf-8', errors='replace')
+            else:
+                serializable_error[key] = value
+        errors.append(serializable_error)
+    
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
-            "error": "Validation Error",
-            "message": "Request data validation failed",
-            "details": exc.errors(),
-            "type": "validation_error"
+            "detail": errors
         }
     )
 
@@ -169,9 +178,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     return JSONResponse(
         status_code=exc.status_code,
         content={
-            "error": f"HTTP {exc.status_code}",
-            "message": exc.detail,
-            "type": "http_error"
+            "detail": exc.detail
         }
     )
 

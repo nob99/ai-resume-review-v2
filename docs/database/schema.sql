@@ -17,7 +17,10 @@ CREATE TABLE users (
     email_verified BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    last_login_at TIMESTAMP WITH TIME ZONE
+    last_login_at TIMESTAMP WITH TIME ZONE,
+    password_changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    failed_login_attempts INTEGER DEFAULT 0,
+    locked_until TIMESTAMP WITH TIME ZONE
 );
 
 -- Analysis requests table for tracking resume review requests
@@ -80,6 +83,8 @@ CREATE TABLE prompt_history (
 
 -- Indexes for performance optimization
 CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_locked_until ON users(locked_until);
+CREATE INDEX idx_users_failed_attempts ON users(failed_login_attempts);
 CREATE INDEX idx_analysis_requests_user_id ON analysis_requests(user_id);
 CREATE INDEX idx_analysis_requests_status ON analysis_requests(status);
 CREATE INDEX idx_analysis_requests_created_at ON analysis_requests(created_at DESC);

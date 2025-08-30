@@ -25,8 +25,8 @@ class TestAuthIntegrationFlow:
         assert response.status_code == 422  # Validation error, not 404
         
         data = response.json()
-        # Our custom error handler uses 'details' not 'detail'
-        assert "details" in data or "error" in data
+        # Standard FastAPI error format uses 'detail'
+        assert "detail" in data
     
     def test_login_endpoint_methods(self, client):
         """Test allowed HTTP methods for login endpoint."""

@@ -16,6 +16,9 @@ erDiagram
         TIMESTAMP created_at
         TIMESTAMP updated_at
         TIMESTAMP last_login_at
+        TIMESTAMP password_changed_at
+        INTEGER failed_login_attempts
+        TIMESTAMP locked_until
     }
     
     analysis_requests {
@@ -88,6 +91,7 @@ erDiagram
   - Role-based access (consultant, admin)
   - Email verification tracking
   - Soft delete via is_active flag
+  - Password security tracking (failed attempts, lockout, change history)
 
 ### analysis_requests
 - **Purpose**: Track resume analysis requests and metadata

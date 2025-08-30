@@ -39,9 +39,18 @@ class TestAuthLogin:
         user.last_name = "Doe"
         user.role = "consultant"
         user.is_active = True
+        user.email_verified = True
         user.created_at = datetime(2024, 1, 15, 10, 30, 0)
+        # Add new security-related attributes
+        user.failed_login_attempts = 0
+        user.locked_until = None
+        user.last_login_at = None
+        user.password_changed_at = datetime(2024, 1, 15, 10, 30, 0)
+        user.password_hash = "hashed_password_here"
         user.is_account_locked.return_value = False
         user.check_password.return_value = True
+        # Add full_name property for UserResponse serialization
+        user.full_name = "John Doe"
         return user
     
     @pytest.fixture
@@ -52,9 +61,10 @@ class TestAuthLogin:
             "password": "securePassword123!"
         }
     
+    @patch('app.models.user.User.check_password')
     @patch('app.api.auth.check_login_rate_limit')
     @patch('app.api.auth.get_db')
-    def test_successful_login(self, mock_get_db, mock_rate_limit, client, mock_user, valid_login_data):
+    def test_successful_login(self, mock_get_db, mock_rate_limit, mock_check_password, client, mock_user, valid_login_data):
         """Test successful user login."""
         # Arrange
         mock_db = Mock(spec=Session)
@@ -62,6 +72,10 @@ class TestAuthLogin:
         mock_db.commit.return_value = None
         mock_get_db.return_value = mock_db
         mock_rate_limit.return_value = AsyncMock()
+        
+        # Mock the check_password method to return True
+        mock_check_password.return_value = True
+        mock_user.is_account_locked.return_value = False
         
         # Act
         response = client.post("/api/v1/auth/login", json=valid_login_data)

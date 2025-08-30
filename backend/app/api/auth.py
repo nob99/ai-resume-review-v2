@@ -236,6 +236,12 @@ async def register(
         )
 
 
+@router.options("/login")
+async def login_options():
+    """Handle CORS preflight requests for login endpoint."""
+    return {"message": "OK"}
+
+
 @router.post("/login", response_model=LoginResponse)
 async def login(
     login_data: LoginRequest,
