@@ -9,8 +9,8 @@ This document defines the shared agreements and practices our team follows to en
 All new team members MUST read the following documents in order:
 1. **Product Vision** (`docs/design/product_vision.md`) - Understand what we're building and why
 2. **Architecture** (`docs/design/architecture.md`) - Understand technical decisions and system design
-3. **Sprint Plan** (`docs/backlog/sprint-plan.md`) - Understand the implementation roadmap
-4. **Current Sprint Backlog** (`docs/backlog/sprint-backlog-XXX.md`) - Understand current work
+3. **Sprint Plan** (`docs/backlog/sprint-0-plan.md`) - Understand the implementation roadmap
+4. **Current Sprint Backlog** (`docs/backlog/sprint-XXX-backlog.md`) - Understand current work
 5. **This Working Agreements document** - Understand team practices
 
 ### Sprint 1 Deliverables Available 
@@ -138,14 +138,41 @@ A story is ready for development when:
 - **Test Isolation**: Each test cleans up its own data
 - **API Testing**: Test full HTTP request/response cycle with real FastAPI app
 
+#### Test Organization Rules
+- **MUST organize tests by USER STORY** for Product Owner visibility
+- **Test folder structure MUST match user story IDs**:
+  ```
+  tests/
+  ├── auth/
+  │   ├── AUTH-001_user_login/
+  │   │   ├── unit/           # Unit tests (mocked dependencies)
+  │   │   └── integration/    # Integration tests (real DB/API)
+  │   ├── AUTH-002_user_logout/
+  │   └── AUTH-003_session_management/
+  └── ai/
+      └── AI-001_langchain_setup/
+  ```
+- **Naming Convention**: `<FEATURE>/<STORY-ID>_<description>/{unit,integration}/`
+- **File Naming**: 
+  - Unit tests: `test_<feature>_unit.py`
+  - Integration tests: `test_<feature>_integration.py`
+- **NEVER create generic test files** like `test_auth.py` - always use story-specific folders
+- **Create empty folders** for upcoming sprint stories during sprint planning
+
 #### Running Tests
 ```bash
+# Run all tests for a specific user story
+python -m pytest tests/auth/AUTH-001_user_login/ -v
+
 # Unit tests only (fast, no database needed)
-python -m pytest tests/test_*_unit.py -v
+python -m pytest tests/auth/AUTH-001_user_login/unit/ -v
 
 # Integration tests (requires database)
 ./database/scripts/setup-dev-db.sh  # Start database first
-python -m pytest tests/test_*_integration.py -v
+python -m pytest tests/auth/AUTH-001_user_login/integration/ -v
+
+# All tests for a feature area
+python -m pytest tests/auth/ -v
 
 # All tests (requires database)
 ./database/scripts/setup-dev-db.sh
@@ -243,6 +270,7 @@ A story/task is DONE when:
 - [ ] Code is complete and follows standards
 - [ ] Unit tests written and passing (>80% coverage)
 - [ ] Integration tests passing
+- [ ] **Tests organized in proper user story folder** (e.g., `tests/auth/AUTH-001_user_login/`)
 - [ ] Code reviewed and approved
 - [ ] Documentation updated (code, API, user docs)
 - [ ] Deployed to development environment
@@ -296,5 +324,6 @@ By joining the team, all members agree to follow these working agreements. These
 
 ---
 
-*Last Updated: December 2024 (Sprint 2 - Added database testing and API documentation details)*  
+*Last Updated: August 2025 (Sprint 2 - Added test organization rules by user story)*  
+*Previous Update: December 2024 (Sprint 2 - Added database testing and API documentation details)*  
 *Next Review: End of Sprint 3*

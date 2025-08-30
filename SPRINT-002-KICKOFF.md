@@ -174,8 +174,8 @@ JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
 ## 📚 Important Resources
 
 ### Documentation
-- **Sprint Plan**: `docs/backlog/sprint-plan.md` - Overall 9-sprint roadmap
-- **Sprint 2 Backlog**: `docs/backlog/sprint-backlog-002.md` - Detailed tasks and acceptance criteria
+- **Sprint Plan**: `docs/backlog/sprint-0-plan.md` - Overall 9-sprint roadmap
+- **Sprint 2 Backlog**: `docs/backlog/sprint-002-backlog.md` - Detailed tasks and acceptance criteria
 - **Sprint 1 Review**: `docs/backlog/sprint-001-review.md` - Foundation we're building on
 - **Working Agreements**: `docs/working-agreements.md` - Team practices and standards
 
@@ -249,7 +249,7 @@ By the end of Sprint 2:
 
 ### Need Help?
 - **Technical Questions**: Refer to existing Sprint 1 code patterns in `backend/app/`
-- **Sprint Planning**: See detailed tasks in `docs/backlog/sprint-backlog-002.md`
+- **Sprint Planning**: See detailed tasks in `docs/backlog/sprint-002-backlog.md`
 - **Architecture Decisions**: Review `docs/design/architecture.md`
 - **Team Practices**: Follow `docs/working-agreements.md`
 

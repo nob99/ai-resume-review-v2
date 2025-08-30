@@ -19,6 +19,7 @@ from datetime import datetime, timedelta
 from app.main import app
 from app.models.user import User, LoginRequest, LoginResponse
 from app.core.security import create_access_token
+from app.database.connection import get_db
 
 
 class TestAuthLogin:
@@ -61,24 +62,34 @@ class TestAuthLogin:
             "password": "securePassword123!"
         }
     
-    @patch('app.models.user.User.check_password')
     @patch('app.api.auth.check_login_rate_limit')
-    @patch('app.api.auth.get_db')
-    def test_successful_login(self, mock_get_db, mock_rate_limit, mock_check_password, client, mock_user, valid_login_data):
+    def test_successful_login(self, mock_rate_limit, client, mock_user, valid_login_data):
         """Test successful user login."""
         # Arrange
         mock_db = Mock(spec=Session)
-        mock_db.query().filter().first.return_value = mock_user
+        # The auth logic uses: db.query(User).filter(User.email == ..., User.is_active == True).first()
+        # So we need to mock the query chain with multiple filters
+        mock_query = Mock()
+        mock_query.filter.return_value.first.return_value = mock_user
+        mock_db.query.return_value = mock_query
         mock_db.commit.return_value = None
-        mock_get_db.return_value = mock_db
+        
+        # Use FastAPI dependency override instead of patching
+        def get_mock_db():
+            return mock_db
+        
+        app.dependency_overrides[get_db] = get_mock_db
         mock_rate_limit.return_value = AsyncMock()
         
-        # Mock the check_password method to return True
-        mock_check_password.return_value = True
+        # Mock the instance methods on the returned user
+        mock_user.check_password.return_value = True
         mock_user.is_account_locked.return_value = False
         
         # Act
         response = client.post("/api/v1/auth/login", json=valid_login_data)
+        
+        # Cleanup
+        app.dependency_overrides.clear()
         
         # Assert
         assert response.status_code == 200
@@ -108,13 +119,18 @@ class TestAuthLogin:
         mock_db.commit.assert_called_once()
     
     @patch('app.api.auth.check_login_rate_limit')
-    @patch('app.api.auth.get_db')
-    def test_login_invalid_email(self, mock_get_db, mock_rate_limit, client):
+    def test_login_invalid_email(self, mock_rate_limit, client):
         """Test login with non-existent email."""
         # Arrange
         mock_db = Mock(spec=Session)
-        mock_db.query().filter().first.return_value = None  # User not found
-        mock_get_db.return_value = mock_db
+        mock_query = Mock()
+        mock_query.filter.return_value.first.return_value = None  # User not found
+        mock_db.query.return_value = mock_query
+        
+        def get_mock_db():
+            return mock_db
+        
+        app.dependency_overrides[get_db] = get_mock_db
         mock_rate_limit.return_value = AsyncMock()
         
         login_data = {
@@ -125,21 +141,29 @@ class TestAuthLogin:
         # Act
         response = client.post("/api/v1/auth/login", json=login_data)
         
+        # Cleanup
+        app.dependency_overrides.clear()
+        
         # Assert
         assert response.status_code == 401
         data = response.json()
         assert data["detail"] == "Invalid email or password"
     
     @patch('app.api.auth.check_login_rate_limit')
-    @patch('app.api.auth.get_db')
-    def test_login_invalid_password(self, mock_get_db, mock_rate_limit, client, mock_user, valid_login_data):
+    def test_login_invalid_password(self, mock_rate_limit, client, mock_user, valid_login_data):
         """Test login with invalid password."""
         # Arrange
         mock_user.check_password.return_value = False  # Invalid password
         mock_db = Mock(spec=Session)
-        mock_db.query().filter().first.return_value = mock_user
+        mock_query = Mock()
+        mock_query.filter.return_value.first.return_value = mock_user
+        mock_db.query.return_value = mock_query
         mock_db.commit.return_value = None
-        mock_get_db.return_value = mock_db
+        
+        def get_mock_db():
+            return mock_db
+        
+        app.dependency_overrides[get_db] = get_mock_db
         mock_rate_limit.return_value = AsyncMock()
         
         invalid_login_data = valid_login_data.copy()
@@ -147,6 +171,9 @@ class TestAuthLogin:
         
         # Act
         response = client.post("/api/v1/auth/login", json=invalid_login_data)
+        
+        # Cleanup
+        app.dependency_overrides.clear()
         
         # Assert
         assert response.status_code == 401
@@ -158,19 +185,27 @@ class TestAuthLogin:
         mock_db.commit.assert_called_once()
     
     @patch('app.api.auth.check_login_rate_limit')
-    @patch('app.api.auth.get_db')
-    def test_login_account_locked(self, mock_get_db, mock_rate_limit, client, mock_user, valid_login_data):
+    def test_login_account_locked(self, mock_rate_limit, client, mock_user, valid_login_data):
         """Test login with locked account."""
         # Arrange
         mock_user.is_account_locked.return_value = True  # Account is locked
         mock_db = Mock(spec=Session)
-        mock_db.query().filter().first.return_value = mock_user
+        mock_query = Mock()
+        mock_query.filter.return_value.first.return_value = mock_user
+        mock_db.query.return_value = mock_query
         mock_db.commit.return_value = None
-        mock_get_db.return_value = mock_db
+        
+        def get_mock_db():
+            return mock_db
+        
+        app.dependency_overrides[get_db] = get_mock_db
         mock_rate_limit.return_value = AsyncMock()
         
         # Act
         response = client.post("/api/v1/auth/login", json=valid_login_data)
+        
+        # Cleanup
+        app.dependency_overrides.clear()
         
         # Assert
         assert response.status_code == 423  # HTTP 423 Locked
@@ -182,18 +217,26 @@ class TestAuthLogin:
         mock_db.commit.assert_called_once()
     
     @patch('app.api.auth.check_login_rate_limit')
-    @patch('app.api.auth.get_db')
-    def test_login_inactive_user(self, mock_get_db, mock_rate_limit, client, mock_user, valid_login_data):
+    def test_login_inactive_user(self, mock_rate_limit, client, mock_user, valid_login_data):
         """Test login with inactive user account."""
         # Arrange
         mock_user.is_active = False
         mock_db = Mock(spec=Session)
-        mock_db.query().filter().first.return_value = None  # Query filters out inactive users
-        mock_get_db.return_value = mock_db
+        mock_query = Mock()
+        mock_query.filter.return_value.first.return_value = None  # Query filters out inactive users
+        mock_db.query.return_value = mock_query
+        
+        def get_mock_db():
+            return mock_db
+        
+        app.dependency_overrides[get_db] = get_mock_db
         mock_rate_limit.return_value = AsyncMock()
         
         # Act
         response = client.post("/api/v1/auth/login", json=valid_login_data)
+        
+        # Cleanup
+        app.dependency_overrides.clear()
         
         # Assert
         assert response.status_code == 401
@@ -235,8 +278,15 @@ class TestAuthLogin:
     def test_rate_limiting_triggered(self, mock_rate_limit, client, valid_login_data):
         """Test rate limiting behavior."""
         # Arrange
-        from app.core.rate_limiter import RateLimitExceeded
-        mock_rate_limit.side_effect = RateLimitExceeded("Too many login attempts")
+        from fastapi import HTTPException
+        mock_rate_limit.side_effect = HTTPException(
+            status_code=429,
+            detail={
+                "error": "Rate limit exceeded",
+                "message": "Too many requests for login"
+            },
+            headers={"Retry-After": "1800"}
+        )
         
         # Act
         response = client.post("/api/v1/auth/login", json=valid_login_data)
@@ -246,18 +296,26 @@ class TestAuthLogin:
         mock_rate_limit.assert_called_once()
     
     @patch('app.api.auth.check_login_rate_limit')
-    @patch('app.api.auth.get_db')
-    def test_jwt_token_structure(self, mock_get_db, mock_rate_limit, client, mock_user, valid_login_data):
+    def test_jwt_token_structure(self, mock_rate_limit, client, mock_user, valid_login_data):
         """Test JWT token structure and claims."""
         # Arrange
         mock_db = Mock(spec=Session)
-        mock_db.query().filter().first.return_value = mock_user
+        mock_query = Mock()
+        mock_query.filter.return_value.first.return_value = mock_user
+        mock_db.query.return_value = mock_query
         mock_db.commit.return_value = None
-        mock_get_db.return_value = mock_db
+        
+        def get_mock_db():
+            return mock_db
+        
+        app.dependency_overrides[get_db] = get_mock_db
         mock_rate_limit.return_value = AsyncMock()
         
         # Act
         response = client.post("/api/v1/auth/login", json=valid_login_data)
+        
+        # Cleanup
+        app.dependency_overrides.clear()
         
         # Assert
         assert response.status_code == 200
@@ -282,17 +340,25 @@ class TestAuthLogin:
             assert payload["role"] == mock_user.role
     
     @patch('app.api.auth.check_login_rate_limit')
-    @patch('app.api.auth.get_db')
-    def test_database_error_handling(self, mock_get_db, mock_rate_limit, client, valid_login_data):
+    def test_database_error_handling(self, mock_rate_limit, client, valid_login_data):
         """Test database error handling."""
         # Arrange
         mock_db = Mock(spec=Session)
-        mock_db.query().filter().first.side_effect = Exception("Database connection failed")
-        mock_get_db.return_value = mock_db
+        mock_query = Mock()
+        mock_query.filter.return_value.first.side_effect = Exception("Database connection failed")
+        mock_db.query.return_value = mock_query
+        
+        def get_mock_db():
+            return mock_db
+        
+        app.dependency_overrides[get_db] = get_mock_db
         mock_rate_limit.return_value = AsyncMock()
         
         # Act
         response = client.post("/api/v1/auth/login", json=valid_login_data)
+        
+        # Cleanup
+        app.dependency_overrides.clear()
         
         # Assert
         assert response.status_code == 500
@@ -300,14 +366,19 @@ class TestAuthLogin:
         assert data["detail"] == "Login failed"
     
     @patch('app.api.auth.check_login_rate_limit')
-    @patch('app.api.auth.get_db')
-    def test_case_insensitive_email(self, mock_get_db, mock_rate_limit, client, mock_user):
+    def test_case_insensitive_email(self, mock_rate_limit, client, mock_user):
         """Test that email comparison is case insensitive."""
         # Arrange
         mock_db = Mock(spec=Session)
-        mock_db.query().filter().first.return_value = mock_user
+        mock_query = Mock()
+        mock_query.filter.return_value.first.return_value = mock_user
+        mock_db.query.return_value = mock_query
         mock_db.commit.return_value = None
-        mock_get_db.return_value = mock_db
+        
+        def get_mock_db():
+            return mock_db
+        
+        app.dependency_overrides[get_db] = get_mock_db
         mock_rate_limit.return_value = AsyncMock()
         
         login_data = {
@@ -318,6 +389,9 @@ class TestAuthLogin:
         # Act
         response = client.post("/api/v1/auth/login", json=login_data)
         
+        # Cleanup
+        app.dependency_overrides.clear()
+        
         # Assert
         assert response.status_code == 200
         
@@ -326,37 +400,53 @@ class TestAuthLogin:
         # The actual filter call would include the lowercased email
     
     @patch('app.api.auth.check_login_rate_limit')
-    @patch('app.api.auth.get_db')
-    def test_login_logging(self, mock_get_db, mock_rate_limit, client, mock_user, valid_login_data):
+    def test_login_logging(self, mock_rate_limit, client, mock_user, valid_login_data):
         """Test that login attempts are properly logged."""
         # Arrange
         mock_db = Mock(spec=Session)
-        mock_db.query().filter().first.return_value = mock_user
+        mock_query = Mock()
+        mock_query.filter.return_value.first.return_value = mock_user
+        mock_db.query.return_value = mock_query
         mock_db.commit.return_value = None
-        mock_get_db.return_value = mock_db
+        
+        def get_mock_db():
+            return mock_db
+        
+        app.dependency_overrides[get_db] = get_mock_db
         mock_rate_limit.return_value = AsyncMock()
         
         # Act
         with patch('app.api.auth.logger') as mock_logger:
             response = client.post("/api/v1/auth/login", json=valid_login_data)
+        
+        # Cleanup
+        app.dependency_overrides.clear()
         
         # Assert
         assert response.status_code == 200
         mock_logger.info.assert_called_with(f"Successful login for user: {mock_user.email}")
     
     @patch('app.api.auth.check_login_rate_limit')
-    @patch('app.api.auth.get_db')
-    def test_failed_login_logging(self, mock_get_db, mock_rate_limit, client, valid_login_data):
+    def test_failed_login_logging(self, mock_rate_limit, client, valid_login_data):
         """Test that failed login attempts are properly logged."""
         # Arrange
         mock_db = Mock(spec=Session)
-        mock_db.query().filter().first.return_value = None  # User not found
-        mock_get_db.return_value = mock_db
+        mock_query = Mock()
+        mock_query.filter.return_value.first.return_value = None  # User not found
+        mock_db.query.return_value = mock_query
+        
+        def get_mock_db():
+            return mock_db
+        
+        app.dependency_overrides[get_db] = get_mock_db
         mock_rate_limit.return_value = AsyncMock()
         
         # Act
         with patch('app.api.auth.logger') as mock_logger:
             response = client.post("/api/v1/auth/login", json=valid_login_data)
+        
+        # Cleanup
+        app.dependency_overrides.clear()
         
         # Assert
         assert response.status_code == 401
