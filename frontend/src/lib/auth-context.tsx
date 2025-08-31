@@ -10,7 +10,7 @@ interface AuthContextType {
   isLoading: boolean
   isAuthenticated: boolean
   error: string | null
-  login: (credentials: LoginRequest) => Promise<void>
+  login: (credentials: LoginRequest) => Promise<boolean>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
   clearError: () => void
@@ -78,13 +78,14 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
   }, [])
 
   // Login function
-  const login = async (credentials: LoginRequest): Promise<void> => {
+  const login = async (credentials: LoginRequest): Promise<boolean> => {
     try {
       setIsLoading(true)
-      setError(null)
+      setError(null) // Clear previous error at start of new attempt
 
       const response = await authApi.login(credentials)
       setUser(response.user)
+      return true  // Login successful
     } catch (error: any) {
       console.error('Login error:', error)
       
@@ -101,7 +102,8 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
         setError('Login failed. Please try again.')
       }
       
-      throw error
+      // Don't throw error - we're handling it with state
+      return false  // Login failed
     } finally {
       setIsLoading(false)
     }

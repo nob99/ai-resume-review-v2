@@ -45,36 +45,44 @@ const LoginForm: React.FC<LoginFormProps> = ({
   // Watch form values for real-time validation
   const emailValue = watch('email')
   const passwordValue = watch('password')
+  
+  // Track previous values to detect actual changes (not just existence)
+  const [prevEmailValue, setPrevEmailValue] = useState('')
+  const [prevPasswordValue, setPrevPasswordValue] = useState('')
 
-  // Clear auth error when user starts typing
+  // Clear auth error only when user starts typing (values change)
   React.useEffect(() => {
-    if (error && (emailValue || passwordValue)) {
+    const emailChanged = emailValue !== prevEmailValue
+    const passwordChanged = passwordValue !== prevPasswordValue
+    
+    if (error && (emailChanged || passwordChanged)) {
       clearError()
     }
-  }, [emailValue, passwordValue, error, clearError])
+    
+    // Update previous values
+    setPrevEmailValue(emailValue)
+    setPrevPasswordValue(passwordValue)
+  }, [emailValue, passwordValue, error, clearError, prevEmailValue, prevPasswordValue])
 
   // Submit handler
   const onSubmit = async (data: FormData) => {
-    try {
-      setIsSubmitting(true)
-      clearError()
-      clearErrors()
+    setIsSubmitting(true)
+    // Don't clear error here - let auth context handle it
+    clearErrors()
 
-      const credentials: LoginRequest = {
-        email: data.email.toLowerCase().trim(),
-        password: data.password,
-      }
-
-      await login(credentials)
-      
-      // Call success callback if provided
-      onSuccess?.()
-    } catch (error) {
-      // Error is handled by the auth context
-      console.error('Login form error:', error)
-    } finally {
-      setIsSubmitting(false)
+    const credentials: LoginRequest = {
+      email: data.email.toLowerCase().trim(),
+      password: data.password,
     }
+
+    const success = await login(credentials)
+    
+    // Only call success callback if login was successful
+    if (success) {
+      onSuccess?.()
+    }
+    
+    setIsSubmitting(false)
   }
 
   const isFormLoading = isLoading || isSubmitting
@@ -89,7 +97,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
       )}
       
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        <form 
+          onSubmit={handleSubmit(onSubmit)} 
+          className="space-y-4" 
+          noValidate
+          autoComplete="off"
+        >
           {/* Email field */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-1">
