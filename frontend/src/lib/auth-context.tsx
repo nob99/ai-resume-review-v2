@@ -52,23 +52,29 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
     const initializeAuth = async () => {
       try {
         setIsLoading(true)
-        setError(null)
+        // Don't clear error here - preserve any existing login errors
 
         // Check if user has valid token
         if (checkAuthStatus()) {
           // Try to get current user info
           const currentUser = await authApi.getCurrentUser()
           setUser(currentUser)
+          // Only clear error if we successfully authenticated
+          setError(null)
         } else {
           // No valid token, user is not authenticated
           setUser(null)
+          // Don't set or clear error here - preserve any login errors
         }
       } catch (error) {
         console.error('Auth initialization error:', error)
         // Clear tokens if they're invalid
         TokenStorage.clearTokens()
         setUser(null)
-        setError('Session expired. Please login again.')
+        // Only set error for actual session expiration, not initial load
+        if (user !== null) {
+          setError('Session expired. Please login again.')
+        }
       } finally {
         setIsLoading(false)
       }
