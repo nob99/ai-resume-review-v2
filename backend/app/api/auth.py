@@ -370,6 +370,13 @@ async def login(
         
         logger.info(f"Successful login for user: {user.email} with session: {session_id}")
         
+        # Reset rate limit for successful login
+        try:
+            await rate_limiter.reset_rate_limit(RateLimitType.LOGIN, user.email)
+            logger.debug(f"Reset rate limit for successful login: {user.email}")
+        except Exception as e:
+            logger.warning(f"Failed to reset rate limit for {user.email}: {str(e)}")
+        
         # Build response carefully to catch any serialization issues
         try:
             user_data = UserResponse.from_orm(user).model_dump()

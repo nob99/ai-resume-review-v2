@@ -1,7 +1,7 @@
-@import "tailwindcss";
-
-/* Import Inter font from Google Fonts */
+/* Import Inter font from Google Fonts - must be first */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@import "tailwindcss";
 
 :root {
   /* Light theme colors */
@@ -16,6 +16,12 @@
   --border: #e5e7eb;
   --input: #e5e7eb;
   --ring: #3b82f6;
+  
+  /* Error colors */
+  --error-50: #fef2f2;
+  --error-200: #fecaca;
+  --error-600: #dc2626;
+  --error-700: #b91c1c;
 }
 
 body {
@@ -69,4 +75,29 @@ html {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--foreground);
+}
+
+/* Error state utility classes */
+.bg-error-50 {
+  background-color: var(--error-50);
+}
+
+.border-error-200 {
+  border-color: var(--error-200);
+}
+
+.text-error-600 {
+  color: var(--error-600);
+}
+
+.text-error-700 {
+  color: var(--error-700);
+}
+
+.hover\:bg-error-50:hover {
+  background-color: var(--error-50);
+}
+
+.focus\:bg-error-50:focus {
+  background-color: var(--error-50);
 }

@@ -121,6 +121,11 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
       // Always clear user state even if API call fails
       setUser(null)
       setIsLoading(false)
+      
+      // Redirect to login page after logout
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login'
+      }
     }
   }
 
