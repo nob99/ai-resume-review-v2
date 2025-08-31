@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios'
-import { LoginRequest, LoginResponse, User, ApiError } from '@/types'
+import { LoginRequest, LoginResponse, User, ApiError, AuthExpiredError, AuthInvalidError, NetworkError, ApiResult } from '@/types'
 
 // Base API URL - will be configurable via environment variable
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -88,16 +88,15 @@ api.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${access_token}`
           return api(originalRequest)
         } catch (refreshError) {
-          // Refresh failed, clear tokens and redirect to login
+          // Refresh failed, clear tokens and throw AuthExpiredError
           TokenStorage.clearTokens()
-          // You could emit an event here to trigger a redirect to login
-          window.location.href = '/login'
-          return Promise.reject(refreshError)
+          // Let the calling code decide how to handle auth expiration
+          throw new AuthExpiredError('Session expired and refresh failed')
         }
       } else {
-        // No refresh token, clear storage and redirect
+        // No refresh token, clear storage and throw AuthExpiredError
         TokenStorage.clearTokens()
-        window.location.href = '/login'
+        throw new AuthExpiredError('No valid session found')
       }
     }
 
@@ -105,49 +104,165 @@ api.interceptors.response.use(
   }
 )
 
-// API functions
+// Helper function to convert axios errors to our custom error types
+function handleApiError(error: AxiosError): never {
+  const responseData = error.response?.data as { detail?: string } | undefined
+  
+  if (error.response?.status === 401) {
+    throw new AuthInvalidError(responseData?.detail || 'Invalid credentials')
+  } else if (error.response?.status === 423) {
+    throw new AuthInvalidError('Account is locked due to too many failed attempts')
+  } else if (error.response?.status === 429) {
+    throw new AuthInvalidError('Too many login attempts. Please try again later.')
+  } else if (error.code === 'ECONNABORTED' || error.code === 'ENOTFOUND') {
+    throw new NetworkError('Network connection failed')
+  } else {
+    throw new Error(responseData?.detail || error.message || 'Request failed')
+  }
+}
+
+// API functions with improved error handling
 export const authApi = {
-  async login(credentials: LoginRequest): Promise<LoginResponse> {
-    const response = await api.post<LoginResponse>('/auth/login', credentials)
-    
-    // Store tokens after successful login
-    const { access_token, refresh_token } = response.data
-    TokenStorage.setTokens(access_token, refresh_token)
-    
-    return response.data
+  async login(credentials: LoginRequest): Promise<ApiResult<LoginResponse>> {
+    try {
+      const response = await api.post<LoginResponse>('/auth/login', credentials)
+      
+      // Store tokens after successful login
+      const { access_token, refresh_token } = response.data
+      TokenStorage.setTokens(access_token, refresh_token)
+      
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+      
+      // Convert axios errors to our custom types
+      try {
+        handleApiError(error as AxiosError)
+        // This line should never be reached since handleApiError always throws
+        return {
+          success: false,
+          error: new Error('Unexpected error occurred')
+        }
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+    }
   },
 
-  async logout(): Promise<void> {
+  async logout(): Promise<ApiResult<void>> {
     try {
       await api.post('/auth/logout')
+      TokenStorage.clearTokens()
+      return {
+        success: true
+      }
     } catch (error) {
       // Even if logout fails on server, clear local tokens
       console.error('Logout error:', error)
-    } finally {
       TokenStorage.clearTokens()
+      
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+      
+      // For logout, we still consider it successful if tokens are cleared
+      return {
+        success: true
+      }
     }
   },
 
-  async getCurrentUser(): Promise<User> {
-    const response = await api.get<User>('/auth/me')
-    return response.data
+  async getCurrentUser(): Promise<ApiResult<User>> {
+    try {
+      const response = await api.get<User>('/auth/me')
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+      
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+      
+      // Fallback for unexpected errors
+      return {
+        success: false,
+        error: new Error('Unexpected error occurred')
+      }
+    }
   },
 
-  async refreshToken(): Promise<LoginResponse> {
+  async refreshToken(): Promise<ApiResult<LoginResponse>> {
     const refreshToken = TokenStorage.getRefreshToken()
     if (!refreshToken) {
-      throw new Error('No refresh token available')
+      return {
+        success: false,
+        error: new AuthExpiredError('No refresh token available')
+      }
     }
 
-    const response = await api.post<LoginResponse>('/auth/refresh', {
-      refresh_token: refreshToken,
-    })
+    try {
+      const response = await api.post<LoginResponse>('/auth/refresh', {
+        refresh_token: refreshToken,
+      })
 
-    // Update stored tokens
-    const { access_token, refresh_token: newRefreshToken } = response.data
-    TokenStorage.setTokens(access_token, newRefreshToken)
+      // Update stored tokens
+      const { access_token, refresh_token: newRefreshToken } = response.data
+      TokenStorage.setTokens(access_token, newRefreshToken)
 
-    return response.data
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+      
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+      
+      // Fallback for unexpected errors
+      return {
+        success: false,
+        error: new Error('Unexpected error occurred')
+      }
+    }
   },
 }
 

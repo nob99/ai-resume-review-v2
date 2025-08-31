@@ -1,8 +1,9 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { useRouter } from 'next/navigation'
 import { authApi, isAuthenticated, TokenStorage } from '@/lib/api'
-import { User, LoginRequest, LoadingState } from '@/types'
+import { User, LoginRequest, LoadingState, AuthExpiredError, AuthInvalidError, NetworkError } from '@/types'
 
 // Auth context types
 interface AuthContextType {
@@ -14,6 +15,7 @@ interface AuthContextType {
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
   clearError: () => void
+  handleAuthExpired: () => void
 }
 
 // Create context
@@ -34,13 +36,22 @@ export function useAuth(): AuthContextType {
 }
 
 // Auth provider component
-export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
+export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   // Clear error helper
   const clearError = () => setError(null)
+
+  // Handle auth expiration - centralized navigation logic
+  const handleAuthExpired = () => {
+    TokenStorage.clearTokens()
+    setUser(null)
+    setError('Session expired. Please login again.')
+    router.push('/login')
+  }
 
   // Check if user is authenticated
   const checkAuthStatus = (): boolean => {
@@ -57,10 +68,20 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
         // Check if user has valid token
         if (checkAuthStatus()) {
           // Try to get current user info
-          const currentUser = await authApi.getCurrentUser()
-          setUser(currentUser)
-          // Only clear error if we successfully authenticated
-          setError(null)
+          const result = await authApi.getCurrentUser()
+          if (result.success && result.data) {
+            setUser(result.data)
+            // Only clear error if we successfully authenticated
+            setError(null)
+          } else if (result.error instanceof AuthExpiredError) {
+            // Session expired during initialization
+            handleAuthExpired()
+          } else {
+            // Other errors during user fetch
+            console.error('Failed to get current user:', result.error)
+            TokenStorage.clearTokens()
+            setUser(null)
+          }
         } else {
           // No valid token, user is not authenticated
           setUser(null)
@@ -89,27 +110,29 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
       setIsLoading(true)
       setError(null) // Clear previous error at start of new attempt
 
-      const response = await authApi.login(credentials)
-      setUser(response.user)
-      return true  // Login successful
-    } catch (error: any) {
-      console.error('Login error:', error)
-      
-      // Handle specific error cases
-      if (error.response?.status === 401) {
-        setError('Invalid email or password')
-      } else if (error.response?.status === 423) {
-        setError('Account is locked due to too many failed attempts')
-      } else if (error.response?.status === 429) {
-        setError('Too many login attempts. Please try again later.')
-      } else if (error.response?.data?.detail) {
-        setError(error.response.data.detail)
-      } else {
-        setError('Login failed. Please try again.')
+      const result = await authApi.login(credentials)
+      if (result.success && result.data) {
+        setUser(result.data.user)
+        return true  // Login successful
+      } else if (result.error) {
+        // Handle specific error types
+        if (result.error instanceof AuthInvalidError) {
+          setError(result.error.message)
+        } else if (result.error instanceof NetworkError) {
+          setError('Network error. Please check your connection.')
+        } else {
+          setError(result.error.message || 'Login failed. Please try again.')
+        }
+        return false  // Login failed
       }
       
-      // Don't throw error - we're handling it with state
-      return false  // Login failed
+      // Should not reach here, but handle just in case
+      setError('Unexpected login error')
+      return false
+    } catch (error) {
+      console.error('Unexpected login error:', error)
+      setError('Login failed. Please try again.')
+      return false
     } finally {
       setIsLoading(false)
     }
@@ -121,7 +144,11 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
       setIsLoading(true)
       setError(null)
 
-      await authApi.logout()
+      const result = await authApi.logout()
+      if (!result.success) {
+        console.error('Logout error:', result.error)
+        // Don't show error to user for logout failures
+      }
     } catch (error) {
       console.error('Logout error:', error)
       // Don't show error to user for logout failures
@@ -130,10 +157,8 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
       setUser(null)
       setIsLoading(false)
       
-      // Redirect to login page after logout
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login'
-      }
+      // Navigate to login page after logout - using router instead of window.location
+      router.push('/login')
     }
   }
 
@@ -141,15 +166,20 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
   const refreshUser = async (): Promise<void> => {
     try {
       if (checkAuthStatus()) {
-        const currentUser = await authApi.getCurrentUser()
-        setUser(currentUser)
+        const result = await authApi.getCurrentUser()
+        if (result.success && result.data) {
+          setUser(result.data)
+        } else if (result.error instanceof AuthExpiredError) {
+          // Session expired, handle centrally
+          handleAuthExpired()
+        } else {
+          console.error('Refresh user error:', result.error)
+          setError('Failed to refresh user information')
+        }
       }
     } catch (error) {
       console.error('Refresh user error:', error)
-      // If refresh fails, user might need to login again
-      TokenStorage.clearTokens()
-      setUser(null)
-      setError('Session expired. Please login again.')
+      setError('Failed to refresh user information')
     }
   }
 
@@ -163,6 +193,7 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
     logout,
     refreshUser,
     clearError,
+    handleAuthExpired,
   }
 
   return (
@@ -202,7 +233,7 @@ interface ProtectedRouteProps {
   fallback?: ReactNode
 }
 
-export function ProtectedRoute({ children, fallback }: ProtectedRouteProps): JSX.Element {
+export function ProtectedRoute({ children, fallback }: ProtectedRouteProps): React.JSX.Element {
   const { isAuthenticated, isLoading } = useAuth()
 
   if (isLoading) {

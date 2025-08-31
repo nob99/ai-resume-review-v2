@@ -8,7 +8,7 @@ type ContainerSize = 'sm' | 'md' | 'lg' | 'xl' | 'full'
 export interface ContainerProps extends BaseComponentProps {
   size?: ContainerSize
   centerContent?: boolean
-  as?: keyof JSX.IntrinsicElements
+  as?: keyof React.JSX.IntrinsicElements
 }
 
 // Container size styles mapping
