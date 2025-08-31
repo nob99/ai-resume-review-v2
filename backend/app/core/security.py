@@ -7,12 +7,13 @@ import re
 import secrets
 import logging
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List, Dict, Any
 from passlib.context import CryptContext
 from passlib.exc import InvalidTokenError
 from jose import JWTError, jwt
 from pydantic import BaseModel, Field
+from .datetime_utils import utc_now, ensure_utc
 
 # Configure secure logging (never log passwords)
 logger = logging.getLogger(__name__)
@@ -27,11 +28,14 @@ COMMON_PASSWORDS = {
     "letmein", "password1", "Password", "123123", "welcome123", "admin123"
 }
 
-# JWT Configuration (will be moved to config later)
-SECRET_KEY = "your-secret-key-change-in-production"  # TODO: Move to environment config
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-REFRESH_TOKEN_EXPIRE_DAYS = 7
+# Import centralized security configuration
+from .config import security_config
+
+# JWT Configuration from centralized config
+SECRET_KEY = security_config.SECRET_KEY
+ALGORITHM = security_config.ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = security_config.ACCESS_TOKEN_EXPIRE_MINUTES
+REFRESH_TOKEN_EXPIRE_DAYS = security_config.REFRESH_TOKEN_EXPIRE_DAYS
 
 
 class PasswordPolicy(BaseModel):
@@ -258,14 +262,23 @@ class TokenManager:
         Returns:
             JWT token string
         """
+        if data is None:
+            raise SecurityError("Token data cannot be None")
+        
         to_encode = data.copy()
         
-        if expires_delta:
-            expire = datetime.utcnow() + expires_delta
-        else:
-            expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        # Add issued at time to make tokens unique
+        now = utc_now()
         
-        to_encode.update({"exp": expire})
+        if expires_delta:
+            expire = now + expires_delta
+        else:
+            expire = now + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        
+        to_encode.update({
+            "exp": expire,
+            "iat": now.timestamp()  # Include microseconds for uniqueness
+        })
         
         try:
             encoded_jwt = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
@@ -290,14 +303,14 @@ class TokenManager:
         if not session_id:
             session_id = str(uuid.uuid4())
         
-        now = datetime.utcnow()
+        now = utc_now()
         expire = now + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
         
         to_encode = {
             "user_id": user_id,
             "session_id": session_id,
-            "exp": expire,
-            "iat": now,  # Issued at timestamp
+            "exp": expire,  # JWT library will convert datetime to timestamp
+            "iat": now.timestamp(),  # Include microseconds for uniqueness
             "jti": str(uuid.uuid4()),  # Unique JWT ID for each token
             "type": "refresh"
         }
@@ -357,8 +370,8 @@ class TokenManager:
                     return False
                 
                 # Calculate TTL (time to live) for Redis key
-                exp_time = datetime.fromtimestamp(exp_timestamp)
-                current_time = datetime.utcnow()
+                exp_time = datetime.fromtimestamp(exp_timestamp, tz=timezone.utc)
+                current_time = utc_now()
                 
                 if exp_time <= current_time:
                     # Token already expired, no need to blacklist

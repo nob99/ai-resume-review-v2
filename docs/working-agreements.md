@@ -72,24 +72,38 @@ A story is ready for development when:
 - Use migration scripts for all schema changes
 - Never modify database directly in production
 
-### Database Testing Setup (Sprint 1 Infrastructure)
-- **🗄️ Database Infrastructure Available**: Complete PostgreSQL + Redis setup from Sprint 1
+### Database Configuration Management
+- **🔐 NEVER hardcode database credentials** in code or documentation
+- **✅ Use centralized configuration** from `app.core.config` module
+- **🏗️ Database Infrastructure Available**: Complete PostgreSQL + Redis setup from Sprint 1
+- **📝 Environment Variables Setup**:
+  ```bash
+  # Copy environment template and configure local values
+  cp backend/.env.example backend/.env
+  # Edit .env with your local database password
+  ```
+- **Required Environment Variables** (set in `.env` file):
+  ```bash
+  DB_HOST=localhost
+  DB_PORT=5432  
+  DB_NAME=ai_resume_review_dev
+  DB_USER=postgres
+  DB_PASSWORD=your_local_password
+  REDIS_HOST=localhost
+  REDIS_PORT=6379
+  ```
 - **Quick Start for Testing**: 
   ```bash
   # Start database and Redis (required for integration tests)
   ./database/scripts/setup-dev-db.sh
   
-  # Verify database is running
+  # Verify database is running  
   psql -h localhost -p 5432 -U postgres -d ai_resume_review_dev
   ```
-- **Database Connection Details**:
-  - Host: localhost, Port: 5432
-  - Database: `ai_resume_review_dev` 
-  - Username: postgres, Password: dev_password_123
-  - Redis: localhost:6379 (no password)
 - **Integration Tests**: Use real `ai_resume_review_dev` database (not separate test DB)
 - **Test Data Management**: Tests create and clean up their own data
 - **Required Services**: Both PostgreSQL AND Redis must be running for integration tests
+- **Team Coordination**: If you change the default database password, notify team in #dev-general
 
 ### Infrastructure as Code
 - **MUST use Terraform** for all infrastructure
@@ -116,6 +130,31 @@ A story is ready for development when:
 - Format with Black
 - Lint with pylint/flake8
 - Minimum 80% test coverage
+
+#### Timezone Handling Standards
+- **🌍 ALWAYS use timezone-aware datetimes** in Python code
+- **❌ NEVER use `datetime.utcnow()`** - it returns timezone-naive datetimes
+- **✅ Use centralized datetime utilities** from `app.core.datetime_utils`:
+  ```python
+  # ✅ Correct - Always timezone-aware
+  from app.core.datetime_utils import utc_now, ensure_utc
+  now = utc_now()  # Returns timezone-aware UTC datetime
+  
+  # ❌ Wrong - Returns timezone-naive datetime
+  import datetime
+  now = datetime.utcnow()  # Can cause comparison errors
+  ```
+- **🗄️ Database Storage**: 
+  - Store ALL timestamps in UTC in the database
+  - Use `DateTime(timezone=True)` in SQLAlchemy models
+  - Use `utc_now()` for default values: `default=utc_now`
+- **🔐 JWT Tokens**: Use timezone-aware timestamps for `iat` and `exp` claims
+- **📱 Display Layer**: Convert to local timezone only for user display
+- **🧪 Testing**: Use timezone-aware datetimes in all test fixtures
+- **⚠️ Migration**: If you encounter timezone comparison errors:
+  1. Import: `from app.core.datetime_utils import utc_now, ensure_utc`
+  2. Replace: `datetime.utcnow()` → `utc_now()`
+  3. For existing datetimes: `ensure_utc(existing_datetime)`
 
 #### TypeScript (Frontend)
 - Use strict mode
@@ -324,6 +363,6 @@ By joining the team, all members agree to follow these working agreements. These
 
 ---
 
-*Last Updated: August 2025 (Sprint 2 - Added test organization rules by user story)*  
-*Previous Update: December 2024 (Sprint 2 - Added database testing and API documentation details)*  
+*Last Updated: August 2025 (Sprint 2 - Added centralized database configuration and timezone handling standards)*  
+*Previous Update: August 2025 (Sprint 2 - Added test organization rules by user story)*  
 *Next Review: End of Sprint 3*

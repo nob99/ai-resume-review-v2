@@ -12,18 +12,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from fastapi.testclient import TestClient
 
-# Set test environment to use existing dev database
+# Set test environment
 os.environ["ENVIRONMENT"] = "test"
-os.environ["DB_HOST"] = "localhost"
-os.environ["DB_PORT"] = "5432"
-os.environ["DB_NAME"] = "ai_resume_review_dev"
-os.environ["DB_USER"] = "postgres"
-os.environ["DB_PASSWORD"] = "dev_password_123"
-os.environ["DB_ECHO"] = "false"
 
 from app.models.user import Base, User
 from app.database.connection import db_manager
 from app.core.rate_limiter import rate_limiter
+from app.core.config import get_database_url
 
 
 @pytest.fixture(scope="session")
@@ -36,9 +31,9 @@ def event_loop():
 
 @pytest.fixture(scope="session")
 def test_engine():
-    """Create test database engine using existing dev database."""
-    # Use existing development PostgreSQL database
-    database_url = f"postgresql://{os.environ['DB_USER']}:{os.environ['DB_PASSWORD']}@{os.environ['DB_HOST']}:{os.environ['DB_PORT']}/{os.environ['DB_NAME']}"
+    """Create test database engine using centralized configuration."""
+    # Use centralized database configuration
+    database_url = get_database_url()
     
     engine = create_engine(
         database_url,

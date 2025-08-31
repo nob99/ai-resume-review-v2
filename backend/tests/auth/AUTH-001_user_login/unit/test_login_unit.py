@@ -103,7 +103,7 @@ class TestAuthLogin:
         
         # Check token properties
         assert data["token_type"] == "bearer"
-        assert data["expires_in"] == 900  # 15 minutes = 900 seconds
+        assert data["expires_in"] == 1800  # 30 minutes = 1800 seconds
         
         # Check user properties
         user_data = data["user"]
@@ -116,7 +116,8 @@ class TestAuthLogin:
         
         # Verify password was checked
         mock_user.check_password.assert_called_once_with(valid_login_data["password"])
-        mock_db.commit.assert_called_once()
+        # Two commits: one for login attempt update, one for refresh token
+        assert mock_db.commit.call_count == 2
     
     @patch('app.api.auth.check_login_rate_limit')
     def test_login_invalid_email(self, mock_rate_limit, client):
@@ -424,7 +425,11 @@ class TestAuthLogin:
         
         # Assert
         assert response.status_code == 200
-        mock_logger.info.assert_called_with(f"Successful login for user: {mock_user.email}")
+        # The log message now includes session ID
+        mock_logger.info.assert_called()
+        log_call = mock_logger.info.call_args[0][0]
+        assert f"Successful login for user: {mock_user.email}" in log_call
+        assert "with session:" in log_call
     
     @patch('app.api.auth.check_login_rate_limit')
     def test_failed_login_logging(self, mock_rate_limit, client, valid_login_data):
@@ -458,9 +463,9 @@ class TestAuthTokenValidation:
     
     def test_token_expiration_time(self):
         """Test that tokens have correct expiration time."""
-        # This would test the ACCESS_TOKEN_EXPIRE_MINUTES = 15 setting
+        # This would test the ACCESS_TOKEN_EXPIRE_MINUTES = 30 setting
         from app.api.auth import ACCESS_TOKEN_EXPIRE_MINUTES
-        assert ACCESS_TOKEN_EXPIRE_MINUTES == 15
+        assert ACCESS_TOKEN_EXPIRE_MINUTES == 30
     
     def test_token_payload_structure(self):
         """Test JWT token payload contains required fields."""

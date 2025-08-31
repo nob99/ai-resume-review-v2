@@ -14,6 +14,9 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.pool import QueuePool
 
+# Import centralized configuration
+from app.core.config import get_database_url, app_config
+
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -22,46 +25,18 @@ class DatabaseConfig:
     """Database configuration management."""
     
     def __init__(self):
-        """Initialize database configuration from environment variables."""
-        self.database_url = self._build_database_url()
+        """Initialize database configuration from centralized config."""
+        self.database_url = get_database_url()
         self.echo_sql = os.getenv("DB_ECHO", "false").lower() == "true"
         self.pool_size = int(os.getenv("DB_POOL_SIZE", "10"))
         self.max_overflow = int(os.getenv("DB_MAX_OVERFLOW", "20"))
         self.pool_timeout = int(os.getenv("DB_POOL_TIMEOUT", "30"))
         self.pool_recycle = int(os.getenv("DB_POOL_RECYCLE", "3600"))  # 1 hour
         self.pool_pre_ping = os.getenv("DB_POOL_PRE_PING", "true").lower() == "true"
-    
-    def _build_database_url(self) -> str:
-        """Build database URL from environment variables."""
-        # Environment-specific configuration
-        env = os.getenv("ENVIRONMENT", "dev")
-        
-        if env == "dev":
-            # Local development database
-            host = os.getenv("DB_HOST", "localhost")
-            port = os.getenv("DB_PORT", "5432")
-            database = os.getenv("DB_NAME", "ai_resume_review_dev")
-            username = os.getenv("DB_USER", "postgres")
-            password = os.getenv("DB_PASSWORD", "dev_password_123")
-        else:
-            # Production/staging (Cloud SQL)
-            host = os.getenv("DB_HOST", "127.0.0.1")  # Cloud SQL Proxy
-            port = os.getenv("DB_PORT", "5432")
-            database = os.getenv("DB_NAME", "ai_resume_review")
-            username = os.getenv("DB_USER", "app_user")
-            password = os.getenv("DB_PASSWORD")
-            
-            if not password:
-                raise ValueError("DB_PASSWORD environment variable is required for production")
-        
-        # Build PostgreSQL URL
-        database_url = f"postgresql://{username}:{password}@{host}:{port}/{database}"
         
         # Add SSL configuration for production
-        if env in ["staging", "prod"]:
-            database_url += "?sslmode=require"
-        
-        return database_url
+        if app_config.ENVIRONMENT in ["staging", "prod"]:
+            self.database_url += "?sslmode=require"
     
     def get_engine_kwargs(self) -> dict:
         """Get SQLAlchemy engine configuration."""

@@ -4,8 +4,9 @@ Tests the RefreshToken model, token hashing, and session management without data
 """
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
+from app.core.datetime_utils import utc_now, ensure_utc
 from unittest.mock import Mock, patch
 
 from app.models.session import RefreshToken, SessionStatus
@@ -41,7 +42,7 @@ class TestRefreshTokenModel:
         assert len(refresh_token.token_hash) == 64  # SHA-256 hash length
         
         # Check expiration is set correctly (7 days)
-        expected_expiry = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        expected_expiry = utc_now() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
         time_diff = abs((refresh_token.expires_at - expected_expiry).total_seconds())
         assert time_diff < 5  # Allow 5 second tolerance
     
@@ -114,7 +115,7 @@ class TestRefreshTokenModel:
         assert refresh_token.is_active() is True
         
         # Manually set expiration to past
-        refresh_token.expires_at = datetime.utcnow() - timedelta(hours=1)
+        refresh_token.expires_at = utc_now() - timedelta(hours=1)
         
         # Token should now be expired
         assert refresh_token.is_expired() is True

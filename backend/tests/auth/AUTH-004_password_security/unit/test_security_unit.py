@@ -152,8 +152,8 @@ class TestPasswordValidation:
         assert not result.is_valid
         assert any("8 characters" in error for error in result.errors)
         
-        # Minimum length
-        result = hasher.validate_password("Abc123!")  
+        # Minimum length (exactly 8 characters)
+        result = hasher.validate_password("Abc123!@")  
         assert result.is_valid
         
         # Long password (bonus points)

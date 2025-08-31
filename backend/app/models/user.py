@@ -3,7 +3,7 @@ User model with secure password handling for the AI Resume Review Platform.
 Integrates with PostgreSQL database and implements secure authentication.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from uuid import UUID, uuid4
 import logging
@@ -20,6 +20,7 @@ from app.core.security import (
     PasswordValidationResult,
     SecurityError
 )
+from app.core.datetime_utils import utc_now, ensure_utc
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -58,12 +59,12 @@ class User(Base):
     email_verified = Column(Boolean, nullable=False, default=False)
     
     # Timestamps
-    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now)
     last_login_at = Column(DateTime(timezone=True), nullable=True)
     
     # Password security tracking
-    password_changed_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+    password_changed_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
     failed_login_attempts = Column(Integer, default=0)
     locked_until = Column(DateTime(timezone=True), nullable=True)
     
@@ -105,7 +106,7 @@ class User(Base):
         try:
             # Hash password (validation happens inside password_hasher)
             self.password_hash = password_hasher.hash_password(password)
-            self.password_changed_at = datetime.utcnow()
+            self.password_changed_at = utc_now()
             
             # Reset security counters on successful password change
             self.failed_login_attempts = 0
@@ -140,7 +141,7 @@ class User(Base):
                 # Reset failed attempts on successful login
                 self.failed_login_attempts = 0
                 self.locked_until = None
-                self.last_login_at = datetime.utcnow()
+                self.last_login_at = utc_now()
                 logger.info(f"Successful login for user: {self.email}")
             else:
                 # Increment failed attempts
@@ -148,7 +149,7 @@ class User(Base):
                 
                 # Lock account after 5 failed attempts
                 if self.failed_login_attempts >= 5:
-                    self.locked_until = datetime.utcnow() + timedelta(minutes=30)
+                    self.locked_until = utc_now() + timedelta(minutes=30)
                     logger.warning(f"Account locked due to failed attempts: {self.email}")
                 else:
                     logger.warning(f"Failed login attempt ({self.failed_login_attempts}/5) for user: {self.email}")
@@ -169,7 +170,7 @@ class User(Base):
         if not self.locked_until:
             return False
             
-        if datetime.utcnow() >= self.locked_until:
+        if utc_now() >= ensure_utc(self.locked_until):
             # Lock period expired, unlock account
             self.locked_until = None
             self.failed_login_attempts = 0

@@ -5,8 +5,9 @@ Tests the complete session management flow with real database and API calls.
 
 import pytest
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
+from app.core.datetime_utils import utc_now, ensure_utc
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
@@ -19,8 +20,10 @@ from app.database.connection import get_db
 from app.core.security import create_refresh_token
 
 
-# Test database setup
-TEST_DATABASE_URL = "postgresql://postgres:dev_password_123@localhost:5432/ai_resume_review_dev"
+# Test database setup using centralized configuration
+from app.core.config import get_database_url
+
+TEST_DATABASE_URL = get_database_url()
 test_engine = create_engine(TEST_DATABASE_URL)
 TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
@@ -387,7 +390,7 @@ class TestSessionManagementIntegration:
             RefreshToken.user_id == self.test_user.id
         ).first()
         
-        refresh_token_record.expires_at = datetime.utcnow() - timedelta(hours=1)
+        refresh_token_record.expires_at = utc_now() - timedelta(hours=1)
         self.db.commit()
         
         # List sessions - should automatically mark as expired
@@ -480,31 +483,31 @@ class TestSessionManagementEdgeCases:
     def test_refresh_with_malformed_token(self):
         """Test refresh endpoint with malformed tokens."""
         test_cases = [
-            "",  # Empty string
-            "not.a.jwt",  # Invalid format
-            "header.payload",  # Missing signature
-            "header.payload.signature.extra",  # Too many parts
+            ("", 422),  # Empty string - validation error
+            ("not.a.jwt", 401),  # Invalid format
+            ("header.payload", 401),  # Missing signature
+            ("header.payload.signature.extra", 401),  # Too many parts
         ]
         
-        for malformed_token in test_cases:
+        for malformed_token, expected_status in test_cases:
             response = client.post("/api/v1/auth/refresh", json={
                 "refresh_token": malformed_token
             })
-            assert response.status_code == 401
+            assert response.status_code == expected_status, f"Token '{malformed_token}' should return {expected_status}, got {response.status_code}"
     
     def test_sessions_without_authentication(self):
         """Test session endpoints without authentication."""
         # Test sessions listing
         response = client.get("/api/v1/auth/sessions")
-        assert response.status_code == 401
+        assert response.status_code == 403  # HTTPBearer returns 403 for missing auth
         
         # Test session revocation
         response = client.delete("/api/v1/auth/sessions/fake-session-id")
-        assert response.status_code == 401
+        assert response.status_code == 403  # HTTPBearer returns 403 for missing auth
         
         # Test revoke all sessions
         response = client.post("/api/v1/auth/sessions/revoke-all")
-        assert response.status_code == 401
+        assert response.status_code == 403  # HTTPBearer returns 403 for missing auth
     
     def test_revoke_nonexistent_session(self):
         """Test revoking a session that doesn't exist."""

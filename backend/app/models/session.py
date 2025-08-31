@@ -3,7 +3,7 @@ Session model for JWT refresh token management and concurrent session tracking.
 Implements secure session management for the AI Resume Review Platform.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from uuid import UUID, uuid4
 import logging
@@ -17,6 +17,7 @@ from pydantic import BaseModel, Field, validator
 
 from app.core.security import REFRESH_TOKEN_EXPIRE_DAYS
 from app.models.user import Base  # Import shared Base
+from app.core.datetime_utils import utc_now, ensure_utc
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -49,8 +50,8 @@ class RefreshToken(Base):
     
     # Token metadata
     expires_at = Column(DateTime(timezone=True), nullable=False)
-    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
-    last_used_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
+    last_used_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
     
     # Session management
     status = Column(String(50), nullable=False, default=SessionStatus.ACTIVE.value)
@@ -88,15 +89,15 @@ class RefreshToken(Base):
         
         # Set timestamps if not provided (for unit testing)
         if not hasattr(self, 'created_at') or self.created_at is None:
-            self.created_at = datetime.utcnow()
+            self.created_at = utc_now()
         if not hasattr(self, 'last_used_at') or self.last_used_at is None:
-            self.last_used_at = datetime.utcnow()
+            self.last_used_at = utc_now()
         
         # Hash the token for secure storage
         self.token_hash = self._hash_token(token)
         
         # Set expiration
-        self.expires_at = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        self.expires_at = utc_now() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
         
         # Generate ID for unit testing if not provided
         if not hasattr(self, 'id') or self.id is None:
@@ -139,8 +140,7 @@ class RefreshToken(Base):
         Returns:
             True if token is expired, False otherwise
         """
-        from datetime import timezone
-        return datetime.now(timezone.utc) >= self.expires_at
+        return utc_now() >= ensure_utc(self.expires_at)
     
     def is_active(self) -> bool:
         """
@@ -159,7 +159,7 @@ class RefreshToken(Base):
     
     def update_last_used(self) -> None:
         """Update last used timestamp."""
-        self.last_used_at = datetime.utcnow()
+        self.last_used_at = utc_now()
     
     def rotate_token(self, new_token: str) -> None:
         """
@@ -169,9 +169,9 @@ class RefreshToken(Base):
             new_token: New JWT refresh token string
         """
         self.token_hash = self._hash_token(new_token)
-        self.last_used_at = datetime.utcnow()
+        self.last_used_at = utc_now()
         # Extend expiration on rotation
-        self.expires_at = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        self.expires_at = utc_now() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
         
         logger.info(f"Refresh token rotated for session {self.session_id}")
     
