@@ -16,7 +16,7 @@ from sqlalchemy.orm import validates, relationship
 from pydantic import BaseModel, Field, validator
 
 from app.core.security import REFRESH_TOKEN_EXPIRE_DAYS
-from app.models.user import Base  # Import shared Base
+from app.models.user import Base
 from app.core.datetime_utils import utc_now, ensure_utc
 
 # Configure logging

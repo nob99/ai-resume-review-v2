@@ -17,9 +17,6 @@ from pydantic import BaseModel, Field
 from app.core.datetime_utils import utc_now
 from app.models.user import Base
 
-# Re-use Base from user model to ensure same declarative base
-# Base = declarative_base()  # Already imported from user.py
-
 
 class AnalysisStatus(str, Enum):
     """Status of analysis request processing."""
