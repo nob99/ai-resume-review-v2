@@ -7,6 +7,8 @@ import pytest
 from datetime import datetime, timedelta
 from sqlalchemy.exc import IntegrityError
 
+from app.core.datetime_utils import utc_now
+
 from app.models.user import (
     User,
     UserRole,
@@ -159,7 +161,7 @@ class TestUser:
         assert user.failed_login_attempts == 5
         assert user.is_account_locked() is True
         assert user.locked_until is not None
-        assert user.locked_until > datetime.utcnow()
+        assert user.locked_until > utc_now()
     
     def test_account_unlock_after_time(self, test_db, test_user_data):
         """Test automatic account unlock after time expires."""
@@ -169,7 +171,7 @@ class TestUser:
         
         # Simulate expired lock
         user.failed_login_attempts = 5
-        user.locked_until = datetime.utcnow() - timedelta(minutes=1)  # Past
+        user.locked_until = utc_now() - timedelta(minutes=1)  # Past
         test_db.commit()
         
         # Should be unlocked now
@@ -185,7 +187,7 @@ class TestUser:
         
         # Lock account
         user.failed_login_attempts = 5
-        user.locked_until = datetime.utcnow() + timedelta(minutes=30)
+        user.locked_until = utc_now() + timedelta(minutes=30)
         test_db.commit()
         
         assert user.is_account_locked() is True
@@ -215,7 +217,7 @@ class TestUser:
         # Should reset counter and update last login
         assert user.failed_login_attempts == 0
         assert user.last_login_at is not None
-        assert user.last_login_at > datetime.utcnow() - timedelta(minutes=1)
+        assert user.last_login_at > utc_now() - timedelta(minutes=1)
     
     def test_password_rehash_check(self, test_db, test_user_data):
         """Test password rehash checking."""
