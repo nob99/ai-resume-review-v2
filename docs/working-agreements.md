@@ -250,7 +250,7 @@ async def create_resource(
 
 #### 1. Development Process
 - **MUST create ER diagrams** before database changes
-- Store diagrams in `docs/database/`
+- **📖 Database Documentation**: See `database/README.md` for complete schema, setup, and migration guide
 - Use migration scripts for all changes
 - Never modify database directly in production
 
