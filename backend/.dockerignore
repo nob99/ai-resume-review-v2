@@ -1,0 +1,88 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment files (sensitive data)
+.env
+.env.*
+!.env.example
+
+# Test coverage
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+.coverage.*
+coverage.xml
+*.cover
+
+# Logs
+*.log
+logs/
+backend.log
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Development files
+*.sqlite
+*.db
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+wheels/
+
+# Temporary files
+*.tmp
+*.bak
+.~*
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# Testing
+tests/
+pytest.ini
+run_tests.py
+test_*.py
+*_test.py

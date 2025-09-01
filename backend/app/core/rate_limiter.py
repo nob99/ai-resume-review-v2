@@ -17,6 +17,8 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
+from app.core.config import get_redis_url
+
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -79,14 +81,14 @@ class RedisRateLimiter:
     Implements sliding window rate limiting with automatic cleanup.
     """
     
-    def __init__(self, redis_url: str = "redis://localhost:6379"):
+    def __init__(self, redis_url: Optional[str] = None):
         """
         Initialize rate limiter with Redis connection.
         
         Args:
-            redis_url: Redis connection URL
+            redis_url: Redis connection URL (optional, defaults to config)
         """
-        self.redis_url = redis_url
+        self.redis_url = redis_url or get_redis_url()
         self.redis_client: Optional[aioredis.Redis] = None
         self.configs = {
             RateLimitType.LOGIN: RateLimitConfigs.LOGIN,

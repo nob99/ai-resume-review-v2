@@ -56,6 +56,44 @@ services:
       postgres:
         condition: service_healthy
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai-resume-review-backend-dev
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount source code for hot reload in development
+      - ./backend/app:/app/app:ro
+      # Mount logs directory
+      - ./backend/logs:/app/logs
+    environment:
+      # Database configuration
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ai_resume_review_dev
+      DB_USER: postgres
+      DB_PASSWORD: dev_password_123
+      # Redis configuration
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # Development settings
+      ENVIRONMENT: development
+      DEBUG: "True"
+      LOG_LEVEL: INFO
+      # Override command for development with hot reload
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    env_file:
+      - ./backend/.env
+    networks:
+      - ai-resume-review-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
 volumes:
   postgres_data:
     name: ai-resume-review-postgres-data
