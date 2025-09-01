@@ -35,6 +35,13 @@ argon2-cffi==23.1.0
 # File processing and validation
 python-magic==0.4.27
 
+# Text extraction dependencies
+PyPDF2==3.0.1
+pdfplumber==0.11.0
+python-docx==1.1.0
+beautifulsoup4==4.12.2
+lxml==4.9.3
+
 # Database and caching
 asyncpg==0.29.0
 aioredis==2.0.1

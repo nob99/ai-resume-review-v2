@@ -12,7 +12,7 @@ from enum import Enum
 from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import validates
+from sqlalchemy.orm import validates, relationship
 from pydantic import BaseModel, EmailStr, Field, validator
 
 from app.core.security import (
@@ -67,6 +67,9 @@ class User(Base):
     password_changed_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
     failed_login_attempts = Column(Integer, default=0)
     locked_until = Column(DateTime(timezone=True), nullable=True)
+    
+    # Relationships
+    analysis_requests = relationship("AnalysisRequest", back_populates="user")
     
     def __init__(self, email: str, password: str, first_name: str, last_name: str, 
                  role: UserRole = UserRole.CONSULTANT, **kwargs):

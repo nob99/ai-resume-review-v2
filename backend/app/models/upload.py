@@ -1,6 +1,6 @@
 """
 Upload-related Pydantic models for API requests and responses.
-Defines data structures for file upload operations.
+Defines data structures for file upload operations and text extraction.
 """
 
 from datetime import datetime
@@ -8,6 +8,10 @@ from typing import Optional, List, Dict, Any
 from uuid import UUID
 from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
+
+# Import text extraction enums from services
+from app.services.text_extraction_service import ExtractionStatus
+from app.core.text_processor import SectionType
 
 
 class UploadStatus(str, Enum):
@@ -172,3 +176,129 @@ class AdminStorageStats(BaseModel):
     oldest_file: Optional[datetime] = Field(None, description="Timestamp of oldest file")
     newest_file: Optional[datetime] = Field(None, description="Timestamp of newest file")
     files_to_cleanup: int = Field(description="Number of files eligible for cleanup")
+
+
+# Text Extraction Models for UPLOAD-003
+
+class TextExtractionRequest(BaseModel):
+    """Request to extract text from uploaded file."""
+    upload_id: UUID = Field(description="ID of uploaded file")
+    force_reextraction: bool = Field(
+        default=False, 
+        description="Force re-extraction even if already completed"
+    )
+    timeout_seconds: int = Field(
+        default=30, 
+        ge=10, 
+        le=300, 
+        description="Maximum processing time in seconds"
+    )
+
+
+class ResumeSection(BaseModel):
+    """Detected section in resume text."""
+    section_type: str = Field(description="Type of section (contact, experience, etc.)")
+    title: str = Field(description="Section title/header")
+    content: str = Field(description="Section content")
+    line_start: int = Field(description="Starting line number")
+    line_end: int = Field(description="Ending line number")
+    confidence: float = Field(description="Detection confidence score")
+
+
+class TextExtractionResult(BaseModel):
+    """Result of text extraction operation."""
+    upload_id: UUID = Field(description="Upload ID")
+    extraction_status: ExtractionStatus = Field(description="Extraction status")
+    extracted_text: Optional[str] = Field(None, description="Raw extracted text")
+    processed_text: Optional[str] = Field(None, description="Cleaned and processed text")
+    sections: List[ResumeSection] = Field(default_factory=list, description="Detected resume sections")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Processing metadata")
+    error_message: Optional[str] = Field(None, description="Error message if extraction failed")
+    processing_time_seconds: Optional[float] = Field(None, description="Processing time")
+    word_count: int = Field(default=0, description="Number of words extracted")
+    line_count: int = Field(default=0, description="Number of lines extracted")
+
+
+class AIReadyData(BaseModel):
+    """AI-ready structured data for resume analysis."""
+    upload_id: UUID = Field(description="Upload ID")
+    text_content: str = Field(description="Cleaned text content")
+    structure: Dict[str, Any] = Field(description="Structured sections and metadata")
+    extraction_info: Dict[str, Any] = Field(description="Extraction statistics and info")
+    contact_info: Dict[str, List[str]] = Field(description="Extracted contact information")
+    quality_assessment: str = Field(description="Text quality assessment (poor/fair/good)")
+    generated_at: datetime = Field(description="When this data was generated")
+
+
+class TextExtractionResponse(BaseModel):
+    """Response for text extraction endpoint."""
+    message: str = Field(description="Success message")
+    extraction_result: TextExtractionResult = Field(description="Extraction results")
+
+
+class TextExtractionStatusResponse(BaseModel):
+    """Response for checking text extraction status."""
+    upload_id: UUID = Field(description="Upload ID")
+    extraction_status: ExtractionStatus = Field(description="Current extraction status")
+    has_extracted_text: bool = Field(description="Whether text has been extracted")
+    has_processed_text: bool = Field(description="Whether text has been processed")
+    sections_detected: int = Field(default=0, description="Number of sections detected")
+    word_count: int = Field(default=0, description="Number of words extracted")
+    error_message: Optional[str] = Field(None, description="Error message if applicable")
+    last_updated: datetime = Field(description="Last update timestamp")
+
+
+class UploadWithExtractionResponse(BaseModel):
+    """Extended upload response including extraction status."""
+    # Base upload fields
+    id: UUID = Field(description="Upload ID")
+    original_filename: str = Field(description="Original filename")
+    file_size_bytes: int = Field(description="File size in bytes")
+    mime_type: str = Field(description="File MIME type")
+    status: UploadStatus = Field(description="Upload processing status")
+    
+    # Analysis parameters
+    target_role: Optional[str] = Field(None, description="Target job role")
+    target_industry: Optional[str] = Field(None, description="Target industry")
+    experience_level: Optional[ExperienceLevel] = Field(None, description="Experience level")
+    
+    # Extraction fields
+    extraction_status: ExtractionStatus = Field(description="Text extraction status")
+    has_extracted_text: bool = Field(description="Whether text extraction is complete")
+    word_count: int = Field(default=0, description="Number of words extracted")
+    sections_detected: int = Field(default=0, description="Number of resume sections detected")
+    text_quality: Optional[str] = Field(None, description="Text quality assessment")
+    
+    # Timestamps
+    created_at: datetime = Field(description="Upload creation time")
+    updated_at: datetime = Field(description="Last update time")
+    processing_started_at: Optional[datetime] = Field(None, description="Processing start time")
+    processing_completed_at: Optional[datetime] = Field(None, description="Processing completion time")
+    
+    # Error handling
+    error_message: Optional[str] = Field(None, description="Error message if applicable")
+
+
+class BatchTextExtractionRequest(BaseModel):
+    """Request to extract text from multiple uploads."""
+    upload_ids: List[UUID] = Field(description="List of upload IDs to process")
+    force_reextraction: bool = Field(
+        default=False, 
+        description="Force re-extraction for all files"
+    )
+    timeout_seconds: int = Field(
+        default=30, 
+        ge=10, 
+        le=300, 
+        description="Timeout per file"
+    )
+
+
+class BatchTextExtractionResponse(BaseModel):
+    """Response for batch text extraction."""
+    total_requested: int = Field(description="Total files requested for extraction")
+    successfully_started: int = Field(description="Files that started extraction")
+    already_extracted: int = Field(description="Files already extracted (skipped)")
+    failed_to_start: int = Field(description="Files that failed to start")
+    results: List[TextExtractionResult] = Field(description="Individual extraction results")
+    errors: List[str] = Field(default_factory=list, description="Errors encountered")
