@@ -218,6 +218,16 @@ Use custom error types:
 
 ## ⚡ Backend Team Guidelines {#backend-team}
 
+### ⚠️ MANDATORY: Backend Documentation
+**All backend engineers MUST read the comprehensive backend documentation at `backend/README.md`**
+
+This includes:
+- Complete Docker development workflow
+- Directory structure and architecture overview
+- Current project status and test coverage
+- API documentation and development standards
+- Configuration management and environment setup
+
 ### Technology Stack
 - **Framework**: FastAPI
 - **Database**: PostgreSQL + Redis
