@@ -15,6 +15,7 @@ from sqlalchemy.exc import IntegrityError
 from app.core.rate_limiter import check_file_upload_rate_limit
 from app.services.file_service import store_uploaded_file, file_storage_service
 from app.models.user import User
+from app.models.analysis import AnalysisRequest  # Import to resolve SQLAlchemy relationships
 from app.models.upload import (
     FileUploadRequest,
     FileUploadResponse, 
