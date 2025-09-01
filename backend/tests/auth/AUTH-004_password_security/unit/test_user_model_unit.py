@@ -133,9 +133,13 @@ class TestUser:
         # Old password should not verify
         assert user.check_password(test_user_data["password"]) is False
         
-        # Security counters should be reset
-        assert user.failed_login_attempts == 0
+        # Security counters should be reset (locked_until should be None)
         assert user.locked_until is None
+        
+        # Note: failed_login_attempts will be 1 due to the failed old password check above,
+        # which is correct behavior. To verify the reset functionality, we can call set_password again
+        user.set_password(new_password)  # This should reset failed_login_attempts to 0
+        assert user.failed_login_attempts == 0
     
     def test_account_locking(self, test_db, test_user_data):
         """Test account locking mechanism."""
@@ -347,10 +351,12 @@ class TestUserValidation:
     
     def test_role_validation(self, test_db):
         """Test role validation."""
+        import uuid
+        
         # Valid roles
         for role in [UserRole.CONSULTANT, UserRole.ADMIN]:
             user = User(
-                email=f"user{role.value}@example.com",
+                email=f"user_{role.value}_{uuid.uuid4().hex[:8]}@example.com",
                 password="Password123!",
                 first_name="Test",
                 last_name="User",
