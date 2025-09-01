@@ -4,7 +4,7 @@ Implements secure file upload with comprehensive validation and rate limiting.
 """
 
 import logging
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File, Form

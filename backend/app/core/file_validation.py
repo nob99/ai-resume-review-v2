@@ -69,6 +69,16 @@ class FileMetadata:
     file_hash: str
 
 
+@dataclass
+class FileInfo:
+    """File information for text extraction service."""
+    file_type: str
+    file_size: int
+    is_valid: bool
+    original_filename: Optional[str] = None
+    file_hash: Optional[str] = None
+
+
 class FileValidator:
     """
     Comprehensive file validator for resume uploads.
@@ -410,3 +420,41 @@ def validate_uploaded_file(file_content: bytes, filename: str) -> FileValidation
         FileValidationResult
     """
     return file_validator.validate_file(file_content, filename)
+
+
+def get_file_info(file_path: Path, original_filename: str) -> FileInfo:
+    """
+    Get FileInfo object from file path for text extraction service.
+    
+    Args:
+        file_path: Path to the file
+        original_filename: Original filename
+        
+    Returns:
+        FileInfo object
+    """
+    try:
+        # Read file content for validation
+        with open(file_path, 'rb') as f:
+            file_content = f.read()
+        
+        # Validate the file
+        validation_result = validate_uploaded_file(file_content, original_filename)
+        
+        # Create FileInfo from validation result
+        return FileInfo(
+            file_type=validation_result.file_info.get('mime_type', 'unknown'),
+            file_size=validation_result.file_info.get('file_size', 0),
+            is_valid=validation_result.is_valid,
+            original_filename=original_filename,
+            file_hash=validation_result.file_info.get('file_hash')
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting file info for {file_path}: {str(e)}")
+        return FileInfo(
+            file_type='unknown',
+            file_size=0,
+            is_valid=False,
+            original_filename=original_filename
+        )
