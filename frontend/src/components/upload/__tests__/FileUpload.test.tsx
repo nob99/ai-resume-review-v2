@@ -33,7 +33,8 @@ describe('FileUpload', () => {
     
     expect(screen.getByText(/Click to upload/)).toBeInTheDocument()
     expect(screen.getByText(/drag and drop/)).toBeInTheDocument()
-    expect(screen.getByText(/PDF, DOC, DOCX up to 10MB/)).toBeInTheDocument()
+    expect(screen.getByText(/PDF, DOC, DOCX up to/)).toBeInTheDocument()
+    expect(screen.getByText('10 MB')).toBeInTheDocument()
   })
 
   it('should show drag active state', () => {
@@ -68,7 +69,9 @@ describe('FileUpload', () => {
     render(<FileUpload onFilesSelected={mockOnFilesSelected} />)
     
     // Simulate file drop
-    onDropCallback([mockFile], [])
+    act(() => {
+      onDropCallback([mockFile], [])
+    })
     
     expect(screen.getByText('Selected Files (1)')).toBeInTheDocument()
     expect(screen.getByText('test.pdf')).toBeInTheDocument()
@@ -95,7 +98,9 @@ describe('FileUpload', () => {
 
     render(<FileUpload onFilesSelected={mockOnFilesSelected} multiple={true} />)
     
-    onDropCallback(files, [])
+    act(() => {
+      onDropCallback(files, [])
+    })
     
     expect(screen.getByText('Selected Files (2)')).toBeInTheDocument()
     expect(screen.getByText('test1.pdf')).toBeInTheDocument()
@@ -122,7 +127,9 @@ describe('FileUpload', () => {
 
     render(<FileUpload onFilesSelected={mockOnFilesSelected} multiple={false} />)
     
-    onDropCallback(files, [])
+    act(() => {
+      onDropCallback(files, [])
+    })
     
     expect(screen.getByText('Selected Files (1)')).toBeInTheDocument()
     expect(screen.getByText('test1.pdf')).toBeInTheDocument()
@@ -149,7 +156,9 @@ describe('FileUpload', () => {
       errors: [{ code: 'file-too-large', message: 'File is too large' }]
     }
     
-    onDropCallback([], [rejectedFile])
+    act(() => {
+      onDropCallback([], [rejectedFile])
+    })
     
     expect(screen.getByText(/exceeds maximum allowed size/)).toBeInTheDocument()
   })
@@ -175,15 +184,17 @@ describe('FileUpload', () => {
     expect(screen.queryByText(/Upload/)).not.toBeInTheDocument()
     
     // Add a file
-    onDropCallback([file], [])
+    act(() => {
+      onDropCallback([file], [])
+    })
     
     // Now upload button should appear
-    expect(screen.getByText('Upload 1 File')).toBeInTheDocument()
+    expect(screen.getByText('Upload 1 File & Extract Text')).toBeInTheDocument()
   })
 
   it('should handle upload process', async () => {
     const file = new File(['content'], 'test.pdf', { type: 'application/pdf' })
-    mockOnUpload.mockResolvedValueOnce(undefined)
+    mockOnUpload.mockResolvedValueOnce(['upload-id-123'])
     
     let onDropCallback: any
     mockUseDropzone.mockImplementation((config: any) => {
@@ -205,15 +216,18 @@ describe('FileUpload', () => {
     })
     
     // Click upload
-    const uploadButton = screen.getByText('Upload 1 File')
-    fireEvent.click(uploadButton)
+    const uploadButton = screen.getByText('Upload 1 File & Extract Text')
+    
+    await act(async () => {
+      fireEvent.click(uploadButton)
+    })
     
     // Should show uploading state
-    expect(screen.getByText('Uploading file...')).toBeInTheDocument()
+    expect(screen.getByText('Uploading files to server...')).toBeInTheDocument()
     
     // Wait for upload to complete
     await waitFor(() => {
-      expect(screen.getByText('Upload completed successfully!')).toBeInTheDocument()
+      expect(screen.getByText('Extracting text from documents...')).toBeInTheDocument()
     })
     
     expect(mockOnUpload).toHaveBeenCalledWith([file])
@@ -244,8 +258,11 @@ describe('FileUpload', () => {
     })
     
     // Click upload
-    const uploadButton = screen.getByText('Upload 1 File')
-    fireEvent.click(uploadButton)
+    const uploadButton = screen.getByText('Upload 1 File & Extract Text')
+    
+    await act(async () => {
+      fireEvent.click(uploadButton)
+    })
     
     // Wait for error
     await waitFor(() => {

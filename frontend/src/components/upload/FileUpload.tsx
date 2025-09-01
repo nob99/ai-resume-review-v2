@@ -16,7 +16,7 @@ import {
 
 interface FileUploadProps {
   onFilesSelected?: (files: File[]) => void
-  onUpload?: (files: File[]) => Promise<string[]> // Returns upload IDs for extraction
+  onUpload?: (files: File[]) => Promise<string[] | void> // Returns upload IDs for extraction
   onExtractionComplete?: (results: TextExtractionResult[]) => void
   multiple?: boolean
   autoStartExtraction?: boolean
@@ -134,12 +134,18 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       
       clearInterval(progressInterval)
       setUploadProgress(90)
-      setUploadIds(uploadedIds)
       
-      if (autoStartExtraction && uploadedIds.length > 0) {
-        setUploadStatus('extracting')
-        setUploadProgress(95)
-        // Text extraction will be handled by TextExtractionStatus components
+      if (uploadedIds && uploadedIds.length > 0) {
+        setUploadIds(uploadedIds)
+        
+        if (autoStartExtraction) {
+          setUploadStatus('extracting')
+          setUploadProgress(95)
+          // Text extraction will be handled by TextExtractionStatus components
+        } else {
+          setUploadProgress(100)
+          setUploadStatus('success')
+        }
       } else {
         setUploadProgress(100)
         setUploadStatus('success')

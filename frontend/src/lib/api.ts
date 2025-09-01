@@ -3,7 +3,8 @@ import {
   LoginRequest, LoginResponse, User, ApiError, AuthExpiredError, AuthInvalidError, NetworkError, ApiResult,
   TextExtractionRequest, TextExtractionResponse, TextExtractionStatusResponse, BatchTextExtractionRequest, 
   BatchTextExtractionResponse, UploadWithExtractionResponse, ExtractionTimeoutError, UnsupportedFileTypeError,
-  ExtractionFailedError, ProcessingQueueFullError
+  ExtractionFailedError, ProcessingQueueFullError, FileUploadResponse, UploadStatusResponse, 
+  UploadListResponse, UploadDeleteResponse
 } from '@/types'
 
 // Base API URL - will be configurable via environment variable
@@ -447,6 +448,194 @@ export const extractionApi = {
       }
       
       // Fallback for unexpected errors
+      return {
+        success: false,
+        error: new Error('Unexpected error occurred')
+      }
+    }
+  }
+}
+
+// Upload API functions
+export const uploadApi = {
+  async uploadResume(
+    file: File,
+    options?: {
+      targetRole?: string
+      targetIndustry?: string
+      experienceLevel?: 'entry' | 'mid' | 'senior' | 'executive'
+    }
+  ): Promise<ApiResult<FileUploadResponse>> {
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      
+      if (options?.targetRole) {
+        formData.append('target_role', options.targetRole)
+      }
+      if (options?.targetIndustry) {
+        formData.append('target_industry', options.targetIndustry)
+      }
+      if (options?.experienceLevel) {
+        formData.append('experience_level', options.experienceLevel)
+      }
+      
+      const response = await api.post<FileUploadResponse>('/upload/resume', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 60000, // 60 second timeout for file uploads
+      })
+      
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || 
+          error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+      
+      // Handle specific upload errors
+      if ((error as AxiosError).response?.status === 413) {
+        return {
+          success: false,
+          error: new Error('File size exceeds maximum allowed size (30MB)')
+        }
+      }
+      
+      if ((error as AxiosError).response?.status === 429) {
+        return {
+          success: false,
+          error: new Error('Too many uploads. Please try again later.')
+        }
+      }
+      
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+      
+      return {
+        success: false,
+        error: new Error('Unexpected error occurred')
+      }
+    }
+  },
+
+  async getUploadStatus(uploadId: string): Promise<ApiResult<UploadStatusResponse>> {
+    try {
+      const response = await api.get<UploadStatusResponse>(`/upload/${uploadId}/status`)
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || 
+          error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+      
+      if ((error as AxiosError).response?.status === 404) {
+        return {
+          success: false,
+          error: new Error('Upload not found')
+        }
+      }
+      
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+      
+      return {
+        success: false,
+        error: new Error('Unexpected error occurred')
+      }
+    }
+  },
+
+  async listUploads(page: number = 1, perPage: number = 20): Promise<ApiResult<UploadListResponse>> {
+    try {
+      const response = await api.get<UploadListResponse>('/upload/list', {
+        params: { page, per_page: perPage }
+      })
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || 
+          error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+      
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+      
+      return {
+        success: false,
+        error: new Error('Unexpected error occurred')
+      }
+    }
+  },
+
+  async deleteUpload(uploadId: string): Promise<ApiResult<UploadDeleteResponse>> {
+    try {
+      const response = await api.delete<UploadDeleteResponse>(`/upload/${uploadId}`)
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || 
+          error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+      
+      if ((error as AxiosError).response?.status === 404) {
+        return {
+          success: false,
+          error: new Error('Upload not found')
+        }
+      }
+      
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+      
       return {
         success: false,
         error: new Error('Unexpected error occurred')

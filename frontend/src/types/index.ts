@@ -185,3 +185,31 @@ export class ProcessingQueueFullError extends Error {
     this.name = 'ProcessingQueueFullError'
   }
 }
+
+// Upload Status Response types
+export interface UploadStatusResponse {
+  id: string
+  status: 'pending' | 'processing' | 'completed' | 'failed'
+  upload_date: string
+  analysis_date?: string
+  error_message?: string
+  processing_time_seconds?: number
+}
+
+// Upload List Response types
+export interface UploadListResponse {
+  uploads: FileUploadResponse[]
+  pagination: {
+    page: number
+    per_page: number
+    total_items: number
+    total_pages: number
+  }
+}
+
+// Upload Delete Response types
+export interface UploadDeleteResponse {
+  message: string
+  upload_id: string
+  deleted_at: string
+}

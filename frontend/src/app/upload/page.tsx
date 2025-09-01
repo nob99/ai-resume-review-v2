@@ -3,25 +3,54 @@
 import { useState } from 'react'
 import { Container, Section, Header } from '@/components/layout'
 import { FileUpload } from '@/components/upload'
-import { Card } from '@/components/ui'
-import { ProtectedRoute } from '@/lib/auth-context'
+import { Card, Alert } from '@/components/ui'
+import { ProtectedRoute, useAuth } from '@/lib/auth-context'
+import { uploadApi } from '@/lib/api'
+import { AuthExpiredError } from '@/types'
 
 export default function UploadPage() {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const { handleAuthExpired } = useAuth()
 
   const handleFilesSelected = (files: File[]) => {
     console.log('Files selected:', files)
     setUploadedFiles(files)
+    setUploadError(null)
   }
 
   const handleUpload = async (files: File[]) => {
     console.log('Uploading files:', files)
+    setUploadError(null)
     
-    // Simulate upload delay
-    await new Promise(resolve => setTimeout(resolve, 3000))
-    
-    // TODO: Implement actual upload to backend
-    console.log('Upload completed!')
+    try {
+      // Upload files one by one and collect upload IDs
+      const uploadIds: string[] = []
+      
+      for (const file of files) {
+        const result = await uploadApi.uploadResume(file)
+        
+        if (!result.success) {
+          if (result.error instanceof AuthExpiredError) {
+            handleAuthExpired()
+            return uploadIds
+          }
+          throw result.error
+        }
+        
+        if (result.data) {
+          uploadIds.push(result.data.id)
+        }
+      }
+      
+      console.log('Upload completed! IDs:', uploadIds)
+      return uploadIds
+      
+    } catch (error) {
+      console.error('Upload error:', error)
+      setUploadError(error instanceof Error ? error.message : 'Upload failed')
+      throw error
+    }
   }
 
   return (
@@ -45,6 +74,16 @@ export default function UploadPage() {
                 multiple={true}
               />
             </Card>
+
+            {uploadError && (
+              <Alert 
+                type="error" 
+                className="mt-4"
+                onClose={() => setUploadError(null)}
+              >
+                {uploadError}
+              </Alert>
+            )}
 
             {uploadedFiles.length > 0 && (
               <Card className="mt-6 p-6">
