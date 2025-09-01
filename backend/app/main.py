@@ -13,6 +13,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.auth import router as auth_router
+from app.api.upload import router as upload_router
 from app.database.connection import init_database, close_database, get_db_health
 from app.core.rate_limiter import rate_limiter
 from app.core.security import SecurityError
@@ -130,6 +131,7 @@ app.add_middleware(
 
 # Include routers with API versioning
 app.include_router(auth_router, prefix="/api/v1")
+app.include_router(upload_router, prefix="/api/v1")
 
 # Global exception handlers
 @app.exception_handler(SecurityError)

@@ -68,7 +68,7 @@ class RateLimitConfigs:
     )
     
     FILE_UPLOAD = RateLimitConfig(
-        requests=10,       # 10 file uploads
+        requests=30,       # 30 file uploads
         window=3600,       # per hour
         block_duration=1800  # block for 30 minutes
     )

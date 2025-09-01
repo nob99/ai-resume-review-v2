@@ -92,6 +92,10 @@ class AppConfig:
     # CORS Configuration
     ALLOWED_HOSTS: list[str] = ["localhost", "127.0.0.1", "0.0.0.0"]
     
+    # File Storage Configuration
+    FILE_STORAGE_PATH: str = os.getenv("FILE_STORAGE_PATH", "storage/uploads")
+    MAX_FILE_SIZE_MB: int = int(os.getenv("MAX_FILE_SIZE_MB", "30"))
+    
     # Testing Configuration
     TEST_DB_NAME: str = os.getenv("TEST_DB_NAME", "ai_resume_review_test")
 
@@ -116,6 +120,18 @@ def get_database_url() -> str:
 def get_redis_url() -> str:
     """Get Redis URL."""
     return RedisConfig.get_url()
+
+
+def get_settings():
+    """Get application settings."""
+    return type('Settings', (), {
+        'file_storage_path': app_config.FILE_STORAGE_PATH,
+        'max_file_size_mb': app_config.MAX_FILE_SIZE_MB,
+        'database_url': get_database_url(),
+        'redis_url': get_redis_url(),
+        'debug': app_config.DEBUG,
+        'environment': app_config.ENVIRONMENT
+    })()
 
 
 # Validate critical configuration on import
