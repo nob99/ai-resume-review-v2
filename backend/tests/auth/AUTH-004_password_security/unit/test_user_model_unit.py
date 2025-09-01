@@ -65,8 +65,12 @@ class TestUser:
     
     def test_email_normalization(self, test_db):
         """Test email normalization to lowercase."""
+        import uuid
+        unique_email = f"TEST_{uuid.uuid4().hex[:8]}@EXAMPLE.COM"
+        expected_email = unique_email.lower()
+        
         user = User(
-            email="TEST@EXAMPLE.COM",
+            email=unique_email,
             password="TestPassword123!",
             first_name="Test",
             last_name="User"
@@ -74,7 +78,7 @@ class TestUser:
         test_db.add(user)
         test_db.commit()
         
-        assert user.email == "test@example.com"
+        assert user.email == expected_email
     
     def test_unique_email_constraint(self, test_db, test_user_data):
         """Test unique email constraint."""
@@ -224,9 +228,11 @@ class TestUser:
     
     def test_role_methods(self, test_db):
         """Test role checking methods."""
+        import uuid
+        
         # Consultant user
         consultant = User(
-            email="consultant@example.com",
+            email=f"consultant_{uuid.uuid4().hex[:8]}@example.com",
             password="Password123!",
             first_name="Con",
             last_name="Sultant",
@@ -236,7 +242,7 @@ class TestUser:
         
         # Admin user
         admin = User(
-            email="admin@example.com", 
+            email=f"admin_{uuid.uuid4().hex[:8]}@example.com", 
             password="Password123!",
             first_name="Ad",
             last_name="Min",
@@ -316,9 +322,11 @@ class TestUserValidation:
     
     def test_email_validation(self, test_db):
         """Test email validation."""
+        import uuid
+        
         # Valid email
         user = User(
-            email="valid@example.com",
+            email=f"valid_{uuid.uuid4().hex[:8]}@example.com",
             password="Password123!",
             first_name="Test",
             last_name="User"

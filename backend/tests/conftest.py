@@ -59,12 +59,18 @@ def TestSessionLocal(test_engine):
 
 @pytest.fixture
 def test_db(TestSessionLocal) -> Generator[Session, None, None]:
-    """Create test database session."""
+    """Create test database session with proper transaction isolation."""
     session = TestSessionLocal()
+    
+    # Start a transaction that we can rollback
+    transaction = session.begin()
+    
     try:
         yield session
     finally:
-        session.rollback()
+        # Check if transaction is still active before rolling back
+        if transaction.is_active:
+            transaction.rollback()
         session.close()
 
 
@@ -112,9 +118,10 @@ async def mock_rate_limiter(mock_redis):
 
 @pytest.fixture
 def test_user_data():
-    """Test user data."""
+    """Test user data with unique email to avoid conflicts."""
+    import uuid
     return {
-        "email": "test@example.com",
+        "email": f"test_{uuid.uuid4().hex[:8]}@example.com",
         "password": "TestPassword123!",
         "first_name": "Test",
         "last_name": "User"
@@ -123,9 +130,10 @@ def test_user_data():
 
 @pytest.fixture
 def test_admin_data():
-    """Test admin user data."""
+    """Test admin user data with unique email to avoid conflicts."""
+    import uuid
     return {
-        "email": "admin@example.com", 
+        "email": f"admin_{uuid.uuid4().hex[:8]}@example.com", 
         "password": "AdminPassword123!",
         "first_name": "Admin",
         "last_name": "User",
@@ -146,8 +154,9 @@ def create_test_user(test_db):
     created_users = []
     
     def _create_user(**kwargs):
+        import uuid
         user_data = {
-            "email": "test@example.com",
+            "email": f"test_user_{uuid.uuid4().hex[:8]}@example.com",
             "password": "TestPassword123!",
             "first_name": "Test", 
             "last_name": "User"
@@ -163,15 +172,7 @@ def create_test_user(test_db):
     
     yield _create_user
     
-    # Cleanup: remove test users after test completes
-    for user in created_users:
-        try:
-            test_db.delete(user)
-            test_db.commit()
-        except Exception:
-            # If user already deleted, continue
-            test_db.rollback()
-            pass
+    # Note: Cleanup is handled by transaction rollback in test_db fixture
 
 
 @pytest.fixture
