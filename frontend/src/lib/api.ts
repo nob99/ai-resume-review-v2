@@ -1,5 +1,10 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios'
-import { LoginRequest, LoginResponse, User, ApiError, AuthExpiredError, AuthInvalidError, NetworkError, ApiResult } from '@/types'
+import { 
+  LoginRequest, LoginResponse, User, ApiError, AuthExpiredError, AuthInvalidError, NetworkError, ApiResult,
+  TextExtractionRequest, TextExtractionResponse, TextExtractionStatusResponse, BatchTextExtractionRequest, 
+  BatchTextExtractionResponse, UploadWithExtractionResponse, ExtractionTimeoutError, UnsupportedFileTypeError,
+  ExtractionFailedError, ProcessingQueueFullError
+} from '@/types'
 
 // Base API URL - will be configurable via environment variable
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -106,15 +111,35 @@ api.interceptors.response.use(
 
 // Helper function to convert axios errors to our custom error types
 function handleApiError(error: AxiosError): never {
-  const responseData = error.response?.data as { detail?: string } | undefined
+  const responseData = error.response?.data as { detail?: string; error?: string } | undefined
   
   if (error.response?.status === 401) {
     throw new AuthInvalidError(responseData?.detail || 'Invalid credentials')
   } else if (error.response?.status === 423) {
     throw new AuthInvalidError('Account is locked due to too many failed attempts')
   } else if (error.response?.status === 429) {
-    throw new AuthInvalidError('Too many login attempts. Please try again later.')
-  } else if (error.code === 'ECONNABORTED' || error.code === 'ENOTFOUND') {
+    // Check if it's extraction-related rate limiting
+    if (responseData?.detail?.includes('queue') || responseData?.detail?.includes('concurrent')) {
+      throw new ProcessingQueueFullError(responseData.detail)
+    }
+    throw new AuthInvalidError('Too many requests. Please try again later.')
+  } else if (error.response?.status === 408 || error.code === 'ECONNABORTED') {
+    // Check if it's extraction timeout
+    if (responseData?.detail?.includes('extraction') || responseData?.detail?.includes('timeout')) {
+      throw new ExtractionTimeoutError(responseData.detail)
+    }
+    throw new NetworkError('Request timed out')
+  } else if (error.response?.status === 415 || error.response?.status === 400) {
+    // Check for unsupported file type
+    if (responseData?.detail?.includes('file type') || responseData?.detail?.includes('format')) {
+      throw new UnsupportedFileTypeError(responseData.detail)
+    }
+    // Check for extraction failures
+    if (responseData?.detail?.includes('extraction') || responseData?.error === 'EXTRACTION_FAILED') {
+      throw new ExtractionFailedError(responseData.detail)
+    }
+    throw new Error(responseData?.detail || 'Bad request')
+  } else if (error.code === 'ENOTFOUND') {
     throw new NetworkError('Network connection failed')
   } else {
     throw new Error(responseData?.detail || error.message || 'Request failed')
@@ -269,6 +294,165 @@ export const authApi = {
 // Utility function to check if user is authenticated
 export function isAuthenticated(): boolean {
   return TokenStorage.getAccessToken() !== null
+}
+
+// Text extraction API functions
+export const extractionApi = {
+  async requestTextExtraction(
+    uploadId: string, 
+    options: { forceReextraction?: boolean; timeoutSeconds?: number } = {}
+  ): Promise<ApiResult<TextExtractionResponse>> {
+    try {
+      const response = await api.post<TextExtractionResponse>('/upload/extract-text', {
+        upload_id: uploadId,
+        force_reextraction: options.forceReextraction || false,
+        timeout_seconds: options.timeoutSeconds || 30
+      })
+      
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || 
+          error instanceof NetworkError || error instanceof ExtractionTimeoutError ||
+          error instanceof UnsupportedFileTypeError || error instanceof ExtractionFailedError ||
+          error instanceof ProcessingQueueFullError) {
+        return {
+          success: false,
+          error
+        }
+      }
+      
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+      
+      // Fallback for unexpected errors
+      return {
+        success: false,
+        error: new Error('Unexpected error occurred')
+      }
+    }
+  },
+
+  async getExtractionStatus(uploadId: string): Promise<ApiResult<TextExtractionStatusResponse>> {
+    try {
+      const response = await api.get<TextExtractionStatusResponse>(`/upload/${uploadId}/extraction-status`)
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || 
+          error instanceof NetworkError || error instanceof ExtractionTimeoutError ||
+          error instanceof UnsupportedFileTypeError || error instanceof ExtractionFailedError ||
+          error instanceof ProcessingQueueFullError) {
+        return {
+          success: false,
+          error
+        }
+      }
+      
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+      
+      // Fallback for unexpected errors
+      return {
+        success: false,
+        error: new Error('Unexpected error occurred')
+      }
+    }
+  },
+
+  async requestBatchExtraction(
+    uploadIds: string[],
+    options: { forceReextraction?: boolean; timeoutSeconds?: number } = {}
+  ): Promise<ApiResult<BatchTextExtractionResponse>> {
+    try {
+      const response = await api.post<BatchTextExtractionResponse>('/upload/batch-extract-text', {
+        upload_ids: uploadIds,
+        force_reextraction: options.forceReextraction || false,
+        timeout_seconds: options.timeoutSeconds || 30
+      })
+      
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || 
+          error instanceof NetworkError || error instanceof ExtractionTimeoutError ||
+          error instanceof UnsupportedFileTypeError || error instanceof ExtractionFailedError ||
+          error instanceof ProcessingQueueFullError) {
+        return {
+          success: false,
+          error
+        }
+      }
+      
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+      
+      // Fallback for unexpected errors
+      return {
+        success: false,
+        error: new Error('Unexpected error occurred')
+      }
+    }
+  },
+
+  async getUploadWithExtraction(uploadId: string): Promise<ApiResult<UploadWithExtractionResponse>> {
+    try {
+      const response = await api.get<UploadWithExtractionResponse>(`/upload/${uploadId}/with-extraction`)
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || 
+          error instanceof NetworkError || error instanceof ExtractionTimeoutError ||
+          error instanceof UnsupportedFileTypeError || error instanceof ExtractionFailedError ||
+          error instanceof ProcessingQueueFullError) {
+        return {
+          success: false,
+          error
+        }
+      }
+      
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+      
+      // Fallback for unexpected errors
+      return {
+        success: false,
+        error: new Error('Unexpected error occurred')
+      }
+    }
+  }
 }
 
 // Export the configured axios instance for custom requests

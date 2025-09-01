@@ -5,6 +5,8 @@ import { useDropzone } from 'react-dropzone'
 import { Button } from '@/components/ui'
 import { FilePreview, FileWithPreview } from './FilePreview'
 import { UploadProgress, UploadStatus } from './UploadProgress'
+import { TextExtractionStatus } from './TextExtractionStatus'
+import { TextExtractionResult } from '@/types'
 import { 
   ACCEPTED_FILE_TYPES, 
   MAX_FILE_SIZE, 
@@ -14,15 +16,19 @@ import {
 
 interface FileUploadProps {
   onFilesSelected?: (files: File[]) => void
-  onUpload?: (files: File[]) => Promise<void>
+  onUpload?: (files: File[]) => Promise<string[]> // Returns upload IDs for extraction
+  onExtractionComplete?: (results: TextExtractionResult[]) => void
   multiple?: boolean
+  autoStartExtraction?: boolean
   className?: string
 }
 
 export const FileUpload: React.FC<FileUploadProps> = ({
   onFilesSelected,
   onUpload,
+  onExtractionComplete,
   multiple = true,
+  autoStartExtraction = true,
   className = ''
 }) => {
   const [files, setFiles] = useState<FileWithPreview[]>([])
@@ -30,6 +36,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadMessage, setUploadMessage] = useState<string>()
   const [fileErrors, setFileErrors] = useState<Record<string, string>>({})
+  const [uploadIds, setUploadIds] = useState<string[]>([])
+  const [extractionResults, setExtractionResults] = useState<TextExtractionResult[]>([])
 
   const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: { file: File; errors: { code: string; message: string }[] }[]) => {
     const newFileErrors: Record<string, string> = {}
@@ -85,6 +93,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     // Reset upload status when new files are added
     setUploadStatus('idle')
     setUploadProgress(0)
+    setUploadIds([])
+    setExtractionResults([])
   }, [files, multiple, onFilesSelected])
 
   const removeFile = useCallback((fileId: string) => {
@@ -110,21 +120,56 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       setUploadStatus('uploading')
       setUploadProgress(20)
       
-      // Simulate progress updates
+      // Simulate upload progress
       const progressInterval = setInterval(() => {
-        setUploadProgress(prev => Math.min(prev + 10, 90))
+        setUploadProgress(prev => {
+          if (uploadStatus === 'uploading') return Math.min(prev + 5, 60)
+          if (uploadStatus === 'validating') return Math.min(prev + 5, 80)
+          return prev
+        })
       }, 500)
       
-      await onUpload(validFiles)
+      setUploadStatus('validating')
+      const uploadedIds = await onUpload(validFiles)
       
       clearInterval(progressInterval)
-      setUploadProgress(100)
-      setUploadStatus('success')
+      setUploadProgress(90)
+      setUploadIds(uploadedIds)
+      
+      if (autoStartExtraction && uploadedIds.length > 0) {
+        setUploadStatus('extracting')
+        setUploadProgress(95)
+        // Text extraction will be handled by TextExtractionStatus components
+      } else {
+        setUploadProgress(100)
+        setUploadStatus('success')
+      }
     } catch (error) {
       setUploadStatus('error')
       setUploadMessage(error instanceof Error ? error.message : 'Upload failed')
     }
   }
+
+  const handleExtractionComplete = useCallback((result: TextExtractionResult) => {
+    setExtractionResults(prev => {
+      const updated = [...prev.filter(r => r.upload_id !== result.upload_id), result]
+      
+      // Check if all extractions are complete
+      if (updated.length === uploadIds.length) {
+        setUploadStatus('extraction_completed')
+        setUploadProgress(100)
+        onExtractionComplete?.(updated)
+      }
+      
+      return updated
+    })
+  }, [uploadIds.length, onExtractionComplete])
+
+  const handleExtractionError = useCallback((error: Error) => {
+    console.error('Extraction error:', error)
+    // Keep extraction status but log error - don't fail the entire upload
+    setUploadMessage(`Text extraction warning: ${error.message}`)
+  }, [])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -217,17 +262,51 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         </div>
       )}
 
-      {onUpload && hasValidFiles && uploadStatus !== 'uploading' && (
+      {/* Text Extraction Status - Show after successful upload */}
+      {autoStartExtraction && uploadIds.length > 0 && uploadStatus === 'extracting' && (
+        <div className="mt-4 space-y-3">
+          <h4 className="text-sm font-medium text-gray-700">Text Extraction Progress</h4>
+          {uploadIds.map((uploadId, index) => (
+            <TextExtractionStatus
+              key={uploadId}
+              uploadId={uploadId}
+              onExtractionComplete={handleExtractionComplete}
+              onError={handleExtractionError}
+              autoStart={true}
+              className="border border-gray-200 rounded-lg p-3 bg-gray-50"
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Upload Button */}
+      {onUpload && hasValidFiles && !['uploading', 'validating', 'extracting'].includes(uploadStatus) && (
         <div className="mt-4">
           <Button
             onClick={handleUpload}
-            disabled={!hasValidFiles || uploadStatus === 'uploading'}
-            loading={uploadStatus === 'uploading'}
+            disabled={!hasValidFiles || ['uploading', 'validating', 'extracting'].includes(uploadStatus)}
+            loading={['uploading', 'validating'].includes(uploadStatus)}
             size="lg"
             className="w-full"
           >
             Upload {files.filter(f => !fileErrors[f.id]).length} File{files.filter(f => !fileErrors[f.id]).length !== 1 ? 's' : ''}
+            {autoStartExtraction && ' & Extract Text'}
           </Button>
+        </div>
+      )}
+
+      {/* Extraction Results Summary */}
+      {extractionResults.length > 0 && uploadStatus === 'extraction_completed' && (
+        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <h4 className="text-sm font-semibold text-green-800 mb-2">Text Extraction Complete</h4>
+          <div className="text-sm text-green-700 space-y-1">
+            {extractionResults.map((result) => (
+              <div key={result.upload_id} className="flex justify-between">
+                <span>File {result.upload_id.slice(0, 8)}...</span>
+                <span>{result.word_count} words, {result.sections.length} sections</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

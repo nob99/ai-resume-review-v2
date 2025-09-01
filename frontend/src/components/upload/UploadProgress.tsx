@@ -2,7 +2,7 @@
 
 import React from 'react'
 
-export type UploadStatus = 'idle' | 'uploading' | 'validating' | 'extracting' | 'success' | 'error'
+export type UploadStatus = 'idle' | 'uploading' | 'validating' | 'extracting' | 'extraction_completed' | 'success' | 'error'
 
 interface UploadProgressProps {
   status: UploadStatus
@@ -15,7 +15,8 @@ const statusMessages: Record<UploadStatus, string> = {
   uploading: 'Uploading file...',
   validating: 'Validating file...',
   extracting: 'Extracting text content...',
-  success: 'Upload completed successfully!',
+  extraction_completed: 'Text extraction completed!',
+  success: 'Upload and processing completed successfully!',
   error: 'Upload failed'
 }
 
@@ -24,6 +25,7 @@ const statusColors: Record<UploadStatus, string> = {
   uploading: 'bg-blue-500',
   validating: 'bg-yellow-500',
   extracting: 'bg-indigo-500',
+  extraction_completed: 'bg-green-400',
   success: 'bg-green-500',
   error: 'bg-red-500'
 }
@@ -34,7 +36,7 @@ export const UploadProgress: React.FC<UploadProgressProps> = ({
   message 
 }) => {
   const displayMessage = message || statusMessages[status]
-  const isActive = status !== 'idle' && status !== 'error' && status !== 'success'
+  const isActive = status !== 'idle' && status !== 'error' && status !== 'success' && status !== 'extraction_completed'
   
   return (
     <div className="w-full">
@@ -66,7 +68,7 @@ export const UploadProgress: React.FC<UploadProgressProps> = ({
         <p className="mt-2 text-sm text-red-600">{message}</p>
       )}
       
-      {status === 'success' && (
+      {(status === 'success' || status === 'extraction_completed') && (
         <p className="mt-2 text-sm text-green-600 flex items-center">
           <svg 
             className="w-4 h-4 mr-1" 
@@ -79,7 +81,7 @@ export const UploadProgress: React.FC<UploadProgressProps> = ({
               clipRule="evenodd" 
             />
           </svg>
-          File ready for analysis
+          {status === 'extraction_completed' ? 'Text extracted and ready for analysis' : 'File ready for analysis'}
         </p>
       )}
     </div>
