@@ -3,6 +3,8 @@
 ## 📋 Table of Contents
 1. [Overview & Purpose](#overview)
 2. [Cross-Functional Team Agreements](#cross-functional)
+   - [Development Environment Standards](#development-environment-standards)
+   - [Port Assignments](#port-assignments)
 3. [Frontend Team Guidelines](#frontend-team)
 4. [Backend Team Guidelines](#backend-team)
 5. [DevOps Team Guidelines](#devops-team)
@@ -36,8 +38,60 @@ All new team members MUST:
 - [ ] Set up development environment per team guidelines
 - [ ] Complete team-specific onboarding checklist
 - [ ] Attend sprint ceremonies within first week
+- [ ] **CHECK DOCKER STATUS BEFORE STARTING ANY LOCAL SERVERS**
 
-### 2. Communication Standards
+### 2. Development Environment Standards
+
+#### ⚠️ CRITICAL: Port Assignments
+**ALL TEAM MEMBERS MUST CHECK DOCKER STATUS BEFORE STARTING LOCAL SERVERS**
+
+```bash
+# MANDATORY: Check Docker status first
+./scripts/docker-dev.sh status
+
+# Or check specific ports
+lsof -i :3000  # Frontend
+lsof -i :8000  # Backend
+```
+
+#### Reserved Port Assignments
+| Service | Port | Purpose | Container Name |
+|---------|------|---------|----------------|
+| **Frontend** | 3000 | Next.js Dev Server | ai-resume-review-frontend-dev |
+| **Backend** | 8000 | FastAPI Server | ai-resume-review-backend-dev |
+| **PostgreSQL** | 5432 | Database | ai-resume-review-postgres-dev |
+| **Redis** | 6379 | Cache/Rate Limiting | ai-resume-review-redis-dev |
+| **PgAdmin** | 8080 | Database Admin UI | ai-resume-review-pgadmin-dev |
+
+#### ❌ FORBIDDEN: Creating New Ports Without Approval
+- **NEVER** start services on reserved ports
+- **NEVER** create new services without documenting port assignment
+- **ALWAYS** check if Docker containers are running first
+- **ALWAYS** use Docker containers for development (not local services)
+
+#### Development Workflow
+1. **Start development**: `./scripts/docker-dev.sh up`
+2. **Check status**: `./scripts/docker-dev.sh status`
+3. **View logs**: `./scripts/docker-dev.sh logs [service]`
+4. **Stop services**: `./scripts/docker-dev.sh down`
+
+#### Troubleshooting Port Conflicts
+If you encounter "port already in use" errors:
+```bash
+# 1. Check Docker containers first
+docker ps
+
+# 2. If not Docker, find process using port
+lsof -i :<PORT>
+
+# 3. Stop Docker services properly
+./scripts/docker-dev.sh down
+
+# 4. Only kill non-Docker processes if necessary
+kill -9 <PID>
+```
+
+### 3. Communication Standards
 
 #### Daily Standup
 - **Time**: 9:30 AM daily
@@ -406,4 +460,5 @@ Analyze the following resume and provide structured feedback:
 
 ---
 
-*Last Updated: Sprint 002 - Team-based reorganization*
+*Last Updated: Sprint 003 - Added Development Environment Standards and Port Assignments*
+*Previous Update: Sprint 002 - Team-based reorganization*
