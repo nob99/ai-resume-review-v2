@@ -14,7 +14,7 @@ backend_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(backend_root))
 
 from app.services.file_service import store_uploaded_file, FileStorageResult
-from app.core.file_validation import get_file_info
+from app.core.file_validation import get_file_info, validate_uploaded_file
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -89,23 +89,26 @@ def test_file_validation():
         pdf_content = create_test_pdf_content()
         
         logger.info("Testing file validation with PDF content...")
-        file_info = get_file_info(pdf_content, "test.pdf")
+        validation_result = validate_uploaded_file(pdf_content, "test.pdf")
         
-        logger.info(f"File info: {file_info}")
+        logger.info(f"Validation result: {validation_result}")
         
-        # Handle FileInfo dataclass or dict
-        if hasattr(file_info, 'file_type'):
-            mime_type = 'application/pdf' if file_info.file_type == 'pdf' else file_info.file_type
-            file_size = file_info.file_size
+        # Check validation result
+        if validation_result.is_valid:
+            logger.info("✅ File validation passed")
         else:
-            mime_type = file_info.get('mime_type', 'unknown')
-            file_size = file_info.get('file_size', 0)
+            logger.error(f"❌ File validation failed: {validation_result.errors}")
+            return False
         
-        if mime_type == 'application/pdf' or file_info.file_type == 'pdf':
+        # Check MIME type
+        mime_type = validation_result.file_info.get('mime_type', 'unknown')
+        if mime_type == 'application/pdf':
             logger.info("✅ PDF MIME type detected correctly")
         else:
             logger.warning(f"⚠️ Unexpected MIME type: {mime_type}")
             
+        # Check file size
+        file_size = validation_result.file_info.get('file_size', 0)
         if file_size > 0:
             logger.info(f"✅ File size detected: {file_size} bytes")
         else:

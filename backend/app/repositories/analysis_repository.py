@@ -185,8 +185,8 @@ class AnalysisRepository(BaseRepository[AnalysisRequest]):
         ).group_by(AnalysisRequest.mime_type).all()
         
         # Recent activity (last 30 days)
-        thirty_days_ago = utc_now().replace(hour=0, minute=0, second=0, microsecond=0)
-        thirty_days_ago = thirty_days_ago.replace(day=thirty_days_ago.day - 30)
+        from datetime import timedelta
+        thirty_days_ago = utc_now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=30)
         
         recent_count = self.db.query(func.count(AnalysisRequest.id)).filter(
             and_(

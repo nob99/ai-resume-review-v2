@@ -153,7 +153,7 @@ async def upload_resume(
         return FileUploadResponse(
             id=upload_result["id"],
             original_filename=upload_result["original_filename"],
-            file_size_bytes=upload_result["file_size_bytes"],
+            file_size=upload_result["file_size_bytes"],
             mime_type=upload_result["mime_type"],
             status=upload_result["status"],
             target_role=upload_result["target_role"],
@@ -162,9 +162,10 @@ async def upload_resume(
             created_at=upload_result["created_at"],
             validation_info=FileValidationInfo(
                 is_valid=True,
-                file_type=upload_result["mime_type"],
-                file_size_mb=round(upload_result["file_size_bytes"] / (1024 * 1024), 2),
-                validation_details="File uploaded and validated successfully"
+                file_size=upload_result["file_size_bytes"],
+                mime_type=upload_result["mime_type"],
+                file_extension=".pdf",  # TODO: Get actual extension from validation
+                file_hash="unknown"     # TODO: Get actual hash from validation
             ),
             message=upload_result["message"]
         )
