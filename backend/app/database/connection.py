@@ -183,7 +183,7 @@ class DatabaseManager:
             "checked_in": pool.checkedin(),
             "checked_out": pool.checkedout(),
             "overflow": pool.overflow(),
-            "invalid": pool.invalid(),
+            "invalidated": pool.invalidated_connections(),
             "url_masked": str(self.engine.url).replace(
                 f":{self.engine.url.password}@", ":***@"
             ) if self.engine.url.password else str(self.engine.url)

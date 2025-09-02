@@ -9,9 +9,14 @@ from uuid import UUID
 from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
 
-# Import text extraction enums from services
-from app.services.text_extraction_service import ExtractionStatus
-from app.core.text_processor import SectionType
+# Define SectionType locally to avoid import issues
+class SectionType(str, Enum):
+    """Resume section types."""
+    CONTACT = "contact"
+    SUMMARY = "summary"
+    EXPERIENCE = "experience"
+    EDUCATION = "education"
+    SKILLS = "skills"
 
 
 class UploadStatus(str, Enum):
@@ -208,7 +213,7 @@ class ResumeSection(BaseModel):
 class TextExtractionResult(BaseModel):
     """Result of text extraction operation."""
     upload_id: UUID = Field(description="Upload ID")
-    extraction_status: ExtractionStatus = Field(description="Extraction status")
+    extraction_status: Optional[str] = Field(None, description="Extraction status")
     extracted_text: Optional[str] = Field(None, description="Raw extracted text")
     processed_text: Optional[str] = Field(None, description="Cleaned and processed text")
     sections: List[ResumeSection] = Field(default_factory=list, description="Detected resume sections")
@@ -239,7 +244,7 @@ class TextExtractionResponse(BaseModel):
 class TextExtractionStatusResponse(BaseModel):
     """Response for checking text extraction status."""
     upload_id: UUID = Field(description="Upload ID")
-    extraction_status: ExtractionStatus = Field(description="Current extraction status")
+    extraction_status: str = Field(description="Current extraction status")
     has_extracted_text: bool = Field(description="Whether text has been extracted")
     has_processed_text: bool = Field(description="Whether text has been processed")
     sections_detected: int = Field(default=0, description="Number of sections detected")
@@ -263,7 +268,7 @@ class UploadWithExtractionResponse(BaseModel):
     experience_level: Optional[ExperienceLevel] = Field(None, description="Experience level")
     
     # Extraction fields
-    extraction_status: ExtractionStatus = Field(description="Text extraction status")
+    extraction_status: Optional[str] = Field(None, description="Text extraction status")
     has_extracted_text: bool = Field(description="Whether text extraction is complete")
     word_count: int = Field(default=0, description="Number of words extracted")
     sections_detected: int = Field(default=0, description="Number of resume sections detected")
