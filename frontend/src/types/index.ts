@@ -72,3 +72,33 @@ export interface ApiResult<T> {
   data?: T
   error?: AuthExpiredError | AuthInvalidError | NetworkError | Error
 }
+
+// File upload types
+export interface FileUploadError extends Error {
+  code: 'INVALID_TYPE' | 'FILE_TOO_LARGE' | 'UPLOAD_FAILED' | 'VALIDATION_FAILED'
+}
+
+export interface UploadedFile {
+  file: File
+  id: string
+  status: 'pending' | 'uploading' | 'validating' | 'extracting' | 'completed' | 'error'
+  progress: number
+  error?: string
+  extractedText?: string
+}
+
+export interface FileValidationResult {
+  isValid: boolean
+  errors: string[]
+}
+
+export interface FileUploadProps extends BaseComponentProps {
+  onFilesSelected?: (files: File[]) => void
+  onUploadComplete?: (files: UploadedFile[]) => void
+  onError?: (error: FileUploadError) => void
+  acceptedTypes?: string[]
+  maxFileSize?: number
+  maxFiles?: number
+  multiple?: boolean
+  disabled?: boolean
+}
