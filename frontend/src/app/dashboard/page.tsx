@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import { ProtectedRoute } from '@/lib/auth-context'
 import { Container, Section, Header } from '@/components/layout'
@@ -10,6 +11,11 @@ import { useToastActions } from '@/components/ui/Toast'
 const DashboardPage: React.FC = () => {
   const { user } = useAuth()
   const { showInfo } = useToastActions()
+  const router = useRouter()
+
+  const handleUploadResume = () => {
+    router.push('/upload')
+  }
 
   const handleFeatureClick = (feature: string) => {
     showInfo(`${feature} feature will be implemented in Sprint 3`)
@@ -39,7 +45,7 @@ const DashboardPage: React.FC = () => {
                 <Card 
                   hover 
                   clickable
-                  onClick={() => handleFeatureClick('Upload Resume')}
+                  onClick={handleUploadResume}
                   className="text-center"
                 >
                   <CardContent className="p-6">
@@ -120,7 +126,7 @@ const DashboardPage: React.FC = () => {
                       Upload your first resume to start seeing activity here
                     </p>
                     <Button 
-                      onClick={() => handleFeatureClick('Upload Resume')}
+                      onClick={handleUploadResume}
                       className="mx-auto"
                     >
                       Upload Resume

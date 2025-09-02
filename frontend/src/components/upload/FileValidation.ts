@@ -62,6 +62,11 @@ export const validateFileSize = (file: File, maxSize: number, minSize: number = 
  * Validates file name for security (no special characters that could be dangerous)
  */
 export const validateFileName = (fileName: string): boolean => {
+  // Check for empty or whitespace-only strings
+  if (!fileName || !fileName.trim()) {
+    return false
+  }
+  
   // Allow letters, numbers, spaces, dots, hyphens, underscores
   const safeNamePattern = /^[a-zA-Z0-9\s._-]+$/
   return safeNamePattern.test(fileName) && fileName.length <= 255
@@ -165,12 +170,16 @@ export const validateFiles = (
  */
 export const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 B'
+  if (bytes < 0) return `${Math.abs(bytes).toFixed(1)} B`
   
   const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   
-  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`
+  // Ensure i is within bounds
+  const sizeIndex = Math.min(i, sizes.length - 1)
+  
+  return `${(bytes / Math.pow(k, sizeIndex)).toFixed(1)} ${sizes[sizeIndex]}`
 }
 
 /**

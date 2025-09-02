@@ -1,5 +1,6 @@
 // Test fixtures for upload component testing
 // Following backend patterns for comprehensive test data
+/* istanbul ignore file */
 
 import { UploadedFile } from '../../types'
 
@@ -7,30 +8,41 @@ import { UploadedFile } from '../../types'
  * Mock File objects for testing file upload functionality
  * Covers valid files, invalid files, and edge cases
  */
+// Create buffer with at least 1KB of data for valid files
+const createValidPdfContent = () => {
+  const content = '%PDF-1.4 ' + 'x'.repeat(1024)
+  return new Blob([content])
+}
+
+const createValidDocContent = () => {
+  const content = 'DOC-HEADER ' + 'x'.repeat(1024)
+  return new Blob([content])
+}
+
 export const testFiles = {
   // Valid resume files
-  validPdf: new File(['%PDF-1.4 mock PDF content'], 'john-doe-resume.pdf', {
+  validPdf: new File([createValidPdfContent()], 'john-doe-resume.pdf', {
     type: 'application/pdf',
     lastModified: Date.now()
   }),
 
-  validDocx: new File(['PK mock DOCX content'], 'jane-smith-cv.docx', {
+  validDocx: new File([createValidDocContent()], 'jane-smith-cv.docx', {
     type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     lastModified: Date.now()
   }),
 
-  validDoc: new File(['mock DOC content'], 'resume-2023.doc', {
+  validDoc: new File([createValidDocContent()], 'resume-2023.doc', {
     type: 'application/msword',
     lastModified: Date.now()
   }),
 
   // Valid files with resume-like names
-  resumeWithKeywords: new File(['PDF content'], 'my-resume-final.pdf', {
+  resumeWithKeywords: new File([createValidPdfContent()], 'my-resume-final.pdf', {
     type: 'application/pdf',
     lastModified: Date.now()
   }),
 
-  cvFile: new File(['PDF content'], 'curriculum-vitae.pdf', {
+  cvFile: new File([createValidPdfContent()], 'curriculum-vitae.pdf', {
     type: 'application/pdf',
     lastModified: Date.now()
   }),
