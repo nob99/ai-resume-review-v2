@@ -121,7 +121,7 @@ class UploadService:
                     "file_size_bytes": analysis_request.file_size_bytes,
                     "mime_type": analysis_request.mime_type,
                     "status": analysis_request.status,
-                    "extraction_status": analysis_request.extraction_status,
+                    "extraction_status": "pending",  # Default value since DB field doesn't exist
                     "target_role": analysis_request.target_role,
                     "target_industry": analysis_request.target_industry,
                     "experience_level": analysis_request.experience_level,
@@ -315,28 +315,30 @@ class UploadService:
                 detail="Upload not found"
             )
         
-        # Check if extraction is needed
-        if (analysis_request.extraction_status == ExtractionStatus.COMPLETED.value 
-            and not force_reextraction):
-            return {
-                "upload_id": upload_id,
-                "extraction_status": analysis_request.extraction_status,
-                "message": "Text extraction already completed"
-            }
+        # Check if extraction is needed (extraction_status field doesn't exist in DB yet)
+        # TODO: Re-enable when extraction_status column is added to database
+        # if (analysis_request.extraction_status == ExtractionStatus.COMPLETED.value 
+        #     and not force_reextraction):
+        #     return {
+        #         "upload_id": upload_id,
+        #         "extraction_status": analysis_request.extraction_status,
+        #         "message": "Text extraction already completed"
+        #     }
         
-        # Update status to processing
-        self.repository.update_extraction_status(
-            id=upload_id,
-            user_id=user.id,
-            extraction_status=ExtractionStatus.PROCESSING.value
-        )
+        # Update status to processing (extraction_status column doesn't exist in DB yet)
+        # TODO: Re-enable when extraction_status column is added to database
+        # self.repository.update_extraction_status(
+        #     id=upload_id,
+        #     user_id=user.id,
+        #     extraction_status=ExtractionStatus.PROCESSING.value
+        # )
         
         # Queue extraction job
         self._queue_text_extraction(upload_id)
         
         return {
             "upload_id": upload_id,
-            "extraction_status": ExtractionStatus.PROCESSING.value,
+            "extraction_status": "processing",  # Default value since DB field doesn't exist
             "message": "Text extraction started"
         }
     
