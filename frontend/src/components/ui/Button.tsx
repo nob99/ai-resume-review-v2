@@ -1,6 +1,6 @@
 import React from 'react'
-import { cn } from '@/lib/utils'
-import { BaseComponentProps } from '@/types'
+import { cn } from '../../lib/utils'
+import { BaseComponentProps } from '../../types'
 
 // Button variant types
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline'
@@ -107,7 +107,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {loading && <LoadingSpinner size={size} />}
-        <span className={cn(loading && 'opacity-0')}>{children}</span>
+        {loading ? (
+          <span className="opacity-0">{children}</span>
+        ) : (
+          <span>{children}</span>
+        )}
       </button>
     )
   }

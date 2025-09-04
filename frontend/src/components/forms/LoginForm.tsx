@@ -31,11 +31,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const {
     register,
     handleSubmit,
-    formState: { errors, isValid },
+    formState: { errors },
     watch,
     clearErrors,
   } = useForm<FormData>({
-    mode: 'onChange',
+    mode: 'onSubmit',
+    reValidateMode: 'onChange',
     defaultValues: {
       email: '',
       password: '',
@@ -178,7 +179,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             type="submit"
             size="md"
             loading={isFormLoading}
-            disabled={isFormLoading || !isValid}
+            disabled={isFormLoading}
             className="w-full"
           >
             {isFormLoading ? 'Signing in...' : 'Sign in'}
