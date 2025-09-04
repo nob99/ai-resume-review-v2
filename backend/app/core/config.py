@@ -96,11 +96,35 @@ class AppConfig:
     TEST_DB_NAME: str = os.getenv("TEST_DB_NAME", "ai_resume_review_test")
 
 
+class AIConfig:
+    """AI and LLM configuration settings."""
+    
+    # OpenAI Configuration
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+    OPENAI_MODEL_NAME: str = os.getenv("OPENAI_MODEL_NAME", "gpt-4")
+    OPENAI_MAX_TOKENS: int = int(os.getenv("OPENAI_MAX_TOKENS", "4000"))
+    OPENAI_TEMPERATURE: float = float(os.getenv("OPENAI_TEMPERATURE", "0.3"))
+    OPENAI_REQUEST_TIMEOUT_SECONDS: int = int(os.getenv("OPENAI_REQUEST_TIMEOUT_SECONDS", "30"))
+    
+    # LangGraph Configuration
+    LANGGRAPH_WORKFLOW_TIMEOUT_SECONDS: int = int(os.getenv("LANGGRAPH_WORKFLOW_TIMEOUT_SECONDS", "300"))
+    LANGGRAPH_MAX_RETRIES: int = int(os.getenv("LANGGRAPH_MAX_RETRIES", "2"))
+    
+    # Agent Configuration
+    STRUCTURE_AGENT_CONFIDENCE_THRESHOLD: float = float(os.getenv("STRUCTURE_AGENT_CONFIDENCE_THRESHOLD", "0.6"))
+    APPEAL_AGENT_CONFIDENCE_THRESHOLD: float = float(os.getenv("APPEAL_AGENT_CONFIDENCE_THRESHOLD", "0.65"))
+    
+    # Monitoring
+    ENABLE_AI_WORKFLOW_LOGGING: bool = os.getenv("ENABLE_AI_WORKFLOW_LOGGING", "True").lower() in ("true", "1", "yes", "on")
+    AI_METRICS_COLLECTION_ENABLED: bool = os.getenv("AI_METRICS_COLLECTION_ENABLED", "True").lower() in ("true", "1", "yes", "on")
+
+
 # Global configuration instances
 db_config = DatabaseConfig()
 redis_config = RedisConfig()
 security_config = SecurityConfig()
 app_config = AppConfig()
+ai_config = AIConfig()
 
 
 def get_test_database_url() -> str:
@@ -116,6 +140,44 @@ def get_database_url() -> str:
 def get_redis_url() -> str:
     """Get Redis URL."""
     return RedisConfig.get_url()
+
+
+def get_settings():
+    """Get combined settings object for easy access."""
+    class Settings:
+        # Database
+        DATABASE_URL = get_database_url()
+        TEST_DATABASE_URL = get_test_database_url()
+        REDIS_URL = get_redis_url()
+        
+        # Security
+        SECRET_KEY = security_config.SECRET_KEY
+        ALGORITHM = security_config.ALGORITHM
+        ACCESS_TOKEN_EXPIRE_MINUTES = security_config.ACCESS_TOKEN_EXPIRE_MINUTES
+        REFRESH_TOKEN_EXPIRE_DAYS = security_config.REFRESH_TOKEN_EXPIRE_DAYS
+        
+        # App
+        DEBUG = app_config.DEBUG
+        LOG_LEVEL = app_config.LOG_LEVEL
+        ENVIRONMENT = app_config.ENVIRONMENT
+        API_V1_STR = app_config.API_V1_STR
+        PROJECT_NAME = app_config.PROJECT_NAME
+        ALLOWED_HOSTS = app_config.ALLOWED_HOSTS
+        
+        # AI
+        OPENAI_API_KEY = ai_config.OPENAI_API_KEY
+        OPENAI_MODEL_NAME = ai_config.OPENAI_MODEL_NAME
+        OPENAI_MAX_TOKENS = ai_config.OPENAI_MAX_TOKENS
+        OPENAI_TEMPERATURE = ai_config.OPENAI_TEMPERATURE
+        OPENAI_REQUEST_TIMEOUT_SECONDS = ai_config.OPENAI_REQUEST_TIMEOUT_SECONDS
+        LANGGRAPH_WORKFLOW_TIMEOUT_SECONDS = ai_config.LANGGRAPH_WORKFLOW_TIMEOUT_SECONDS
+        LANGGRAPH_MAX_RETRIES = ai_config.LANGGRAPH_MAX_RETRIES
+        STRUCTURE_AGENT_CONFIDENCE_THRESHOLD = ai_config.STRUCTURE_AGENT_CONFIDENCE_THRESHOLD
+        APPEAL_AGENT_CONFIDENCE_THRESHOLD = ai_config.APPEAL_AGENT_CONFIDENCE_THRESHOLD
+        ENABLE_AI_WORKFLOW_LOGGING = ai_config.ENABLE_AI_WORKFLOW_LOGGING
+        AI_METRICS_COLLECTION_ENABLED = ai_config.AI_METRICS_COLLECTION_ENABLED
+    
+    return Settings()
 
 
 # Validate critical configuration on import
