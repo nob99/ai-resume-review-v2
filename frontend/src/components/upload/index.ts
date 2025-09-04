@@ -1,6 +1,7 @@
 // Upload components barrel export
 export { default as FileUpload } from './FileUpload'
 export { default as FilePreview, FilePreviewItem } from './FilePreview'
+export { default as UploadProgressDashboard } from './UploadProgressDashboard'
 export * from './FileValidation'
 
 // Export types

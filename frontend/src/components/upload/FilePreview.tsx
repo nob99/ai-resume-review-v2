@@ -3,22 +3,26 @@
 import React from 'react'
 import { Card, CardContent, Button } from '../ui'
 import { cn } from '../../lib/utils'
-import { BaseComponentProps, UploadedFile } from '../../types'
+import { BaseComponentProps, UploadedFile, DetailedProgressInfo, UploadedFileV2 } from '../../types'
 import { formatFileSize, getFileTypeDisplayName, isLikelyResume } from './FileValidation'
 
 interface FilePreviewProps extends BaseComponentProps {
-  files: UploadedFile[]
+  files: (UploadedFile | UploadedFileV2)[]
   onRemove?: (fileId: string) => void
   onRetry?: (fileId: string) => void
+  onCancel?: (fileId: string) => void
   showProgress?: boolean
+  showDetailedProgress?: boolean
   readOnly?: boolean
 }
 
 interface FilePreviewItemProps extends BaseComponentProps {
-  uploadedFile: UploadedFile
+  uploadedFile: UploadedFile | UploadedFileV2
   onRemove?: (fileId: string) => void
   onRetry?: (fileId: string) => void
+  onCancel?: (fileId: string) => void
   showProgress?: boolean
+  showDetailedProgress?: boolean
   readOnly?: boolean
 }
 
@@ -65,13 +69,39 @@ const FileIcon: React.FC<{ file: File; status: UploadedFile['status'] }> = ({ fi
   }
 }
 
-const StatusIndicator: React.FC<{ status: UploadedFile['status']; progress: number }> = ({ status, progress }) => {
+const StatusIndicator: React.FC<{ 
+  status: UploadedFile['status'] | 'cancelled' | 'queued'
+  progress: number
+  detailedProgress?: DetailedProgressInfo
+}> = ({ status, progress, detailedProgress }) => {
+  const formatSpeed = (bytesPerSecond: number): string => {
+    if (bytesPerSecond === 0) return ''
+    const kbps = bytesPerSecond / 1024
+    if (kbps < 1024) {
+      return ` (${kbps.toFixed(1)} KB/s)`
+    }
+    const mbps = kbps / 1024
+    return ` (${mbps.toFixed(1)} MB/s)`
+  }
+
+  const formatTime = (milliseconds: number): string => {
+    const seconds = Math.floor(milliseconds / 1000)
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    
+    if (minutes === 0) {
+      return `${remainingSeconds}s`
+    }
+    return `${minutes}m ${remainingSeconds}s`
+  }
+
   switch (status) {
     case 'pending':
+    case 'queued':
       return (
         <div className="flex items-center space-x-2 text-neutral-500">
           <div className="w-2 h-2 rounded-full bg-neutral-300"></div>
-          <span className="text-sm">Pending</span>
+          <span className="text-sm">Queued</span>
         </div>
       )
     
@@ -79,7 +109,15 @@ const StatusIndicator: React.FC<{ status: UploadedFile['status']; progress: numb
       return (
         <div className="flex items-center space-x-2 text-primary-600">
           <div className="w-4 h-4 border-2 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
-          <span className="text-sm">Uploading... {Math.round(progress)}%</span>
+          <span className="text-sm">
+            Uploading... {Math.round(progress)}%
+            {detailedProgress?.speed ? formatSpeed(detailedProgress.speed) : ''}
+          </span>
+          {detailedProgress?.estimatedTimeRemaining && detailedProgress.estimatedTimeRemaining > 0 && (
+            <span className="text-xs text-neutral-500">
+              • {formatTime(detailedProgress.estimatedTimeRemaining)} remaining
+            </span>
+          )}
         </div>
       )
     
@@ -116,6 +154,21 @@ const StatusIndicator: React.FC<{ status: UploadedFile['status']; progress: numb
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
           <span className="text-sm font-medium">Failed</span>
+          {detailedProgress?.retryCount && detailedProgress.retryCount > 0 && (
+            <span className="text-xs text-error-500">
+              (Retry {detailedProgress.retryCount}/{detailedProgress.maxRetries})
+            </span>
+          )}
+        </div>
+      )
+    
+    case 'cancelled':
+      return (
+        <div className="flex items-center space-x-2 text-neutral-600">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="text-sm font-medium">Cancelled</span>
         </div>
       )
     
@@ -154,17 +207,23 @@ const FilePreviewItem: React.FC<FilePreviewItemProps> = ({
   uploadedFile,
   onRemove,
   onRetry,
+  onCancel,
   showProgress = true,
+  showDetailedProgress = false,
   readOnly = false,
   className,
   ...props
 }) => {
   const { file, id, status, progress, error } = uploadedFile
+  const detailedProgress = 'progressInfo' in uploadedFile ? uploadedFile.progressInfo : undefined
+  const displayStatus = detailedProgress?.stage || status
+  const displayProgress = detailedProgress?.percentage || progress
   
   const cardClasses = cn(
     'transition-all duration-200',
-    status === 'error' && 'border-error-200 bg-error-50',
-    status === 'completed' && 'border-success-200 bg-success-50',
+    displayStatus === 'error' && 'border-error-200 bg-error-50',
+    displayStatus === 'completed' && 'border-success-200 bg-success-50',
+    displayStatus === 'cancelled' && 'border-neutral-300 bg-neutral-50',
     className
   )
 
@@ -176,13 +235,19 @@ const FilePreviewItem: React.FC<FilePreviewItemProps> = ({
     onRetry?.(id)
   }
 
+  const handleCancel = () => {
+    onCancel?.(id)
+  }
+
+  const isProcessing = ['uploading', 'validating', 'extracting'].includes(displayStatus)
+
   return (
     <Card className={cardClasses} {...props}>
       <CardContent className="p-4">
         <div className="flex items-start space-x-3">
           {/* File Icon */}
           <div className="flex-shrink-0 mt-1">
-            <FileIcon file={file} status={status} />
+            <FileIcon file={file} status={displayStatus as UploadedFile['status']} />
           </div>
           
           {/* File Info */}
@@ -199,13 +264,28 @@ const FilePreviewItem: React.FC<FilePreviewItemProps> = ({
                 </h4>
                 <p className="text-xs text-neutral-500 mt-0.5">
                   {getFileTypeDisplayName(file)} • {formatFileSize(file.size)}
+                  {detailedProgress?.bytesUploaded && detailedProgress.bytesUploaded > 0 && (
+                    <span className="text-primary-600">
+                      {' '}• {formatFileSize(detailedProgress.bytesUploaded)} uploaded
+                    </span>
+                  )}
                 </p>
               </div>
               
               {/* Actions */}
               {!readOnly && (
                 <div className="flex items-center space-x-2 ml-4">
-                  {status === 'error' && onRetry && (
+                  {isProcessing && onCancel && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleCancel}
+                      className="h-6 px-2 text-xs text-warning-600 hover:text-warning-700"
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                  {displayStatus === 'error' && onRetry && (
                     <Button
                       size="sm"
                       variant="ghost"
@@ -215,35 +295,53 @@ const FilePreviewItem: React.FC<FilePreviewItemProps> = ({
                       Retry
                     </Button>
                   )}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={handleRemove}
-                    className="h-6 w-6 p-0 text-neutral-400 hover:text-error-600"
-                    aria-label={`Remove ${file.name}`}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </Button>
+                  {!isProcessing && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleRemove}
+                      className="h-6 w-6 p-0 text-neutral-400 hover:text-error-600"
+                      aria-label={`Remove ${file.name}`}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
             
             {/* Status and Progress */}
             <div className="mt-2 space-y-2">
-              <StatusIndicator status={status} progress={progress} />
-              {showProgress && <ProgressBar progress={progress} status={status} />}
+              <StatusIndicator 
+                status={displayStatus as any} 
+                progress={displayProgress} 
+                detailedProgress={showDetailedProgress ? detailedProgress : undefined}
+              />
+              {showProgress && <ProgressBar progress={displayProgress} status={displayStatus as UploadedFile['status']} />}
+              
+              {/* Detailed Progress Stats */}
+              {showDetailedProgress && detailedProgress && isProcessing && (
+                <div className="flex items-center space-x-3 text-xs text-neutral-600">
+                  {detailedProgress.speed > 0 && (
+                    <span>Speed: {formatFileSize(detailedProgress.speed)}/s</span>
+                  )}
+                  {detailedProgress.timeElapsed > 0 && (
+                    <span>Elapsed: {Math.floor(detailedProgress.timeElapsed / 1000)}s</span>
+                  )}
+                </div>
+              )}
               
               {/* Error Message */}
-              {status === 'error' && error && (
+              {displayStatus === 'error' && error && (
                 <p className="text-xs text-error-600 bg-error-50 p-2 rounded border border-error-200">
                   {error}
                 </p>
               )}
               
               {/* Extracted Text Preview */}
-              {status === 'completed' && uploadedFile.extractedText && (
+              {displayStatus === 'completed' && uploadedFile.extractedText && (
                 <div className="mt-3 p-3 bg-neutral-50 border border-neutral-200 rounded">
                   <h5 className="text-xs font-medium text-neutral-700 mb-2">Text Preview:</h5>
                   <p className="text-xs text-neutral-600 line-clamp-3">
@@ -261,12 +359,31 @@ const FilePreviewItem: React.FC<FilePreviewItemProps> = ({
 }
 
 const FilePreview = React.forwardRef<HTMLDivElement, FilePreviewProps>(
-  ({ files, onRemove, onRetry, showProgress = true, readOnly = false, className, ...props }, ref) => {
+  ({ 
+    files, 
+    onRemove, 
+    onRetry, 
+    onCancel,
+    showProgress = true, 
+    showDetailedProgress = false,
+    readOnly = false, 
+    className, 
+    ...props 
+  }, ref) => {
     if (files.length === 0) return null
 
-    const completedCount = files.filter(f => f.status === 'completed').length
-    const errorCount = files.filter(f => f.status === 'error').length
-    const processingCount = files.filter(f => ['uploading', 'validating', 'extracting'].includes(f.status)).length
+    // Helper function to get status from file (handles both UploadedFile and UploadedFileV2)
+    const getFileStatus = (file: UploadedFile | UploadedFileV2) => {
+      if ('progressInfo' in file && file.progressInfo) {
+        return file.progressInfo.stage
+      }
+      return file.status
+    }
+
+    const completedCount = files.filter(f => getFileStatus(f) === 'completed').length
+    const errorCount = files.filter(f => getFileStatus(f) === 'error').length
+    const cancelledCount = files.filter(f => getFileStatus(f) === 'cancelled').length
+    const processingCount = files.filter(f => ['uploading', 'validating', 'extracting'].includes(getFileStatus(f))).length
 
     return (
       <div ref={ref} className={cn('space-y-4', className)} {...props}>
@@ -301,6 +418,15 @@ const FilePreview = React.forwardRef<HTMLDivElement, FilePreviewProps>(
                 <span className="text-sm">{errorCount} failed</span>
               </div>
             )}
+
+            {cancelledCount > 0 && (
+              <div className="flex items-center space-x-1 text-neutral-600">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-sm">{cancelledCount} cancelled</span>
+              </div>
+            )}
           </div>
           
           {!readOnly && files.length > 0 && (
@@ -320,10 +446,12 @@ const FilePreview = React.forwardRef<HTMLDivElement, FilePreviewProps>(
           {files.map((uploadedFile) => (
             <FilePreviewItem
               key={uploadedFile.id}
-              uploadedFile={uploadedFile}
+              uploadedFile={uploadedFile as any}
               onRemove={onRemove}
               onRetry={onRetry}
+              onCancel={onCancel}
               showProgress={showProgress}
+              showDetailedProgress={showDetailedProgress}
               readOnly={readOnly}
             />
           ))}

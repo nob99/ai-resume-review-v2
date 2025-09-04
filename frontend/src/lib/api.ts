@@ -1,5 +1,16 @@
-import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios'
-import { LoginRequest, LoginResponse, User, ApiError, AuthExpiredError, AuthInvalidError, NetworkError, ApiResult } from '@/types'
+import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosProgressEvent } from 'axios'
+import { 
+  LoginRequest, 
+  LoginResponse, 
+  User, 
+  ApiError, 
+  AuthExpiredError, 
+  AuthInvalidError, 
+  NetworkError, 
+  ApiResult,
+  DetailedProgressInfo,
+  UploadedFileV2,
+} from '@/types'
 
 // Base API URL - will be configurable via environment variable
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -269,6 +280,317 @@ export const authApi = {
 // Utility function to check if user is authenticated
 export function isAuthenticated(): boolean {
   return TokenStorage.getAccessToken() !== null
+}
+
+// File upload API functions with progress tracking
+export const uploadApi = {
+  async uploadFile(
+    file: File,
+    onProgress?: (progress: AxiosProgressEvent) => void,
+    abortController?: AbortController
+  ): Promise<ApiResult<UploadedFileV2>> {
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await api.post<UploadedFileV2>('/files/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: onProgress,
+        signal: abortController?.signal,
+      })
+
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (axios.isCancel(error)) {
+        return {
+          success: false,
+          error: new Error('Upload cancelled')
+        }
+      }
+
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+
+      return {
+        success: false,
+        error: new Error('Upload failed')
+      }
+    }
+  },
+
+  async uploadMultipleFiles(
+    files: File[],
+    onProgress?: (fileId: string, progress: AxiosProgressEvent) => void,
+    abortControllers?: Map<string, AbortController>
+  ): Promise<ApiResult<UploadedFileV2[]>> {
+    try {
+      const uploadPromises = files.map(async (file) => {
+        const fileId = `${file.name}-${Date.now()}`
+        const abortController = abortControllers?.get(fileId)
+        
+        const result = await this.uploadFile(
+          file,
+          (progress) => onProgress?.(fileId, progress),
+          abortController
+        )
+
+        if (!result.success) {
+          throw result.error
+        }
+
+        return result.data!
+      })
+
+      const results = await Promise.all(uploadPromises)
+
+      return {
+        success: true,
+        data: results
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error as Error
+      }
+    }
+  },
+
+  async getFileStatus(fileId: string): Promise<ApiResult<UploadedFileV2>> {
+    try {
+      const response = await api.get<UploadedFileV2>(`/files/${fileId}/status`)
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+
+      return {
+        success: false,
+        error: new Error('Failed to get file status')
+      }
+    }
+  },
+
+  async cancelUpload(fileId: string): Promise<ApiResult<void>> {
+    try {
+      await api.post(`/files/${fileId}/cancel`)
+      return {
+        success: true
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+
+      return {
+        success: false,
+        error: new Error('Failed to cancel upload')
+      }
+    }
+  },
+
+  async deleteFile(fileId: string): Promise<ApiResult<void>> {
+    try {
+      await api.delete(`/files/${fileId}`)
+      return {
+        success: true
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+
+      return {
+        success: false,
+        error: new Error('Failed to delete file')
+      }
+    }
+  },
+
+  async retryUpload(
+    file: File,
+    fileId: string,
+    onProgress?: (progress: AxiosProgressEvent) => void,
+    abortController?: AbortController
+  ): Promise<ApiResult<UploadedFileV2>> {
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('retry_file_id', fileId)
+
+      const response = await api.post<UploadedFileV2>('/files/retry', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: onProgress,
+        signal: abortController?.signal,
+      })
+
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (axios.isCancel(error)) {
+        return {
+          success: false,
+          error: new Error('Upload cancelled')
+        }
+      }
+
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+
+      return {
+        success: false,
+        error: new Error('Retry upload failed')
+      }
+    }
+  },
+}
+
+// WebSocket connection for real-time progress updates
+export class UploadWebSocket {
+  private ws: WebSocket | null = null
+  private reconnectAttempts = 0
+  private maxReconnectAttempts = 5
+  private reconnectDelay = 1000
+
+  constructor(
+    private onMessage: (data: any) => void,
+    private onError?: (error: Event) => void,
+    private onClose?: () => void
+  ) {}
+
+  connect(): void {
+    const wsUrl = BASE_URL.replace('http', 'ws') + '/ws/upload-progress'
+    
+    try {
+      this.ws = new WebSocket(wsUrl)
+      
+      this.ws.onopen = () => {
+        console.log('WebSocket connected for upload progress')
+        this.reconnectAttempts = 0
+      }
+
+      this.ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          this.onMessage(data)
+        } catch (error) {
+          console.error('Failed to parse WebSocket message:', error)
+        }
+      }
+
+      this.ws.onerror = (error) => {
+        console.error('WebSocket error:', error)
+        this.onError?.(error)
+      }
+
+      this.ws.onclose = () => {
+        console.log('WebSocket closed')
+        this.onClose?.()
+        this.attemptReconnect()
+      }
+    } catch (error) {
+      console.error('Failed to create WebSocket:', error)
+      this.attemptReconnect()
+    }
+  }
+
+  private attemptReconnect(): void {
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.reconnectAttempts++
+      console.log(`Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`)
+      
+      setTimeout(() => {
+        this.connect()
+      }, this.reconnectDelay * this.reconnectAttempts)
+    }
+  }
+
+  send(message: any): void {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(message))
+    }
+  }
+
+  disconnect(): void {
+    if (this.ws) {
+      this.ws.close()
+      this.ws = null
+    }
+  }
 }
 
 // Export the configured axios instance for custom requests

@@ -75,16 +75,84 @@ export interface ApiResult<T> {
 
 // File upload types
 export interface FileUploadError extends Error {
-  code: 'INVALID_TYPE' | 'FILE_TOO_LARGE' | 'UPLOAD_FAILED' | 'VALIDATION_FAILED'
+  code: 'INVALID_TYPE' | 'FILE_TOO_LARGE' | 'UPLOAD_FAILED' | 'VALIDATION_FAILED' | 'CANCELLED'
 }
 
 export interface UploadedFile {
   file: File
   id: string
-  status: 'pending' | 'uploading' | 'validating' | 'extracting' | 'completed' | 'error'
+  status: 'pending' | 'uploading' | 'validating' | 'extracting' | 'completed' | 'error' | 'cancelled'
   progress: number
   error?: string
   extractedText?: string
+}
+
+// Enhanced progress tracking types for UPLOAD-004
+export interface DetailedProgressInfo {
+  fileId: string
+  fileName: string
+  stage: 'queued' | 'uploading' | 'validating' | 'extracting' | 'completed' | 'error' | 'cancelled'
+  percentage: number
+  bytesUploaded: number
+  totalBytes: number
+  timeElapsed: number // milliseconds
+  estimatedTimeRemaining: number // milliseconds
+  speed: number // bytes per second
+  retryCount: number
+  maxRetries: number
+}
+
+export interface UploadProgressState {
+  files: Map<string, DetailedProgressInfo>
+  overallProgress: number
+  totalFiles: number
+  completedFiles: number
+  failedFiles: number
+  isUploading: boolean
+  startTime: number
+  estimatedTotalTime: number
+}
+
+export interface TimeEstimation {
+  remaining: number // milliseconds
+  percentage: number
+  speed: number // bytes per second
+  formattedRemaining: string // "2m 30s"
+}
+
+export interface UploadCancellationToken {
+  fileId: string
+  abortController: AbortController
+  timestamp: number
+}
+
+// Enhanced file type with detailed progress
+export interface UploadedFileV2 extends UploadedFile {
+  progressInfo?: DetailedProgressInfo
+  cancellationToken?: UploadCancellationToken
+  startTime?: number
+  endTime?: number
+  retryAttempts?: number
+}
+
+// Progress event types
+export interface UploadProgressEvent {
+  type: 'progress' | 'stage-change' | 'error' | 'complete' | 'cancelled'
+  fileId: string
+  data: Partial<DetailedProgressInfo>
+  timestamp: number
+}
+
+// WebSocket message types for real-time updates
+export interface ProgressWebSocketMessage {
+  type: 'progress_update' | 'status_change' | 'error' | 'batch_complete'
+  payload: {
+    fileId?: string
+    progress?: number
+    stage?: string
+    message?: string
+    timestamp: number
+  }
 }
 
 export interface FileValidationResult {
