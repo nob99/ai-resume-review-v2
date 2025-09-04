@@ -17,7 +17,7 @@ export interface ButtonProps extends BaseComponentProps {
 
 // Variant styles mapping
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: 'bg-primary-500 hover:bg-primary-600 focus:ring-primary-500 text-white border-transparent',
+  primary: 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 text-white border-transparent',
   secondary: 'bg-secondary-500 hover:bg-secondary-600 focus:ring-secondary-500 text-white border-transparent',
   danger: 'bg-error-500 hover:bg-error-600 focus:ring-error-500 text-white border-transparent',
   outline: 'bg-transparent hover:bg-neutral-50 focus:ring-primary-500 text-neutral-700 border-neutral-300 hover:border-neutral-400',
@@ -110,7 +110,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {loading ? (
           <span className="opacity-0">{children}</span>
         ) : (
-          <span>{children}</span>
+          <span className="text-white">{children}</span>
         )}
       </button>
     )
