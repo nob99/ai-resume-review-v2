@@ -40,7 +40,7 @@ const UserMenu: React.FC<{ isOpen: boolean; onToggle: () => void }> = ({ isOpen,
         aria-expanded={isOpen}
       >
         {/* User avatar */}
-        <div className="w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
+        <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
           {user.first_name?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
         </div>
         <span className="hidden sm:inline-block font-medium text-neutral-700">
@@ -249,7 +249,7 @@ const Header: React.FC<HeaderProps> = ({ className, showUserMenu = true }) => {
           {/* Logo and brand */}
           <div className="flex items-center">
             <a href="/" className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-primary-500 text-white rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center">
                 <span className="font-bold text-sm">AI</span>
               </div>
               <span className="font-bold text-xl text-neutral-900">
