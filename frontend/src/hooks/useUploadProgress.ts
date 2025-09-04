@@ -5,7 +5,7 @@ import {
   UploadCancellationToken,
   UploadProgressEvent,
   TimeEstimation,
-} from '@/types'
+} from '../types'
 
 interface UseUploadProgressOptions {
   maxRetries?: number

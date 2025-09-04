@@ -109,10 +109,10 @@ const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
 
     const dropzoneClasses = cn(
       // Base classes
-      'relative w-full min-h-[200px] p-8',
+      'relative w-full min-h-[240px] p-8',
       'border-2 border-dashed border-neutral-300',
       'rounded-lg transition-all duration-200',
-      'cursor-pointer',
+      'cursor-pointer bg-white shadow-sm',
       
       // Hover and focus states
       'hover:border-primary-400 hover:bg-primary-50',
@@ -168,23 +168,23 @@ const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
               {/* Main text */}
               <div className="space-y-2">
                 <p className={cn(
-                  'text-lg font-medium',
+                  'text-lg font-bold',
                   isDragActive ? 'text-primary-700' : 'text-neutral-700',
                   disabled && 'text-neutral-400'
                 )}>
-                  {isDragActive ? 'Drop files here' : 'Drag & drop resume files'}
+                  {isDragActive ? 'Drop files here to upload' : 'Drag & drop resume files here'}
                 </p>
                 <p className={cn(
-                  'text-sm',
-                  isDragActive ? 'text-primary-600' : 'text-neutral-500',
+                  'text-base',
+                  isDragActive ? 'text-primary-600' : 'text-neutral-600',
                   disabled && 'text-neutral-300'
                 )}>
                   or{' '}
                   <span className={cn(
-                    'font-medium underline',
-                    !disabled && 'hover:text-primary-600'
+                    'font-semibold underline text-blue-600',
+                    !disabled && 'hover:text-blue-700 cursor-pointer'
                   )}>
-                    click to browse
+                    click here to browse files
                   </span>
                 </p>
               </div>

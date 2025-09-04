@@ -527,17 +527,40 @@ Skills: JavaScript, Python, AWS, Docker, Kubernetes`
                 </div>
               )}
 
-              {/* Help Text */}
+              {/* Help Text and Instructions */}
               {selectedFiles.length === 0 && (
-                <Alert>
-                  <h3 className="font-medium mb-2">Getting Started</h3>
-                  <ul className="text-sm space-y-1 list-disc list-inside">
-                    <li>Upload PDF, DOC, or DOCX resume files</li>
-                    <li>Maximum file size: 10MB per file</li>
-                    <li>You can upload up to 5 files at once</li>
-                    <li>Files are processed securely and not stored permanently</li>
-                  </ul>
-                </Alert>
+                <div className="space-y-6">
+                  <Alert>
+                    <h3 className="font-medium mb-2">Getting Started</h3>
+                    <ul className="text-sm space-y-1 list-disc list-inside">
+                      <li>Upload PDF, DOC, or DOCX resume files</li>
+                      <li>Maximum file size: 10MB per file</li>
+                      <li>You can upload up to 5 files at once</li>
+                      <li>Files are processed securely and not stored permanently</li>
+                    </ul>
+                  </Alert>
+                  
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <h3 className="text-sm font-medium text-blue-800">
+                          Next Step: Select Your Resume Files
+                        </h3>
+                        <div className="mt-2 text-sm text-blue-700">
+                          <p>
+                            Use the drag-and-drop area above to select your resume files. 
+                            After selecting files, upload buttons will appear to start processing.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
           </div>
