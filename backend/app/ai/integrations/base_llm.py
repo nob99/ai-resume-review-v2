@@ -209,7 +209,7 @@ class BaseLLM(ABC):
             model=self.model,
             usage_stats=usage_stats,
             response_time_ms=response_time_ms,
-            timestamp=time.time()
+            timestamp=str(time.time())
         )
     
     def _handle_api_error(self, error: Exception) -> LLMError:

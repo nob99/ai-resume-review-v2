@@ -390,13 +390,19 @@ Provide detailed, actionable feedback with specific scores and recommendations f
             
             # Check if line indicates a new category
             line_lower = line.lower()
+            category_found = False
             for category, patterns in category_patterns.items():
                 for pattern in patterns:
                     if re.search(pattern, line_lower):
                         current_category = category
+                        category_found = True
                         break
-                if current_category == category:
+                if category_found:
                     break
+            
+            # If this line is a category header, don't process it as an item
+            if category_found:
+                continue
             
             # Extract list items (lines starting with bullets, dashes, numbers)
             if current_category and re.match(r'^[-•*\d+\.]\s+', line):

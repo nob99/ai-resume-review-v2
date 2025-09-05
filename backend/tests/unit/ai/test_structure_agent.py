@@ -8,6 +8,7 @@ output parsing, validation, and error handling.
 
 import pytest
 from unittest.mock import MagicMock, AsyncMock
+from pydantic import ValidationError
 from app.ai.agents.structure_agent import StructureAgent
 from app.ai.models.analysis_request import AnalysisState, StructureAnalysisResult
 from app.ai.integrations.base_llm import MockLLM, LLMResponse
@@ -353,28 +354,27 @@ class TestStructureAgent:
         
         assert structure_agent.validate_structure_result(valid_result) is True
         
-        # Invalid result - score out of range
-        invalid_result = StructureAnalysisResult(
-            format_score=150.0,  # Invalid score
-            section_organization_score=80.0,
-            professional_tone_score=90.0,
-            completeness_score=75.0,
-            formatting_issues=[],
-            missing_sections=[],
-            tone_problems=[],
-            completeness_gaps=[],
-            strengths=["Good formatting"],
-            recommendations=["Add metrics"],
-            total_sections_found=4,
-            word_count=500,
-            estimated_reading_time_minutes=3,
-            confidence_score=0.8,
-            processing_time_ms=1000,
-            model_used="test",
-            prompt_version="test"
-        )
-        
-        assert structure_agent.validate_structure_result(invalid_result) is False
+        # Test that invalid scores raise validation errors
+        with pytest.raises(ValidationError):
+            invalid_result = StructureAnalysisResult(
+                format_score=150.0,  # Invalid score - over 100
+                section_organization_score=80.0,
+                professional_tone_score=90.0,
+                completeness_score=75.0,
+                formatting_issues=[],
+                missing_sections=[],
+                tone_problems=[],
+                completeness_gaps=[],
+                strengths=["Good formatting"],
+                recommendations=["Add metrics"],
+                total_sections_found=4,
+                word_count=500,
+                estimated_reading_time_minutes=3,
+                confidence_score=0.8,
+                processing_time_ms=1000,
+                model_used="test",
+                prompt_version="test"
+            )
     
     def test_get_capabilities(self, structure_agent):
         """Test agent capabilities reporting."""
