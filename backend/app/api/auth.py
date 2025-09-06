@@ -246,7 +246,7 @@ async def register(
         # TODO: Add email verification in future sprint
         # background_tasks.add_task(send_verification_email, new_user.email)
         
-        return UserResponse.from_orm(new_user)
+        return UserResponse.model_validate(new_user)
         
     except HTTPException:
         raise
@@ -379,7 +379,7 @@ async def login(
         
         # Build response carefully to catch any serialization issues
         try:
-            user_data = UserResponse.from_orm(user).model_dump()
+            user_data = UserResponse.model_validate(user).model_dump()
         except Exception as e:
             logger.error(f"Error serializing user data: {str(e)}")
             # Return basic user info if serialization fails
@@ -462,7 +462,7 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
     Returns:
         Current user information
     """
-    return UserResponse.from_orm(current_user)
+    return UserResponse.model_validate(current_user)
 
 
 @router.put("/me", response_model=UserResponse)
@@ -495,7 +495,7 @@ async def update_current_user(
         
         logger.info(f"User updated: {current_user.email}")
         
-        return UserResponse.from_orm(current_user)
+        return UserResponse.model_validate(current_user)
         
     except Exception as e:
         db.rollback()
@@ -625,7 +625,7 @@ async def list_users(
         List of users with detailed information
     """
     users = db.query(User).offset(skip).limit(limit).all()
-    return [UserDetailResponse.from_orm(user) for user in users]
+    return [UserDetailResponse.model_validate(user) for user in users]
 
 
 @router.post("/admin/reset-password")

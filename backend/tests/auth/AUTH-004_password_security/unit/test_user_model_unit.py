@@ -468,7 +468,7 @@ class TestPydanticModels:
         """Test UserResponse model."""
         user = create_test_user()
         
-        response = UserResponse.from_orm(user)
+        response = UserResponse.model_validate(user)
         
         assert response.id == user.id
         assert response.email == user.email

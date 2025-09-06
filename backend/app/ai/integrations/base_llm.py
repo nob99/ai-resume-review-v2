@@ -12,7 +12,7 @@ and provides async support for high-performance processing.
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, AsyncGenerator
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 import time
 import asyncio
 import logging
@@ -29,8 +29,7 @@ class LLMResponse(BaseModel):
     response_time_ms: int
     timestamp: str
     
-    class Config:
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 class LLMError(Exception):

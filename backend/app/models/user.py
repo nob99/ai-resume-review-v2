@@ -13,7 +13,7 @@ from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import validates
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 
 from app.core.security import (
     password_hasher, 
@@ -336,8 +336,7 @@ class UserResponse(UserBase):
     last_login_at: Optional[datetime] = None
     full_name: str
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserDetailResponse(UserResponse):
@@ -347,8 +346,7 @@ class UserDetailResponse(UserResponse):
     locked_until: Optional[datetime] = None
     password_changed_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LoginRequest(BaseModel):

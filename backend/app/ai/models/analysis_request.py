@@ -13,7 +13,7 @@ Key Models:
 """
 
 from typing import TypedDict, Optional, List, Literal, Dict, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 
 
@@ -290,10 +290,11 @@ class CompleteAnalysisResult(BaseModel):
         default_factory=dict
     )
     
-    class Config:
-        json_encoders = {
+    model_config = ConfigDict(
+        json_encoders={
             datetime: lambda dt: dt.isoformat()
         }
+    )
         
     def get_score_breakdown(self) -> Dict[str, float]:
         """Get detailed score breakdown for frontend display."""
