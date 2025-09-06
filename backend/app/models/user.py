@@ -11,9 +11,9 @@ from enum import Enum
 
 from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import validates
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from app.core.security import (
     password_hasher, 
@@ -277,7 +277,8 @@ class UserCreate(UserBase):
     """User creation model with password."""
     password: str = Field(..., min_length=8, max_length=128)
     
-    @validator('password')
+    @field_validator('password')
+    @classmethod
     def validate_password(cls, password):
         """Validate password strength."""
         validation_result = password_hasher.validate_password(password)
@@ -300,7 +301,8 @@ class PasswordUpdate(BaseModel):
     current_password: str = Field(..., min_length=1)
     new_password: str = Field(..., min_length=8, max_length=128)
     
-    @validator('new_password')
+    @field_validator('new_password')
+    @classmethod
     def validate_new_password(cls, password):
         """Validate new password strength."""
         validation_result = password_hasher.validate_password(password)
@@ -315,7 +317,8 @@ class AdminPasswordReset(BaseModel):
     new_password: str = Field(..., min_length=8, max_length=128)
     force_password_change: bool = Field(default=True)
     
-    @validator('new_password')
+    @field_validator('new_password')
+    @classmethod
     def validate_new_password(cls, password):
         """Validate new password strength."""
         validation_result = password_hasher.validate_password(password)

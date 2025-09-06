@@ -1,3 +1,0 @@
-"""
-Resume analysis agents.
-"""
