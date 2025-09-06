@@ -102,17 +102,16 @@ class TestAuthIntegrationFlow:
     
     def test_successful_login_with_real_user(self, client, create_test_user):
         """Test successful login response format with real user in database."""
-        # Create a real user in the database
+        # Create a real user in the database with unique email
         test_user = create_test_user(
-            email="integration.test@example.com",
             password="TestPassword123!",
             first_name="Integration",
             last_name="Test"
         )
         
-        # Make login request
+        # Make login request using the generated email
         response = client.post("/api/v1/auth/login", json={
-            "email": "integration.test@example.com",
+            "email": test_user.email,
             "password": "TestPassword123!"
         })
         
@@ -136,7 +135,7 @@ class TestAuthIntegrationFlow:
         for field in user_required_fields:
             assert field in user_data, f"Missing user field: {field}"
         
-        assert user_data["email"] == "integration.test@example.com"
+        assert user_data["email"] == test_user.email
         assert user_data["first_name"] == "Integration"
         assert user_data["last_name"] == "Test"
         assert user_data["role"] == "consultant"
