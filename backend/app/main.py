@@ -12,10 +12,13 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api.auth import router as auth_router
 from app.database.connection import init_database, close_database, get_db_health
 from app.core.rate_limiter import rate_limiter
 from app.core.security import SecurityError
+from app.core.config import get_settings
+
+# Get settings to check feature flags
+settings = get_settings()
 
 # Configure logging
 logging.basicConfig(
@@ -128,8 +131,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers with API versioning
-app.include_router(auth_router, prefix="/api/v1")
+# Include routers with API versioning and feature flags
+if settings.USE_NEW_AUTH:
+    from app.features.auth.api import router as new_auth_router
+    app.include_router(new_auth_router, prefix="/api/v1", tags=["auth"])
+    logger.info("Using NEW auth implementation")
+else:
+    from app.api.auth import router as auth_router
+    app.include_router(auth_router, prefix="/api/v1")
+    logger.info("Using OLD auth implementation")
 
 # Global exception handlers
 @app.exception_handler(SecurityError)

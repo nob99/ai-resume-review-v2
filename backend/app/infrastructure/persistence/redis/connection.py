@@ -10,7 +10,9 @@ import json
 import redis.asyncio as redis
 from redis.asyncio.connection import ConnectionPool
 
-from app.core.config import settings
+from app.core.config import get_settings
+
+settings = get_settings()
 
 logger = logging.getLogger(__name__)
 
