@@ -134,7 +134,7 @@ app.add_middleware(
 # Include routers with API versioning and feature flags
 if settings.USE_NEW_AUTH:
     from app.features.auth.api import router as new_auth_router
-    app.include_router(new_auth_router, prefix="/api/v1", tags=["auth"])
+    app.include_router(new_auth_router, prefix="/api/v1/auth", tags=["auth"])
     logger.info("Using NEW auth implementation")
 else:
     from app.api.auth import router as auth_router
@@ -274,10 +274,16 @@ async def root():
     }
 
 
-# Startup message
+# Startup message and infrastructure initialization
 @app.on_event("startup")
 async def startup_message():
-    """Log startup message."""
+    """Log startup message and initialize infrastructure if needed."""
+    # Initialize new infrastructure if using new auth
+    if settings.USE_NEW_AUTH:
+        from app.infrastructure.persistence.postgres.connection import init_postgres
+        await init_postgres()
+        logger.info("🔧 New infrastructure initialized (PostgreSQL connection)")
+    
     logger.info("🚀 AI Resume Review Platform API is ready!")
     logger.info("📚 Documentation: http://localhost:8000/docs")
     logger.info("🏥 Health Check: http://localhost:8000/health")

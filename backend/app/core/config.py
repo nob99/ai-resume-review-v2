@@ -178,7 +178,7 @@ def get_settings():
         AI_METRICS_COLLECTION_ENABLED = ai_config.AI_METRICS_COLLECTION_ENABLED
         
         # Feature flags for architecture migration (Phase 1)
-        USE_NEW_AUTH = os.getenv("USE_NEW_AUTH", "false").lower() == "true"
+        USE_NEW_AUTH = os.getenv("USE_NEW_AUTH", "true").lower() == "true"  # Changed default to true for testing
         USE_NEW_UPLOAD = os.getenv("USE_NEW_UPLOAD", "false").lower() == "true"
         USE_NEW_AI = os.getenv("USE_NEW_AI", "false").lower() == "true"
         

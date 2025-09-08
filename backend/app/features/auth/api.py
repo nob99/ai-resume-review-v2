@@ -59,7 +59,8 @@ def get_client_ip(request: Request) -> str:
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded:
         return forwarded.split(",")[0].strip()
-    return request.client.host
+    # Handle test environment where request.client might be None
+    return request.client.host if request.client else "127.0.0.1"
 
 
 def get_user_agent(request: Request) -> Optional[str]:
@@ -105,7 +106,7 @@ async def login(
         client_ip = get_client_ip(request)
         user_agent = get_user_agent(request)
         
-        response = await auth_service.login(login_request, client_ip, user_agent)
+        response = await auth_service.login(login_request, client_ip, user_agent, request)
         
         return response
         

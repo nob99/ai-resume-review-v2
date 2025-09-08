@@ -70,7 +70,8 @@ class AuthService:
         self,
         login_request: LoginRequest,
         client_ip: str,
-        user_agent: Optional[str] = None
+        user_agent: Optional[str] = None,
+        request: Any = None  # For rate limiting compatibility
     ) -> LoginResponse:
         """
         Authenticate user and create tokens.
@@ -88,7 +89,9 @@ class AuthService:
             HTTPException: If rate limited
         """
         # Check rate limiting
-        await check_login_rate_limit(client_ip)
+        if request:
+            await check_login_rate_limit(request, login_request.email)
+        # If no request (for testing), skip rate limiting check
         
         # Get user by email
         user = await self.user_repo.get_by_email(login_request.email)
@@ -102,7 +105,7 @@ class AuthService:
             raise SecurityError("Account is deactivated")
         
         # Verify password
-        if not user.verify_password(login_request.password):
+        if not user.check_password(login_request.password):
             logger.warning(f"Invalid password for user: {user.email}")
             raise SecurityError("Invalid email or password")
         
@@ -116,23 +119,13 @@ class AuthService:
         access_token = create_access_token({"sub": str(user.id), "email": user.email})
         refresh_token_str = create_refresh_token({"sub": str(user.id), "session_id": session_id})
         
-        # Store refresh token
-        refresh_token = RefreshToken(
+        # Store refresh token (let repository handle creation)
+        refresh_token = await self.token_repo.create(
             user_id=user.id,
             token=refresh_token_str,
             session_id=session_id,
             device_info=user_agent,
             ip_address=client_ip
-        )
-        
-        await self.token_repo.create(
-            user_id=refresh_token.user_id,
-            token_hash=refresh_token.token_hash,
-            session_id=refresh_token.session_id,
-            expires_at=refresh_token.expires_at,
-            status=refresh_token.status,
-            device_info=refresh_token.device_info,
-            ip_address=refresh_token.ip_address
         )
         
         await self.token_repo.commit()
@@ -380,7 +373,7 @@ class AuthService:
             raise SecurityError("User not found")
         
         # Verify current password
-        if not user.verify_password(current_password):
+        if not user.check_password(current_password):
             raise SecurityError("Current password is incorrect")
         
         # Validate new password

@@ -79,6 +79,42 @@ class TestAuthLogin:
             return mock_db
         
         app.dependency_overrides[get_db] = get_mock_db
+        
+        # For new auth implementation, also mock the async session
+        if hasattr(app, 'dependency_overrides'):
+            try:
+                from app.infrastructure.persistence.postgres.connection import get_async_session
+                
+                async def get_mock_async_session():
+                    # Create an async-compatible mock that mimics AsyncSession
+                    mock_async_session = AsyncMock()
+                    mock_async_session.execute = AsyncMock()
+                    mock_async_session.commit = AsyncMock()
+                    mock_async_session.rollback = AsyncMock()
+                    mock_async_session.close = AsyncMock()
+                    mock_async_session.add = Mock()
+                    mock_async_session.delete = Mock()
+                    mock_async_session.flush = AsyncMock()
+                    
+                    # Set up query behavior to return the mock user
+                    query_result = AsyncMock()
+                    query_result.scalars.return_value.first.return_value = mock_user
+                    # Make scalar_one_or_none return the user directly (not a coroutine)
+                    def mock_scalar_one_or_none():
+                        return mock_user
+                    query_result.scalar_one_or_none = mock_scalar_one_or_none
+                    
+                    # Make execute return a resolved result (not a coroutine)
+                    async def mock_execute(*args, **kwargs):
+                        return query_result
+                    
+                    mock_async_session.execute = mock_execute
+                    
+                    return mock_async_session
+                
+                app.dependency_overrides[get_async_session] = get_mock_async_session
+            except ImportError:
+                pass  # New infrastructure not available, skip
         mock_rate_limit.return_value = AsyncMock()
         
         # Mock the instance methods on the returned user
