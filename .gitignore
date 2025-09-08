@@ -129,6 +129,3 @@ service-account-key.json
 
 # Local development overrides
 docker-compose.override.yml
-
-# Legacy archived code
-backend/app/archive/
