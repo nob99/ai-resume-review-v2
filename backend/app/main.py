@@ -43,6 +43,12 @@ async def lifespan(app: FastAPI):
         await rate_limiter.connect()
         logger.info("Rate limiter initialized")
         
+        # Initialize new infrastructure if using new auth
+        if settings.USE_NEW_AUTH:
+            from app.infrastructure.persistence.postgres.connection import init_postgres
+            await init_postgres()
+            logger.info("🔧 New infrastructure initialized (PostgreSQL connection)")
+        
         logger.info("Application startup completed successfully")
         
     except Exception as e:
@@ -124,7 +130,9 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",  # React dev server
         "http://localhost:8000",  # Local development
-        "https://*.airesumereview.com",  # Production domains
+        "https://airesumereview.com",  # Production domain
+        "https://www.airesumereview.com",  # Production www domain
+        "https://api.airesumereview.com",  # Production API domain
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -274,19 +282,8 @@ async def root():
     }
 
 
-# Startup message and infrastructure initialization
-@app.on_event("startup")
-async def startup_message():
-    """Log startup message and initialize infrastructure if needed."""
-    # Initialize new infrastructure if using new auth
-    if settings.USE_NEW_AUTH:
-        from app.infrastructure.persistence.postgres.connection import init_postgres
-        await init_postgres()
-        logger.info("🔧 New infrastructure initialized (PostgreSQL connection)")
-    
-    logger.info("🚀 AI Resume Review Platform API is ready!")
-    logger.info("📚 Documentation: http://localhost:8000/docs")
-    logger.info("🏥 Health Check: http://localhost:8000/health")
+# Startup message - moved to lifespan function for proper async handling
+# The new infrastructure initialization is now handled in the lifespan function above
 
 
 if __name__ == "__main__":

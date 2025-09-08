@@ -40,7 +40,7 @@ class PostgresConnection:
         Args:
             database_url: Optional database URL, defaults to settings.DATABASE_URL
         """
-        self.database_url = database_url or settings.DATABASE_URL
+        self.database_url = database_url or settings.ASYNC_DATABASE_URL
         self._engine: Optional[AsyncEngine] = None
         self._sessionmaker: Optional[async_sessionmaker] = None
     

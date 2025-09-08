@@ -47,6 +47,20 @@ class DatabaseConfig:
         """
         db_name = database_name or cls.NAME
         return f"postgresql://{cls.USER}:{cls.PASSWORD}@{cls.HOST}:{cls.PORT}/{db_name}"
+    
+    @classmethod
+    def get_async_url(cls, database_name: Optional[str] = None) -> str:
+        """
+        Get async database URL for SQLAlchemy async operations.
+        
+        Args:
+            database_name: Optional database name override
+            
+        Returns:
+            PostgreSQL async connection URL using asyncpg driver
+        """
+        db_name = database_name or cls.NAME
+        return f"postgresql+asyncpg://{cls.USER}:{cls.PASSWORD}@{cls.HOST}:{cls.PORT}/{db_name}"
 
 
 class RedisConfig:
@@ -137,6 +151,11 @@ def get_database_url() -> str:
     return DatabaseConfig.get_url()
 
 
+def get_async_database_url() -> str:
+    """Get async database URL for new infrastructure."""
+    return DatabaseConfig.get_async_url()
+
+
 def get_redis_url() -> str:
     """Get Redis URL."""
     return RedisConfig.get_url()
@@ -147,6 +166,7 @@ def get_settings():
     class Settings:
         # Database
         DATABASE_URL = get_database_url()
+        ASYNC_DATABASE_URL = get_async_database_url()
         TEST_DATABASE_URL = get_test_database_url()
         REDIS_URL = get_redis_url()
         
