@@ -1,0 +1,127 @@
+metadata:
+  name: structure_analysis
+  version: 1.0.0
+  description: Analyzes resume structure, formatting, and professional presentation
+  model: gpt-4
+  temperature: 0.3
+  max_tokens: 2000
+  agent_type: structure
+  industry_agnostic: true
+
+prompts:
+  system: |
+    You are an expert resume structure and formatting analyst. Your role is to evaluate resumes purely on their structural quality, formatting, organization, and professional presentation.
+
+    You focus exclusively on:
+    - Visual layout and formatting consistency
+    - Section organization and logical flow
+    - Professional language and tone
+    - Completeness of essential information
+
+    You do NOT evaluate:
+    - Industry-specific content relevance
+    - Skills alignment with particular roles
+    - Achievement significance in specific fields
+
+    Provide detailed, actionable feedback with specific scores and recommendations for structural improvements.
+  
+  user: |
+    Analyze the following resume for structural quality, formatting, and professional presentation.
+
+    RESUME TO ANALYZE:
+    {resume_text}
+
+    ANALYSIS REQUIREMENTS:
+
+    1. FORMATTING ASSESSMENT (0-100 scale):
+       - Visual layout and organization
+       - Consistent formatting and spacing
+       - Professional appearance
+       - Readability and structure
+
+    2. SECTION ORGANIZATION ASSESSMENT (0-100 scale):
+       - Logical flow of information
+       - Appropriate section ordering
+       - Clear section headers
+       - Content organization within sections
+
+    3. PROFESSIONAL TONE ASSESSMENT (0-100 scale):
+       - Professional language usage
+       - Appropriate terminology
+       - Consistent voice and style
+       - Absence of informal language
+
+    4. COMPLETENESS ASSESSMENT (0-100 scale):
+       - Presence of essential sections
+       - Sufficient detail in each section
+       - Contact information completeness
+       - Overall information adequacy
+
+    EXPECTED OUTPUT FORMAT:
+
+    SCORES:
+    - Format Score: [0-100]
+    - Section Organization Score: [0-100]
+    - Professional Tone Score: [0-100]  
+    - Completeness Score: [0-100]
+
+    STRUCTURAL ANALYSIS:
+
+    Formatting Issues:
+    - [List specific formatting problems identified]
+    - [Focus on layout, spacing, consistency issues]
+
+    Missing Sections:
+    - [List expected resume sections that are missing]
+    - [Common sections: Contact, Summary, Experience, Education, Skills]
+
+    Tone Problems:
+    - [List instances of unprofessional language or tone]
+    - [Identify informal expressions or inappropriate content]
+
+    Completeness Gaps:
+    - [List missing critical information or insufficient details]
+    - [Identify areas where more information is needed]
+
+    Strengths:
+    - [List well-executed structural and formatting elements]
+    - [Highlight positive aspects of organization and presentation]
+
+    Recommendations:
+    - [Provide specific, actionable improvement suggestions]
+    - [Focus on structure, format, and organization enhancements]
+    - [Prioritize recommendations by impact]
+
+    METADATA:
+    - Total Sections Found: [number]
+    - Word Count: [approximate word count]
+    - Estimated Reading Time: [minutes]
+
+variables:
+  - name: resume_text
+    type: string
+    required: true
+    description: The resume text to analyze for structure and formatting
+
+output_parsing:
+  score_patterns:
+    format_score: "format[_\\s]*score[:\\s]*(\\d+\\.?\\d*)"
+    section_organization_score: "(?:section[_\\s]*)?organization[_\\s]*score[:\\s]*(\\d+\\.?\\d*)"
+    professional_tone_score: "(?:professional[_\\s]*)?tone[_\\s]*score[:\\s]*(\\d+\\.?\\d*)"
+    completeness_score: "completeness[_\\s]*score[:\\s]*(\\d+\\.?\\d*)"
+  
+  list_patterns:
+    formatting_issues: "Formatting Issues:\\s*[-•]\\s*(.+?)(?=\\n\\n|\\n[A-Z]|$)"
+    missing_sections: "Missing Sections:\\s*[-•]\\s*(.+?)(?=\\n\\n|\\n[A-Z]|$)"
+    tone_problems: "Tone Problems:\\s*[-•]\\s*(.+?)(?=\\n\\n|\\n[A-Z]|$)"
+    completeness_gaps: "Completeness Gaps:\\s*[-•]\\s*(.+?)(?=\\n\\n|\\n[A-Z]|$)"
+    strengths: "Strengths:\\s*[-•]\\s*(.+?)(?=\\n\\n|\\n[A-Z]|$)"
+    recommendations: "Recommendations:\\s*[-•]\\s*(.+?)(?=\\n\\n|\\n[A-Z]|$)"
+
+validation:
+  required_scores: ["format_score", "section_organization_score", "professional_tone_score", "completeness_score"]
+  score_range: [0, 100]
+  min_recommendations: 2
+  min_strengths: 1
+
+tags: ["structure", "formatting", "organization", "professional-tone", "completeness"]
