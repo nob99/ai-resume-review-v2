@@ -52,7 +52,16 @@ class LegacyAIAdapter:
         """Initialize the adapter with the legacy orchestrator."""
         try:
             # Initialize the legacy AI components
-            llm_client = OpenAIClient()
+            from app.core.config import get_settings
+            settings = get_settings()
+            
+            llm_client = OpenAIClient(
+                api_key=settings.OPENAI_API_KEY,
+                model=getattr(settings, 'OPENAI_MODEL_NAME', 'gpt-4'),
+                max_tokens=getattr(settings, 'OPENAI_MAX_TOKENS', 4000),
+                temperature=getattr(settings, 'OPENAI_TEMPERATURE', 0.3),
+                timeout_seconds=getattr(settings, 'OPENAI_REQUEST_TIMEOUT_SECONDS', 30)
+            )
             self.orchestrator = ResumeAnalysisOrchestrator(llm_client)
             
             # Adapter configuration

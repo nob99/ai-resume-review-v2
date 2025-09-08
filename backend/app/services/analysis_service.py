@@ -20,16 +20,83 @@ making it easy to test, monitor, and modify each layer independently.
 
 import logging
 import uuid
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from datetime import datetime
 
 from app.ai.orchestrator import ResumeAnalysisOrchestrator
 from app.ai.integrations.openai_client import OpenAIClient
 from app.ai.models.analysis_request import CompleteAnalysisResult
+from app.ai_agents.interface import AIAnalyzer, AnalysisRequest, AnalysisResult, Industry
 from app.core.config import get_settings
 from app.core.datetime_utils import utc_now
 
 logger = logging.getLogger(__name__)
+
+
+def get_ai_analyzer() -> AIAnalyzer:
+    """
+    Factory function to get appropriate AI analyzer based on feature flag.
+    
+    Returns:
+        AIAnalyzer: Either the new isolated AI system or legacy adapter
+    """
+    settings = get_settings()
+    
+    if settings.USE_NEW_AI:
+        logger.info("Using NEW AI implementation (isolated AI agents system)")
+        # TODO: Import the actual new AI client once implemented
+        # from app.ai_agents.client import AIClient
+        # return AIClient()
+        
+        # For now, use legacy adapter as the "new" system (Phase 3 completion)
+        from app.ai_agents.legacy_adapter import LegacyAIAdapter
+        return LegacyAIAdapter()
+    else:
+        logger.info("Using OLD AI implementation (direct orchestrator)")
+        # Create a wrapper to adapt the old system to the new interface
+        return LegacyAIAnalyzerWrapper()
+
+
+class LegacyAIAnalyzerWrapper:
+    """
+    Temporary wrapper to adapt the old orchestrator to the new interface.
+    This allows the old system to work during the transition period.
+    """
+    
+    def __init__(self):
+        """Initialize with the old orchestrator system."""
+        settings = get_settings()
+        self.llm_client = OpenAIClient(
+            api_key=settings.OPENAI_API_KEY,
+            model=getattr(settings, 'OPENAI_MODEL_NAME', 'gpt-4'),
+            max_tokens=getattr(settings, 'OPENAI_MAX_TOKENS', 4000),
+            temperature=getattr(settings, 'OPENAI_TEMPERATURE', 0.3),
+            timeout_seconds=getattr(settings, 'OPENAI_REQUEST_TIMEOUT_SECONDS', 30)
+        )
+        self.orchestrator = ResumeAnalysisOrchestrator(self.llm_client)
+    
+    async def analyze_resume(self, request: AnalysisRequest) -> CompleteAnalysisResult:
+        """Adapt new interface to old orchestrator call."""
+        # Map new industry enum to old string format
+        industry_mapping = {
+            Industry.STRATEGY_TECH: "tech_consulting",
+            Industry.MA_FINANCIAL: "finance_banking",
+            Industry.CONSULTING: "general_business", 
+            Industry.SYSTEM_INTEGRATOR: "system_integrator",
+            Industry.GENERAL: "general_business"
+        }
+        
+        legacy_industry = industry_mapping.get(request.industry, "general_business")
+        analysis_id = str(uuid.uuid4())
+        user_id = "analysis_service_user"
+        
+        # Call the old orchestrator
+        return await self.orchestrator.analyze_resume(
+            resume_text=request.text,
+            industry=legacy_industry,
+            analysis_id=analysis_id,
+            user_id=user_id
+        )
 
 
 class AnalysisException(Exception):
@@ -54,10 +121,9 @@ class AnalysisService:
     """
     
     def __init__(self):
-        """Initialize the analysis service with AI orchestrator."""
+        """Initialize the analysis service with AI analyzer."""
         self.settings = get_settings()
-        self.llm_client = self._create_llm_client()
-        self.ai_orchestrator = ResumeAnalysisOrchestrator(self.llm_client)
+        self.ai_analyzer = get_ai_analyzer()
         
         # Configuration
         self.config = {
@@ -109,13 +175,27 @@ class AnalysisService:
             # Business logic: logging and monitoring
             logger.info(f"Starting analysis {analysis_id} for user {user_id}, industry: {industry}")
             
-            # Execute AI workflow (delegated to AI module)
-            analysis_result = await self.ai_orchestrator.analyze_resume(
-                resume_text=processed_text,
-                industry=industry,
-                analysis_id=analysis_id,
-                user_id=user_id
+            # Execute AI workflow using the new interface
+            # Map legacy industry string to new Industry enum
+            industry_mapping = {
+                "tech_consulting": Industry.STRATEGY_TECH,
+                "finance_banking": Industry.MA_FINANCIAL,
+                "general_business": Industry.CONSULTING,
+                "system_integrator": Industry.SYSTEM_INTEGRATOR,
+                "healthcare_pharma": Industry.GENERAL,
+                "manufacturing": Industry.GENERAL
+            }
+            
+            mapped_industry = industry_mapping.get(industry, Industry.GENERAL)
+            
+            # Create analysis request for new interface
+            analysis_request = AnalysisRequest(
+                text=processed_text,
+                industry=mapped_industry
             )
+            
+            # Call the AI analyzer (could be old or new implementation)
+            analysis_result = await self.ai_analyzer.analyze_resume(analysis_request)
             
             # Business logic: post-processing and validation
             await self._validate_analysis_result(analysis_result)
@@ -217,28 +297,40 @@ class AnalysisService:
     
     async def get_service_health(self) -> Dict[str, Any]:
         """
-        Get service health status including AI orchestrator.
+        Get service health status including AI analyzer.
         
         Returns:
             Dict containing health status information
         """
         try:
-            # Check AI orchestrator health
-            ai_health = await self.ai_orchestrator.validate_setup()
+            # Check AI analyzer health using new interface
+            ai_health = await self.ai_analyzer.health_check()
             
-            # Check LLM connection
-            llm_health = await self.llm_client.validate_connection()
-            
-            # Get usage statistics
-            usage_stats = self.llm_client.get_usage_stats()
+            # Additional health checks based on implementation type
+            additional_info = {}
+            if hasattr(self.ai_analyzer, 'orchestrator'):
+                # Old wrapper - get additional orchestrator info
+                try:
+                    orchestrator_health = await self.ai_analyzer.orchestrator.validate_setup()
+                    llm_health = await self.ai_analyzer.llm_client.validate_connection()
+                    usage_stats = self.ai_analyzer.llm_client.get_usage_stats()
+                    workflow_info = self.ai_analyzer.orchestrator.get_workflow_info()
+                    
+                    additional_info = {
+                        "ai_orchestrator": "healthy" if orchestrator_health else "failed",
+                        "llm_connection": "healthy" if llm_health else "failed", 
+                        "usage_stats": usage_stats,
+                        "workflow_info": workflow_info
+                    }
+                except Exception:
+                    pass
             
             return {
-                "status": "healthy" if (ai_health and llm_health) else "degraded",
-                "ai_orchestrator": "healthy" if ai_health else "failed",
-                "llm_connection": "healthy" if llm_health else "failed",
-                "usage_stats": usage_stats,
-                "workflow_info": self.ai_orchestrator.get_workflow_info(),
-                "timestamp": utc_now().isoformat()
+                "status": "healthy" if ai_health else "degraded",
+                "ai_analyzer": "healthy" if ai_health else "failed",
+                "ai_system": "NEW (isolated)" if self.settings.USE_NEW_AI else "OLD (direct)",
+                "timestamp": utc_now().isoformat(),
+                **additional_info
             }
             
         except Exception as e:
@@ -407,21 +499,6 @@ class AnalysisService:
         # if await self.rate_limiter.is_rate_limited(user_id):
         #     raise AnalysisValidationException("Rate limit exceeded")
     
-    def _create_llm_client(self) -> OpenAIClient:
-        """
-        Create LLM client based on configuration.
-        
-        Returns:
-            OpenAIClient: Configured LLM client
-        """
-        # Business logic: LLM client configuration
-        return OpenAIClient(
-            api_key=self.settings.OPENAI_API_KEY,
-            model=getattr(self.settings, 'OPENAI_MODEL_NAME', 'gpt-4'),
-            max_tokens=getattr(self.settings, 'OPENAI_MAX_TOKENS', 4000),
-            temperature=getattr(self.settings, 'OPENAI_TEMPERATURE', 0.3),
-            timeout_seconds=getattr(self.settings, 'OPENAI_REQUEST_TIMEOUT_SECONDS', 30)
-        )
     
     # ========================================================================
     # PUBLIC UTILITY METHODS
