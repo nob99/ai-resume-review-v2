@@ -1,8 +1,8 @@
-# AI Resume Review - Backend
+# AI Resume Review Platform - Backend
 
 ## 🎯 Overview
 
-FastAPI-based backend service for the AI Resume Review system, providing comprehensive authentication, resume analysis, and AI-powered feedback capabilities.
+FastAPI-based backend service for the AI Resume Review Platform, providing secure authentication, AI-powered resume analysis, and comprehensive user management for recruitment consultants.
 
 ## 🚀 Quick Start
 
@@ -28,41 +28,58 @@ docker-compose up --build
 
 ## 🛠 Technology Stack
 
-- **Framework**: FastAPI 0.104+
-- **Database**: PostgreSQL + Redis
-- **ORM**: SQLAlchemy
-- **Authentication**: JWT with bcrypt
-- **AI/ML**: LangChain with OpenAI/Anthropic
-- **Testing**: pytest (149/151 tests passing)
-- **Container**: Docker with multi-service setup
+- **Framework**: FastAPI 0.104.1
+- **Database**: PostgreSQL 15 + Redis 5.0
+- **ORM**: SQLAlchemy 2.0 (async)
+- **Authentication**: JWT with bcrypt (12 rounds)
+- **AI/ML**: LangChain 0.3+ with LangGraph, OpenAI & Anthropic
+- **Testing**: pytest 7.4+ with async support
+- **Security**: Rate limiting, CORS, input validation
+- **Container**: Docker with multi-service orchestration
 
 ## 📁 Directory Structure
 
 ```
 backend/
 ├── app/                          # Main application code
-│   ├── agents/                   # AI agents for resume analysis
-│   │   ├── base/                # Base agent framework
-│   │   └── resume/              # Resume-specific agents
-│   ├── api/                     # API endpoints
-│   │   └── auth.py              # Authentication routes
+│   ├── ai_agents/               # AI agents system (LangChain/LangGraph)
+│   │   ├── interface.py         # Agent interface definitions
+│   │   ├── legacy_adapter.py    # Legacy compatibility
+│   │   ├── prompts/             # Database-driven prompt management
+│   │   │   ├── loader.py        # Prompt loading system
+│   │   │   ├── versioning.py    # Prompt version management
+│   │   │   └── templates/       # Prompt templates
+│   │   └── tests/               # AI agent tests
+│   ├── features/                # Feature-based architecture
+│   │   └── auth/                # Authentication feature
+│   │       ├── api.py           # Auth API endpoints
+│   │       ├── models.py        # Auth database models
+│   │       ├── repository.py    # Data access layer
+│   │       ├── schemas.py       # Pydantic schemas
+│   │       ├── service.py       # Business logic
+│   │       └── tests/           # Feature-specific tests
+│   ├── infrastructure/          # Infrastructure layer
+│   │   ├── persistence/         # Database abstractions
+│   │   │   ├── postgres/        # PostgreSQL implementation
+│   │   │   └── redis/           # Redis cache implementation
+│   │   └── storage/             # File storage abstractions
+│   ├── services/                # Application services
+│   │   └── analysis_service.py  # Resume analysis service
 │   ├── core/                    # Core utilities
-│   │   ├── config.py            # Centralized configuration
-│   │   ├── datetime_utils.py    # Timezone-aware datetime handling
-│   │   ├── rate_limiter.py      # API rate limiting
+│   │   ├── config.py            # Configuration management
+│   │   ├── datetime_utils.py    # UTC datetime handling
+│   │   ├── rate_limiter.py      # Distributed rate limiting
 │   │   └── security.py          # Security utilities
-│   ├── database/                # Database connection management
-│   ├── models/                  # SQLAlchemy models
-│   │   ├── user.py              # User model
-│   │   └── session.py           # Session model
+│   ├── database/                # Legacy database connections
+│   ├── archive/                 # Archived legacy code
 │   └── main.py                  # FastAPI application entry point
-├── tests/                       # Comprehensive test suite
-│   ├── auth/                    # Authentication tests (AUTH-001 to AUTH-004)
-│   └── ai/                      # AI integration tests (AI-001)
-├── docker-entrypoint.sh         # Docker container startup script
+├── scripts/                     # Utility scripts
+├── requirements.txt             # Python dependencies (51 packages)
+├── pytest.ini                  # Test configuration
 ├── Dockerfile                   # Container definition
-├── requirements.txt             # Python dependencies
-└── pytest.ini                  # Test configuration
+├── docker-entrypoint.sh         # Container startup script
+├── .env.example                 # Environment template
+└── run_tests.py                 # Test runner script
 ```
 
 ## 📚 Documentation
@@ -78,41 +95,56 @@ backend/
 
 ## 🧪 Testing
 
-### Current Status: **98.7% Success Rate** (149/151 tests passing)
+### Running Tests
 
 ```bash
-# Run all tests
-docker-compose exec backend python -m pytest
+# Using the project's docker development script (recommended)
+./scripts/docker-dev.sh up
+./scripts/docker-dev.sh shell backend
+pytest
 
-# Run specific test category
-docker-compose exec backend python -m pytest tests/auth/  # Authentication tests
-docker-compose exec backend python -m pytest tests/ai/    # AI integration tests
+# Run specific test categories
+pytest -m "not integration"        # Unit tests only
+pytest app/features/auth/tests/     # Authentication tests
+pytest app/ai_agents/tests/         # AI agent tests
 
-# Run with coverage
-docker-compose exec backend python -m pytest --cov=app
+# Coverage reports
+pytest --cov=app --cov-report=term-missing
+pytest --cov=app --cov-report=html
+
+# Using the test runner script
+python run_tests.py
 ```
 
-### Test Organization
-- **Unit Tests**: 110/110 passing ✅
-- **Integration Tests**: 39/41 passing ✅
-- **Test Structure**: Organized by user stories (AUTH-001, AUTH-002, etc.)
+### Test Architecture
+- **Feature-based organization**: Tests organized by feature (auth, ai_agents)
+- **User story structure**: Tests grouped by user stories (AUTH-001, AUTH-002, etc.)
+- **Multiple test types**: Unit, integration, and functional tests
+- **Async testing**: Full async/await support with pytest-asyncio
+- **Real databases**: Integration tests use real PostgreSQL for reliability
+- **Coverage target**: Minimum 80% coverage required
 
 ## 🔐 Authentication System
 
-**Status**: ✅ **Production Ready** (100% test coverage)
+**Status**: ✅ **Production Ready** - Modern feature-based architecture
 
-- **User Registration & Login** (AUTH-001) - Complete
-- **Secure Logout** (AUTH-002) - Complete  
-- **Session Management** (AUTH-003) - Complete with refresh tokens
-- **Password Security** (AUTH-004) - Complete with bcrypt + salt
+- **JWT Authentication**: Access tokens (30min) + refresh tokens (7 days)
+- **Password Security**: Bcrypt hashing with 12 rounds minimum
+- **Rate Limiting**: 5 login attempts per 15 minutes per IP
+- **Session Management**: Multi-session support with selective revocation
+- **Security Features**: Account lockout, admin management, input validation
+- **New Architecture**: Feature-based design with repository pattern
 
-## 🤖 AI Integration
+## 🤖 AI Agent System
 
-**Status**: ✅ **Core Functionality Ready**
+**Status**: ✅ **Core Infrastructure Ready** - Database-driven prompt management
 
-- **LangChain Setup** (AI-001) - 13/14 tests passing
-- **OpenAI Integration** - Fully functional
-- **Anthropic Integration** - Optional (requires ANTHROPIC_API_KEY)
+- **LangChain/LangGraph**: Multi-agent orchestration system
+- **Specialized Agents**: Base, Structure, and Appeal evaluation agents
+- **Database-driven Prompts**: Dynamic prompt loading and versioning
+- **Industry Support**: Strategy/Tech/M&A/Financial Advisory/SI consulting
+- **OpenAI & Anthropic**: Dual LLM provider support
+- **Legacy Compatibility**: Smooth migration from legacy implementation
 
 ## 🚀 API Documentation
 
@@ -123,86 +155,130 @@ docker-compose exec backend python -m pytest --cov=app
 
 ### Key Endpoints
 ```
-POST /api/v1/auth/login       # User authentication
-POST /api/v1/auth/logout      # Session termination
-POST /api/v1/auth/refresh     # Token refresh
-POST /api/v1/auth/register    # User registration
+# Authentication
+POST /api/v1/auth/login           # User authentication
+POST /api/v1/auth/register        # User registration
+POST /api/v1/auth/refresh         # Token refresh
+POST /api/v1/auth/logout          # Session termination
+GET  /api/v1/auth/me              # Current user profile
+GET  /api/v1/auth/sessions        # List user sessions
+POST /api/v1/auth/sessions/revoke # Revoke specific session
+POST /api/v1/auth/change-password # Change password
+
+# System
+GET  /health                      # Health check
+GET  /                            # API information
+GET  /docs                        # Swagger documentation
 ```
 
 ## 🔧 Development Workflow
 
 ### 1. Environment Setup
 ```bash
-# Copy environment template
-cp .env.example .env
-# Edit .env with your local configuration
+# Use the project development script (recommended)
+./scripts/docker-dev.sh up
+
+# Or manual setup:
+cp backend/.env.example backend/.env
+# Edit .env with your configuration
+docker-compose up --build
 ```
 
 ### 2. Code Standards
-- **Follow working agreements** in `docs/working-agreements.md`
-- **API Design**: Must follow OpenAPI 3.0 specification
-- **Database**: Create ER diagrams before schema changes
-- **Timezone**: Always use `app.core.datetime_utils.utc_now()`
-- **Testing**: Minimum 80% coverage required
+- **Architecture**: Follow feature-based organization
+- **API Design**: OpenAPI 3.0 specification with FastAPI
+- **Database**: Use async SQLAlchemy 2.0, no raw SQL
+- **Timezone**: ALWAYS use `app.core.datetime_utils.utc_now()`
+- **Security**: No hardcoded secrets, use environment variables
+- **Testing**: 80% minimum coverage, organized by feature
+- **Type Hints**: Full type annotations required
 
 ### 3. Development Process
 ```bash
+# Check Docker services status
+./scripts/docker-dev.sh status
+
 # Start development environment
-docker-compose up --build
+./scripts/docker-dev.sh up
 
 # Make code changes
-# Tests run automatically on file changes
+# Run tests and linting
+./scripts/docker-dev.sh shell backend
+pytest
+black app tests
+flake8 app tests
+mypy app
 
-# Run full test suite before committing
-docker-compose exec backend python -m pytest
-
-# Follow git workflow: feature/STORY-ID-description
-git checkout -b feature/AUTH-005-password-reset
+# Create feature branch from sprint branch
+git checkout sprint-004
+git checkout -b feature/UPLOAD-001-file-validation
 ```
 
 ## 🚦 Current Status
 
-### ✅ **Ready for Development**
-- Docker containerization complete and tested
-- Authentication system fully implemented
-- Database schema stable with migrations
-- Comprehensive test coverage (98.7%)
-- AI integration core functionality working
+### ✅ **Production Ready**
+- Modern feature-based architecture implemented
+- Authentication system with advanced security
+- AI agent infrastructure with LangChain/LangGraph
+- Database-driven prompt management system
+- Comprehensive async testing framework
+- Docker development environment
 
-### 🔄 **In Progress**
-- Additional AI agent capabilities
-- Extended API endpoints for resume features
-- Performance optimizations
+### 🔄 **Sprint 003 In Progress** (File Upload Pipeline)
+- UPLOAD-001: File upload interface ✅
+- UPLOAD-002: File validation 🔄
+- UPLOAD-003: Text extraction 🔄
+- UPLOAD-004: Progress feedback 🔄
 
 ### 📋 **Next Priorities**
-- Resume upload and processing endpoints
-- Enhanced AI feedback generation
-- User dashboard API endpoints
+- Complete file upload and processing pipeline
+- Resume analysis API endpoints
+- Multi-industry AI agent specializations
+- Performance monitoring and optimization
 
 ## 🛡 Security
 
-- **No hardcoded credentials** - All config via environment variables
-- **OWASP compliance** - Security review required for sensitive features
-- **JWT tokens** with proper expiration and refresh
-- **Bcrypt password hashing** with 12 rounds
-- **Rate limiting** on sensitive endpoints
+- **Zero hardcoded secrets** - All configuration via environment variables
+- **JWT security** - Access tokens (30min) + rotating refresh tokens (7 days)
+- **Password security** - Bcrypt with 12+ rounds, strength validation
+- **Rate limiting** - Distributed Redis-based protection (5 attempts/15min)
+- **Input validation** - Comprehensive Pydantic schema validation
+- **CORS protection** - Configured for specific origins only
+- **Account protection** - Lockout mechanisms, admin controls
+- **Security headers** - OWASP recommended headers
 
 ## 🐛 Troubleshooting
 
 ### Common Issues
-1. **Port conflicts**: Ensure ports 8000, 5432, 6379, 8080 are available
-2. **Environment variables**: Check `.env` file configuration
-3. **Docker issues**: See [README-DOCKER.md](README-DOCKER.md) for detailed troubleshooting
+1. **Port conflicts**: Use `./scripts/docker-dev.sh status` to check services
+2. **Environment setup**: Copy `.env.example` to `.env` and configure
+3. **Docker issues**: Use development script for consistent environment
+4. **Database connection**: Ensure PostgreSQL is running before backend
+5. **Test failures**: Check Redis/PostgreSQL are accessible for integration tests
 
-### Logs
+### Logs and Debugging
 ```bash
-# View backend logs
-docker-compose logs backend
+# Using development script (recommended)
+./scripts/docker-dev.sh logs backend
+./scripts/docker-dev.sh logs
 
-# View all service logs  
-docker-compose logs
+# Direct Docker commands
+docker-compose logs backend
+docker-compose logs -f  # Follow logs
+
+# Application logs location
+backend/logs/  # Application-specific logs
 ```
+
+## 📊 Development Metrics
+
+- **Architecture**: Modern feature-based organization
+- **Dependencies**: 51 production + development packages
+- **Test Coverage**: 80% minimum requirement
+- **Code Quality**: Black + flake8 + mypy enforcement
+- **Security**: Multiple layers of protection
+- **Performance**: Async throughout the stack
 
 ---
 
-*Last Updated: Sprint 002 - Backend containerization and authentication system complete*
+*Last Updated: Sprint 003 - Modern architecture with AI agents and file upload pipeline*
