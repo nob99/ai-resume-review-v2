@@ -150,6 +150,18 @@ else:
     from app.features.auth.api import router as new_auth_router
     app.include_router(new_auth_router, prefix="/api/v1/auth", tags=["auth"])
 
+# File upload feature (NEW)
+if getattr(settings, 'USE_NEW_FILE_UPLOAD', True):
+    from app.features.file_upload.api import router as file_upload_router
+    app.include_router(file_upload_router, prefix="/api/v1/files", tags=["files"])
+    logger.info("File upload feature enabled")
+
+# Resume analysis feature (NEW)
+if getattr(settings, 'USE_NEW_ANALYSIS', True):
+    from app.features.resume_analysis.api import router as analysis_router
+    app.include_router(analysis_router, prefix="/api/v1/analysis", tags=["analysis"])
+    logger.info("Resume analysis feature enabled")
+
 # Global exception handlers
 @app.exception_handler(SecurityError)
 async def security_error_handler(request: Request, exc: SecurityError):
