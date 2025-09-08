@@ -137,7 +137,7 @@ class AuthService:
             refresh_token=refresh_token_str,
             token_type="bearer",
             expires_in=1800,  # 30 minutes
-            user=UserResponse.from_orm(user)
+            user=UserResponse.model_validate(user)
         )
     
     async def refresh_token(
@@ -288,7 +288,7 @@ class AuthService:
             
             logger.info(f"New user registered: {user.email}")
             
-            return UserResponse.from_orm(user)
+            return UserResponse.model_validate(user)
             
         except IntegrityError:
             await self.user_repo.rollback()

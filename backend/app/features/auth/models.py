@@ -13,7 +13,7 @@ from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import validates
-from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict, computed_field
 
 from app.core.security import (
     password_hasher, 
@@ -87,6 +87,20 @@ class User(Base):
         self.first_name = first_name.strip()
         self.last_name = last_name.strip()
         self.role = role.value if isinstance(role, UserRole) else role
+        
+        # Set default values for unit testing (normally handled by database)
+        if self.is_active is None:
+            self.is_active = True
+        if self.email_verified is None:
+            self.email_verified = False
+        if self.failed_login_attempts is None:
+            self.failed_login_attempts = 0
+        if self.created_at is None:
+            self.created_at = utc_now()
+        if self.updated_at is None:
+            self.updated_at = utc_now()
+        if self.password_changed_at is None:
+            self.password_changed_at = utc_now()
         
         # Hash password securely
         self.set_password(password)
@@ -334,7 +348,12 @@ class UserResponse(UserBase):
     email_verified: bool
     created_at: datetime
     last_login_at: Optional[datetime] = None
-    full_name: str
+    
+    @computed_field
+    @property
+    def full_name(self) -> str:
+        """Computed full name from first_name and last_name."""
+        return f"{self.first_name} {self.last_name}".strip()
     
     model_config = ConfigDict(from_attributes=True)
 

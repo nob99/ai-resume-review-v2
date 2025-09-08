@@ -145,9 +145,10 @@ if settings.USE_NEW_AUTH:
     app.include_router(new_auth_router, prefix="/api/v1/auth", tags=["auth"])
     logger.info("Using NEW auth implementation")
 else:
-    from app.api.auth import router as auth_router
-    app.include_router(auth_router, prefix="/api/v1")
-    logger.info("Using OLD auth implementation")
+    # OLD auth implementation has been removed - fallback to new implementation
+    logger.warning("OLD auth implementation no longer available, using NEW auth implementation")
+    from app.features.auth.api import router as new_auth_router
+    app.include_router(new_auth_router, prefix="/api/v1/auth", tags=["auth"])
 
 # Global exception handlers
 @app.exception_handler(SecurityError)
