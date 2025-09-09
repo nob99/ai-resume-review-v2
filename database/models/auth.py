@@ -72,6 +72,11 @@ class User(Base):
     locked_until = Column(DateTime(timezone=True), nullable=True)
     
     # Relationships
+    created_candidates = relationship("Candidate", back_populates="created_by")
+    assignments = relationship("UserCandidateAssignment", 
+                             foreign_keys="UserCandidateAssignment.user_id", 
+                             back_populates="user")
+    # Keep old relationships for backward compatibility during migration
     file_uploads = relationship("FileUpload", back_populates="user")
     analyses = relationship("ResumeAnalysis", back_populates="user")
     

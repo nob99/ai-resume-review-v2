@@ -14,14 +14,35 @@ Base = declarative_base()
 # Import all models to ensure they're registered with the Base
 # This must be done after Base is created to avoid circular imports
 from .auth import User, RefreshToken
+from .candidate import Candidate
+from .assignment import UserCandidateAssignment
+from .resume import Resume, ResumeStatus
+from .section import ResumeSection, SectionType
+from .review import ReviewRequest, ReviewResult, ReviewFeedbackItem, ReviewStatus, FeedbackType, FeedbackCategory
+# Keep old models for backward compatibility during migration
 from .files import FileUpload
 from .analysis import ResumeAnalysis
 
 # Export all models for easy importing
 __all__ = [
     "Base",
+    # Auth models
     "User", 
     "RefreshToken",
+    # New candidate-centric models
+    "Candidate",
+    "UserCandidateAssignment", 
+    "Resume",
+    "ResumeStatus",
+    "ResumeSection",
+    "SectionType",
+    "ReviewRequest",
+    "ReviewResult", 
+    "ReviewFeedbackItem",
+    "ReviewStatus",
+    "FeedbackType",
+    "FeedbackCategory",
+    # Old models (for backward compatibility)
     "FileUpload",
     "ResumeAnalysis",
 ]
