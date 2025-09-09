@@ -18,7 +18,7 @@ from sqlalchemy.pool import QueuePool
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
-from backend.app.core.config import get_database_url, app_config
+from app.core.config import get_database_url, app_config
 
 # Configure logging
 logger = logging.getLogger(__name__)

@@ -16,7 +16,7 @@ from . import Base
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
-from backend.app.core.datetime_utils import utc_now
+from app.core.datetime_utils import utc_now
 
 
 class Industry(str, Enum):
