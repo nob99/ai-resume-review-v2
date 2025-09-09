@@ -12,6 +12,9 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent.parent))
 from database.connection import init_database, close_database, get_db_health
 from app.core.rate_limiter import rate_limiter
 from app.core.security import SecurityError

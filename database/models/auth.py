@@ -16,8 +16,11 @@ from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import validates, relationship
 
 from . import Base
-from app.core.datetime_utils import utc_now, ensure_utc
-from app.core.security import password_hasher, REFRESH_TOKEN_EXPIRE_DAYS
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent.parent))
+from backend.app.core.datetime_utils import utc_now, ensure_utc
+from backend.app.core.security import password_hasher, REFRESH_TOKEN_EXPIRE_DAYS
 
 
 class UserRole(str, Enum):

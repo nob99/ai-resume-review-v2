@@ -13,7 +13,10 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from . import Base
-from app.core.datetime_utils import utc_now
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent.parent))
+from backend.app.core.datetime_utils import utc_now
 
 
 class FileStatus(str, Enum):

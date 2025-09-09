@@ -14,8 +14,11 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.pool import QueuePool
 
-# Import centralized configuration
-from app.core.config import get_database_url, app_config
+# Import centralized configuration  
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+from backend.app.core.config import get_database_url, app_config
 
 # Configure logging
 logger = logging.getLogger(__name__)

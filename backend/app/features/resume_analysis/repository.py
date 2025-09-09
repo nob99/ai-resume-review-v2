@@ -9,6 +9,9 @@ from sqlalchemy import desc, and_, func
 
 from infrastructure.persistence.postgres.base import BaseRepository
 from app.core.datetime_utils import utc_now
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 from database.models.analysis import ResumeAnalysis, AnalysisStatus, Industry, MarketTier
 
 

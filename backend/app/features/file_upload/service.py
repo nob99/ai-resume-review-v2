@@ -15,6 +15,9 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.datetime_utils import utc_now
 from .repository import FileUploadRepository
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 from database.models.files import FileUpload, FileStatus, FileType
 from .schemas import (
     FileUploadResponse,
