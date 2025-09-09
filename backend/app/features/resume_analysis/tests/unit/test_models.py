@@ -2,7 +2,7 @@
 
 import pytest
 from datetime import datetime
-from app.features.resume_analysis.models import (
+from app.features.resume_analysis.schemas import (
     Industry,
     AnalysisStatus,
     MarketTier,

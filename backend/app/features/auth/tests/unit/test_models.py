@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
-from app.features.auth.models import User, RefreshToken, UserRole
+from database.models.auth import User, RefreshToken, UserRole
 from app.features.auth.tests.fixtures.mock_data import MockAuthData
 from app.core.datetime_utils import utc_now
 from app.core.security import SecurityError
@@ -25,7 +25,7 @@ class TestUserModel:
             "password": "TestPassword123!",
             "first_name": "John",
             "last_name": "Doe",
-            "role": UserRole.CONSULTANT
+            "role": UserRole.JUNIOR_RECRUITER
         }
     
     def test_user_creation(self, user_data):
@@ -72,7 +72,7 @@ class TestUserModel:
         # Assert
         assert user.email == "test@example.com"
     
-    @pytest.mark.parametrize("role", [UserRole.CONSULTANT, UserRole.ADMIN])
+    @pytest.mark.parametrize("role", [UserRole.JUNIOR_RECRUITER, UserRole.SENIOR_RECRUITER, UserRole.ADMIN])
     def test_user_role_validation(self, user_data, role):
         """Test that user roles are properly validated."""
         # Arrange
@@ -142,10 +142,10 @@ class TestUserModel:
     
     def test_is_admin_method(self, user_data):
         """Test admin role checking method."""
-        # Test consultant user
-        user_data["role"] = UserRole.CONSULTANT
-        consultant = User(**user_data)
-        assert consultant.is_admin() is False
+        # Test junior recruiter user
+        user_data["role"] = UserRole.JUNIOR_RECRUITER
+        junior_recruiter = User(**user_data)
+        assert junior_recruiter.is_admin() is False
         
         # Test admin user
         user_data["role"] = UserRole.ADMIN
@@ -451,7 +451,7 @@ class TestModelValidation:
                 password="ValidPassword123!",
                 first_name="John",
                 last_name="Doe",
-                role=UserRole.CONSULTANT
+                role=UserRole.JUNIOR_RECRUITER
             )
     
     def test_user_empty_required_fields(self):
@@ -462,7 +462,7 @@ class TestModelValidation:
                 password="ValidPassword123!",
                 first_name="John",
                 last_name="Doe",
-                role=UserRole.CONSULTANT
+                role=UserRole.JUNIOR_RECRUITER
             )
         
         with pytest.raises((ValueError, SecurityError)):
@@ -471,7 +471,7 @@ class TestModelValidation:
                 password="",
                 first_name="John",
                 last_name="Doe",
-                role=UserRole.CONSULTANT
+                role=UserRole.JUNIOR_RECRUITER
             )
     
     def test_refresh_token_invalid_user_id(self):
@@ -491,7 +491,7 @@ class TestModelValidation:
             password="ValidPassword123!",
             first_name="John",
             last_name="Doe",
-            role=UserRole.CONSULTANT
+            role=UserRole.JUNIOR_RECRUITER
         )
         
         # Act & Assert

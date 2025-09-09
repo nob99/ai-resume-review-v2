@@ -7,7 +7,7 @@ from fastapi import UploadFile
 import uuid
 
 from app.features.file_upload.service import FileUploadService
-from app.features.file_upload.models import FileStatus, FileType
+from database.models.files import FileStatus, FileType
 
 
 @pytest.fixture

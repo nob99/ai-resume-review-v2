@@ -9,7 +9,7 @@ from uuid import UUID, uuid4
 from unittest.mock import Mock, AsyncMock
 import pytest
 
-from app.features.auth.models import User, RefreshToken
+from database.models.auth import User, RefreshToken
 from app.features.auth.schemas import LoginRequest, UserResponse, LoginResponse
 from app.core.datetime_utils import utc_now
 

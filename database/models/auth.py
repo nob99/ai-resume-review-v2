@@ -25,7 +25,8 @@ from backend.app.core.security import password_hasher, REFRESH_TOKEN_EXPIRE_DAYS
 
 class UserRole(str, Enum):
     """User role enumeration."""
-    CONSULTANT = "consultant"
+    JUNIOR_RECRUITER = "junior_recruiter"
+    SENIOR_RECRUITER = "senior_recruiter"
     ADMIN = "admin"
 
 
@@ -56,7 +57,7 @@ class User(Base):
     last_name = Column(String(100), nullable=False)
     
     # Account status and permissions
-    role = Column(String(50), nullable=False, default=UserRole.CONSULTANT.value)
+    role = Column(String(50), nullable=False, default=UserRole.JUNIOR_RECRUITER.value)
     is_active = Column(Boolean, nullable=False, default=True)
     email_verified = Column(Boolean, nullable=False, default=False)
     
@@ -75,7 +76,7 @@ class User(Base):
     analyses = relationship("ResumeAnalysis", back_populates="user")
     
     def __init__(self, email: str, password: str, first_name: str, last_name: str, 
-                 role: UserRole = UserRole.CONSULTANT, **kwargs):
+                 role: UserRole = UserRole.JUNIOR_RECRUITER, **kwargs):
         """
         Initialize user with secure password handling.
         
@@ -84,7 +85,7 @@ class User(Base):
             password: Plain text password (will be hashed)
             first_name: User first name
             last_name: User last name  
-            role: User role (consultant or admin)
+            role: User role (junior_recruiter, senior_recruiter, or admin)
             **kwargs: Additional fields
         """
         super().__init__(**kwargs)
@@ -95,6 +96,8 @@ class User(Base):
         self.role = role.value if isinstance(role, UserRole) else role
         
         # Set default values for unit testing (normally handled by database)
+        if self.id is None:
+            self.id = uuid.uuid4()
         if self.is_active is None:
             self.is_active = True
         if self.email_verified is None:
@@ -184,9 +187,13 @@ class User(Base):
         """Check if user has admin role."""
         return self.role == UserRole.ADMIN.value
     
-    def is_consultant(self) -> bool:
-        """Check if user has consultant role."""
-        return self.role == UserRole.CONSULTANT.value
+    def is_junior_recruiter(self) -> bool:
+        """Check if user has junior recruiter role."""
+        return self.role == UserRole.JUNIOR_RECRUITER.value
+    
+    def is_senior_recruiter(self) -> bool:
+        """Check if user has senior recruiter role."""
+        return self.role == UserRole.SENIOR_RECRUITER.value
     
     def get_full_name(self) -> str:
         """Get user's full name."""

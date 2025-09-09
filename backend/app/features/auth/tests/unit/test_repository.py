@@ -10,7 +10,7 @@ from uuid import UUID, uuid4
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.features.auth.repository import UserRepository, RefreshTokenRepository
-from app.features.auth.models import User, RefreshToken
+from database.models.auth import User, RefreshToken
 from app.features.auth.tests.fixtures.mock_data import (
     MockAuthData,
     MockAuthComponents
