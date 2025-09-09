@@ -48,7 +48,7 @@ class TestAuthAPILogin:
             return self.mock_auth_service
         
         # Override dependencies
-        from app.infrastructure.persistence.postgres import get_async_session
+        from infrastructure.persistence.postgres import get_async_session
         from app.features.auth.api import get_auth_service
         main_app.dependency_overrides[get_async_session] = mock_get_async_session
         main_app.dependency_overrides[get_auth_service] = mock_get_auth_service

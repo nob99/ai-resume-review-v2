@@ -15,8 +15,8 @@ from app.main import app
 from app.features.auth.service import AuthService
 from app.features.auth.repository import UserRepository, RefreshTokenRepository
 from app.features.auth.schemas import LoginRequest, UserCreate
-from app.features.auth.models import User, RefreshToken
-from app.infrastructure.persistence.postgres import get_async_session
+from database.models.auth import User, RefreshToken
+from infrastructure.persistence.postgres import get_async_session
 from app.features.auth.tests.fixtures.mock_data import MockAuthData
 from app.core.datetime_utils import utc_now
 
