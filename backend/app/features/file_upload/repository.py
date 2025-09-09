@@ -7,9 +7,9 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, and_
 
-from app.infrastructure.persistence.postgres.base import BaseRepository
+from infrastructure.persistence.postgres.base import BaseRepository
 from app.core.datetime_utils import utc_now
-from .models import FileUpload, FileStatus
+from database.models.files import FileUpload, FileStatus
 
 
 class FileUploadRepository(BaseRepository[FileUpload]):

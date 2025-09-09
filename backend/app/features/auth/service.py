@@ -28,7 +28,7 @@ from app.core.rate_limiter import (
     RateLimitType
 )
 from app.core.datetime_utils import utc_now
-from .models import User, RefreshToken, SessionStatus, UserRole
+from database.models.auth import User, RefreshToken, SessionStatus, UserRole
 from .repository import UserRepository, RefreshTokenRepository
 from .schemas import (
     UserCreate,

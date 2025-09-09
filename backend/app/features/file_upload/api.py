@@ -8,18 +8,18 @@ from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Query, 
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-from app.database.connection import get_db
+from database.connection import get_db
 from app.features.auth.api import get_current_user
-from app.features.auth.models import User
+from database.models.auth import User
 from app.core.rate_limiter import rate_limiter, RateLimitExceeded
 
 from .service import FileUploadService
-from .models import (
+from .schemas import (
     UploadedFileV2,
     FileUploadResponse,
-    FileUploadListResponse,
-    FileStatus
+    FileUploadListResponse
 )
+from database.models.files import FileStatus
 
 logger = logging.getLogger(__name__)
 

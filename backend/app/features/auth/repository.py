@@ -9,8 +9,8 @@ from uuid import UUID
 from sqlalchemy import select, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.infrastructure.persistence.postgres.base import BaseRepository
-from .models import User, RefreshToken, SessionStatus
+from infrastructure.persistence.postgres.base import BaseRepository
+from database.models.auth import User, RefreshToken, SessionStatus
 
 
 class UserRepository(BaseRepository[User]):

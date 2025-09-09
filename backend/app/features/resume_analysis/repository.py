@@ -7,9 +7,9 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc, and_, func
 
-from app.infrastructure.persistence.postgres.base import BaseRepository
+from infrastructure.persistence.postgres.base import BaseRepository
 from app.core.datetime_utils import utc_now
-from .models import ResumeAnalysis, AnalysisStatus, Industry, MarketTier
+from database.models.analysis import ResumeAnalysis, AnalysisStatus, Industry, MarketTier
 
 
 class AnalysisRepository(BaseRepository[ResumeAnalysis]):

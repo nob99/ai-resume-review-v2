@@ -10,14 +10,11 @@ from app.core.config import get_settings
 from app.core.datetime_utils import utc_now
 
 # Import AI orchestrator from the isolated ai_agents module
-from app.ai_agents.orchestrator import ResumeAnalysisOrchestrator
+from ai_agents.orchestrator import ResumeAnalysisOrchestrator
 
 from .repository import AnalysisRepository
-from .models import (
-    ResumeAnalysis,
-    AnalysisStatus,
-    Industry,
-    MarketTier,
+from database.models.analysis import ResumeAnalysis, AnalysisStatus, Industry, MarketTier
+from .schemas import (
     AnalysisRequest,
     AnalysisResult,
     AnalysisResponse,

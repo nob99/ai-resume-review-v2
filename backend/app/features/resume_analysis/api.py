@@ -8,22 +8,21 @@ from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-from app.database.connection import get_db
+from database.connection import get_db
 from app.features.auth.api import get_current_user
-from app.features.auth.models import User
+from database.models.auth import User
 from app.core.rate_limiter import rate_limiter, RateLimitExceeded
 
 from .service import AnalysisService, AnalysisValidationException, AnalysisException
-from .models import (
+from .schemas import (
     AnalysisRequest,
     AnalysisResponse,
     AnalysisResult,
     AnalysisListResponse,
     AnalysisSummary,
-    AnalysisStats,
-    AnalysisStatus,
-    Industry
+    AnalysisStats
 )
+from database.models.analysis import AnalysisStatus, Industry
 
 logger = logging.getLogger(__name__)
 

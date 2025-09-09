@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.database.connection import init_database, close_database, get_db_health
+from database.connection import init_database, close_database, get_db_health
 from app.core.rate_limiter import rate_limiter
 from app.core.security import SecurityError
 from app.core.config import get_settings
@@ -45,7 +45,7 @@ async def lifespan(app: FastAPI):
         
         # Initialize new infrastructure if using new auth
         if settings.USE_NEW_AUTH:
-            from app.infrastructure.persistence.postgres.connection import init_postgres
+            from infrastructure.persistence.postgres.connection import init_postgres
             await init_postgres()
             logger.info("🔧 New infrastructure initialized (PostgreSQL connection)")
         

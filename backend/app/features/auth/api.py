@@ -16,7 +16,7 @@ from app.core.security import (
     SecurityError
 )
 from app.core.rate_limiter import rate_limiter, RateLimitType
-from app.infrastructure.persistence.postgres.connection import get_async_session
+from infrastructure.persistence.postgres.connection import get_async_session
 from .repository import UserRepository, RefreshTokenRepository
 from .service import AuthService
 from .schemas import (

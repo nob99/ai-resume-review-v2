@@ -15,10 +15,8 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.datetime_utils import utc_now
 from .repository import FileUploadRepository
-from .models import (
-    FileUpload,
-    FileStatus,
-    FileType,
+from database.models.files import FileUpload, FileStatus, FileType
+from .schemas import (
     FileUploadResponse,
     UploadedFileV2,
     FileInfo,
