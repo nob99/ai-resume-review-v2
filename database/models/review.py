@@ -10,7 +10,7 @@ from enum import Enum
 from typing import Optional, Dict, Any
 
 from sqlalchemy import Column, String, Integer, Text, DateTime, ForeignKey, JSON
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship, validates
 
 from . import Base
@@ -145,6 +145,7 @@ class ReviewResult(Base):
     formatting_score = Column(Integer, nullable=True)  # 0-100
     executive_summary = Column(Text, nullable=True)
     detailed_scores = Column(JSON, nullable=True)  # JSON object with detailed breakdowns
+    raw_ai_response = Column(JSONB, nullable=True, doc="Complete raw AI response JSON for flexible frontend processing")
     ai_model_used = Column(String(100), nullable=True)
     processing_time_ms = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
