@@ -153,6 +153,11 @@ else:
     from app.features.auth.api import router as new_auth_router
     app.include_router(new_auth_router, prefix="/api/v1/auth", tags=["auth"])
 
+# Candidate management feature (REQUIRED for resume uploads)
+from app.features.candidate.api import router as candidate_router
+app.include_router(candidate_router, prefix="/api/v1/candidates", tags=["candidates"])
+logger.info("Candidate management feature enabled")
+
 # Resume upload feature (NEW - renamed from file_upload)
 if getattr(settings, 'USE_NEW_RESUME_UPLOAD', True):
     from app.features.resume_upload.api import router as resume_upload_router
