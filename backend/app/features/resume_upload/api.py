@@ -216,7 +216,7 @@ async def get_upload(
     description="Get list of user's file uploads with pagination"
 )
 async def list_uploads(
-    status: Optional[FileStatus] = Query(None, description="Filter by status"),
+    status: Optional[ResumeStatus] = Query(None, description="Filter by status"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(10, ge=1, le=50, description="Items per page"),
     current_user: User = Depends(get_current_user),

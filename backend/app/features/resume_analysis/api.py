@@ -308,31 +308,36 @@ async def validate_request(
     Validate an analysis request without running the analysis.
     Useful for frontend validation and testing.
     """
-    
+
     try:
-        # This would call internal validation without running analysis
-        # For now, just return basic validation
-        
-        if len(request.text) < 100:
-            raise AnalysisValidationException("Text too short")
-        
-        if len(request.text) > 50000:
-            raise AnalysisValidationException("Text too long")
-        
+        # Validate industry support
         if request.industry not in service.get_supported_industries():
             raise AnalysisValidationException("Unsupported industry")
-        
+
+        # Validate analysis depth
+        if request.analysis_depth not in [depth.value for depth in AnalysisDepth]:
+            raise AnalysisValidationException("Invalid analysis depth")
+
+        # Validate focus areas if provided
+        if request.focus_areas:
+            valid_areas = ["structure", "content", "formatting", "impact", "relevance"]
+            invalid_areas = [area for area in request.focus_areas if area not in valid_areas]
+            if invalid_areas:
+                raise AnalysisValidationException(f"Invalid focus areas: {', '.join(invalid_areas)}")
+
         return {
             "valid": True,
             "message": "Request is valid",
-            "text_length": len(request.text),
-            "industry": request.industry.value
+            "industry": request.industry.value,
+            "analysis_depth": request.analysis_depth.value,
+            "focus_areas": request.focus_areas or [],
+            "compare_to_market": request.compare_to_market
         }
-        
+
     except AnalysisValidationException as e:
         return {
             "valid": False,
             "message": str(e),
-            "text_length": len(request.text),
-            "industry": request.industry.value
+            "industry": request.industry.value,
+            "analysis_depth": request.analysis_depth.value
         }
