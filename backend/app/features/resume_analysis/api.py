@@ -40,24 +40,26 @@ def get_analysis_service(db: Session = Depends(get_db)) -> AnalysisService:
 
 
 @router.post(
-    "/analyze",
+    "/resumes/{resume_id}/analyze",
     response_model=AnalysisResponse,
-    summary="Analyze resume",
-    description="Analyze a resume text for a specific industry using AI agents"
+    summary="Request resume analysis",
+    description="Request AI analysis for an uploaded resume, returns job ID for polling"
 )
-async def analyze_resume(
+async def request_resume_analysis(
+    resume_id: uuid.UUID,
     background_tasks: BackgroundTasks,
     request: AnalysisRequest,
     current_user: User = Depends(get_current_user),
     service: AnalysisService = Depends(get_analysis_service)
 ) -> AnalysisResponse:
     """
-    Analyze a resume for industry-specific feedback.
-    
-    - Validates input text and industry
-    - Uses specialized AI agents for analysis
-    - Returns detailed scores and feedback
-    - Stores results for future reference
+    Request analysis for an uploaded resume.
+
+    - References uploaded resume by ID (no copy/paste needed!)
+    - Validates user access to the resume via candidate permissions
+    - Queues analysis job for background processing
+    - Returns analysis job ID for polling results
+    - Supports different analysis depths and focus areas
     """
     
     try:
@@ -68,12 +70,16 @@ async def analyze_resume(
             window_seconds=300  # 5 analyses per 5 minutes
         )
         
-        logger.info(f"User {current_user.id} starting analysis for industry: {request.industry}")
-        
-        # Process analysis
-        result = await service.analyze_resume(
-            request=request,
-            user_id=current_user.id
+        logger.info(f"User {current_user.id} requesting analysis for resume {resume_id}, industry: {request.industry}")
+
+        # Request analysis (async processing)
+        result = await service.request_analysis(
+            resume_id=resume_id,
+            industry=request.industry,
+            user_id=current_user.id,
+            analysis_depth=request.analysis_depth,
+            focus_areas=request.focus_areas,
+            compare_to_market=request.compare_to_market
         )
         
         logger.info(f"Analysis completed: {result.analysis_id}")
@@ -96,23 +102,68 @@ async def analyze_resume(
 
 
 @router.get(
-    "/{analysis_id}",
+    "/analysis/{analysis_id}/status",
+    response_model=AnalysisResponse,
+    summary="Get analysis status",
+    description="Poll analysis status and get results when ready"
+)
+async def get_analysis_status(
+    analysis_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    service: AnalysisService = Depends(get_analysis_service)
+) -> AnalysisResponse:
+    """
+    Poll analysis status and get results when complete.
+
+    Use this endpoint to check if analysis is done and retrieve results.
+    Frontend should poll this every 2-3 seconds until status is 'completed'.
+    """
+
+    status_result = await service.get_analysis_status(analysis_id, current_user.id)
+    if not status_result:
+        raise HTTPException(status_code=404, detail="Analysis not found or not accessible")
+
+    return status_result
+
+
+@router.get(
+    "/analysis/{analysis_id}",
     response_model=AnalysisResult,
     summary="Get analysis result",
-    description="Get detailed results of a specific analysis"
+    description="Get detailed results of a completed analysis"
 )
-async def get_analysis(
+async def get_analysis_result(
     analysis_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
     service: AnalysisService = Depends(get_analysis_service)
 ) -> AnalysisResult:
-    """Get detailed analysis results by ID."""
-    
+    """Get detailed analysis results by ID (only for completed analyses)."""
+
     result = await service.get_analysis_result(analysis_id, current_user.id)
     if not result:
         raise HTTPException(status_code=404, detail="Analysis not found or not accessible")
-    
+
     return result
+
+
+@router.get(
+    "/resumes/{resume_id}/analyses",
+    response_model=AnalysisListResponse,
+    summary="List resume analyses",
+    description="Get all analyses performed on a specific resume"
+)
+async def get_resume_analysis_history(
+    resume_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    service: AnalysisService = Depends(get_analysis_service)
+) -> AnalysisListResponse:
+    """Get analysis history for a specific resume."""
+
+    analyses = await service.get_resume_analyses(resume_id, current_user.id)
+    return AnalysisListResponse(
+        analyses=analyses,
+        total_count=len(analyses)
+    )
 
 
 @router.get(

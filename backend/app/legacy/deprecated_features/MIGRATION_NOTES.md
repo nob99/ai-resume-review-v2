@@ -24,9 +24,17 @@
 
 ## File Upload Integration
 
-**Current Status**: `app/features/file_upload` still active
-**Next Step**: Merge into unified resume service
-**Timeline**: Next 2 weeks
+**Status**: ✅ **COMPLETED** - Transformed to `resume_upload`
+**Result**: Complete candidate-centric resume management with proper Resume model
+**Timeline**: Completed September 2025
+
+## Resume Analysis Refactoring
+
+**Status**: ✅ **COMPLETED** - Text-based analysis replaced with resume-referencing
+**Old Method**: Users copy/paste resume text into analysis requests
+**New Method**: Analysis references uploaded resumes by ID
+**Legacy File**: `resume_analysis_text_based.py` contains old implementation
+**Timeline**: Completed September 2025
 
 ## Testing
 

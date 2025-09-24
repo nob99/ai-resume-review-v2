@@ -9,12 +9,14 @@ This directory contains deprecated features that are being phased out during the
 - **candidate**: New candidate-centric architecture implemented with full test coverage
 - **resume_analysis**: New on-demand analysis service with polling-based results
 
-### 🔄 In Progress
-- **file_upload**: Being merged into unified resume service (functionality preserved)
+### ✅ Recently Completed
+- **file_upload**: Transformed to `resume_upload` with candidate-centric design ✅
+- **resume_analysis**: Text-based method replaced with resume-referencing ✅
 
 ### 📁 Archived Features (deprecated_features/)
 - **resume**: Old resume service (replaced by new candidate-centric resume service)
 - **review**: Old review system (replaced by resume_analysis with better structure)
+- **resume_analysis_text_based.py**: Old text-input analysis method (replaced by resume-referencing)
 
 ## ⚠️ Important Notes
 

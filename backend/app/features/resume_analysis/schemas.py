@@ -34,13 +34,26 @@ class MarketTier(str, Enum):
     UNKNOWN = "unknown"
 
 
+class AnalysisDepth(str, Enum):
+    """Analysis depth/complexity levels."""
+    QUICK = "quick"        # Basic scoring, fast turnaround
+    STANDARD = "standard"  # Full analysis with detailed feedback
+    DEEP = "deep"         # Comprehensive analysis with section-level insights
+
+
 # Pydantic Schemas
 class AnalysisRequest(BaseModel):
-    """Request to analyze a resume."""
-    text: str = Field(..., min_length=100, max_length=50000)
+    """Request to analyze an uploaded resume."""
     industry: Industry
-    file_upload_id: Optional[str] = None
-    analysis_options: Optional[Dict[str, Any]] = None
+    analysis_depth: AnalysisDepth = AnalysisDepth.STANDARD
+    focus_areas: Optional[List[str]] = Field(
+        None,
+        description="Specific areas to focus on: structure, content, formatting, impact, relevance"
+    )
+    compare_to_market: bool = Field(
+        False,
+        description="Include market tier comparison analysis"
+    )
 
 
 class ScoreDetails(BaseModel):

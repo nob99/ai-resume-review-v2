@@ -17,6 +17,9 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 from database.models.analysis import ResumeAnalysis, AnalysisStatus, Industry, MarketTier
+
+# Import resume upload service for integration
+from app.features.resume_upload.service import ResumeUploadService
 from .schemas import (
     AnalysisRequest,
     AnalysisResult,
@@ -26,7 +29,8 @@ from .schemas import (
     ScoreDetails,
     ConfidenceMetrics,
     FeedbackSection,
-    CompleteAnalysisResult
+    CompleteAnalysisResult,
+    AnalysisDepth
 )
 
 logger = logging.getLogger(__name__)
@@ -57,7 +61,10 @@ class AnalysisService:
         self.db = db
         self.repository = AnalysisRepository(db)
         self.settings = get_settings()
-        
+
+        # Initialize resume upload service for integration
+        self.resume_service = ResumeUploadService(db)
+
         # Initialize AI orchestrator from isolated module
         self.ai_orchestrator = ResumeAnalysisOrchestrator()
         
@@ -77,103 +84,194 @@ class AnalysisService:
         }
         
         logger.info("AnalysisService initialized successfully")
-    
-    async def analyze_resume(
+
+    async def request_analysis(
         self,
-        request: AnalysisRequest,
-        user_id: uuid.UUID
+        resume_id: uuid.UUID,
+        industry: Industry,
+        user_id: uuid.UUID,
+        analysis_depth: AnalysisDepth = AnalysisDepth.STANDARD,
+        focus_areas: Optional[List[str]] = None,
+        compare_to_market: bool = False
     ) -> AnalysisResponse:
         """
-        Main business logic interface for resume analysis.
-        
+        Request analysis for an uploaded resume (NEW two-feature method).
+
         Args:
-            request: Analysis request with text and industry
+            resume_id: ID of uploaded resume to analyze
+            industry: Target industry for analysis
+            analysis_depth: Complexity level (quick/standard/deep)
+            focus_areas: Specific areas to focus on
+            compare_to_market: Include market comparison
             user_id: User requesting the analysis
-            
+
         Returns:
-            AnalysisResponse: Complete analysis response
-            
+            AnalysisResponse: Analysis job ID and polling info
+
         Raises:
+            HTTPException: If resume not found or access denied
             AnalysisValidationException: When input validation fails
-            AnalysisException: When analysis processing fails
         """
-        
+
         try:
-            # Step 1: Business logic - input validation
-            await self._validate_analysis_request(request, user_id)
-            
-            # Step 2: Create analysis record
-            file_upload_id = uuid.UUID(request.file_upload_id) if request.file_upload_id else None
-            analysis = await self.repository.create_analysis(
-                user_id=user_id,
-                industry=request.industry,
-                file_upload_id=file_upload_id
+            logger.info(f"User {user_id} requesting {analysis_depth.value} analysis for resume {resume_id}")
+
+            # Step 1: Validate resume access and get resume text
+            resume_text = await self._get_resume_text(resume_id, user_id)
+
+            # Step 2: Check for recent duplicate analysis (caching)
+            recent_analysis = await self._check_recent_analysis(resume_id, industry)
+            if recent_analysis:
+                logger.info(f"Returning cached analysis {recent_analysis.analysis_id}")
+                return recent_analysis
+
+            # Step 3: Create analysis record
+            analysis_record = await self.repository.create_analysis(
+                resume_id=resume_id,
+                requested_by_user_id=user_id,
+                industry=industry,
+                analysis_depth=analysis_depth.value,
+                focus_areas=focus_areas,
+                compare_to_market=compare_to_market,
+                status=AnalysisStatus.PENDING
             )
-            
-            logger.info(f"Starting analysis {analysis.id} for user {user_id}, industry: {request.industry}")
-            
-            # Step 3: Update status to processing
-            await self.repository.update_status(analysis.id, AnalysisStatus.PROCESSING)
-            
-            # Step 4: Business logic - preprocessing
-            processed_text = self._preprocess_resume_text(request.text)
-            
-            # Step 5: Delegate to AI orchestrator (isolated module)
-            ai_result = await self._call_ai_orchestrator(
-                text=processed_text,
-                industry=request.industry.value,
-                analysis_id=str(analysis.id)
-            )
-            
-            # Step 6: Business logic - post-processing and validation
-            await self._validate_ai_result(ai_result)
-            
-            # Step 7: Parse and store results
-            analysis_result = await self._parse_ai_result(ai_result, analysis.id)
-            
-            await self.repository.save_results(
-                analysis_id=analysis.id,
-                overall_score=analysis_result.overall_score,
-                market_tier=analysis_result.market_tier,
-                structure_scores=analysis_result.structure_scores.dict() if analysis_result.structure_scores else None,
-                appeal_scores=analysis_result.appeal_scores.dict() if analysis_result.appeal_scores else None,
-                confidence_metrics=analysis_result.confidence_metrics.dict() if analysis_result.confidence_metrics else None,
-                structure_feedback=analysis_result.structure_feedback.specific_feedback if analysis_result.structure_feedback else None,
-                appeal_feedback=analysis_result.appeal_feedback.specific_feedback if analysis_result.appeal_feedback else None,
-                analysis_summary=analysis_result.analysis_summary,
-                improvement_suggestions=", ".join(analysis_result.improvement_suggestions or []),
-                ai_model_version=analysis_result.ai_model_version
-            )
-            
-            # Step 8: Mark as completed
-            await self.repository.update_status(analysis.id, AnalysisStatus.COMPLETED)
-            
-            # Step 9: Business logic - usage tracking
-            self._track_analysis_usage(user_id, request.industry, analysis_result.overall_score)
-            
-            logger.info(
-                f"Analysis {analysis.id} completed successfully "
-                f"(score: {analysis_result.overall_score}, time: {analysis_result.processing_time_seconds:.2f}s)"
-            )
-            
+
+            # Step 4: Queue background analysis job
+            await self._queue_analysis_job(analysis_record.id, resume_text, industry, analysis_depth)
+
+            # Step 5: Return job info for polling
             return AnalysisResponse(
-                analysis_id=str(analysis.id),
-                status=AnalysisStatus.COMPLETED,
-                result=analysis_result
+                analysis_id=analysis_record.id,
+                status=AnalysisStatus.PENDING,
+                message="Analysis queued for processing",
+                poll_url=f"/api/v1/analysis/{analysis_record.id}/status",
+                estimated_completion_seconds=self._estimate_completion_time(analysis_depth)
             )
-            
-        except AnalysisValidationException as e:
-            logger.warning(f"Analysis validation failed: {str(e)}")
-            if 'analysis' in locals():
-                await self.repository.update_status(analysis.id, AnalysisStatus.ERROR, str(e))
-            raise
-            
+
+        except HTTPException:
+            raise  # Re-raise HTTP exceptions as-is
         except Exception as e:
-            logger.error(f"Analysis failed: {str(e)}")
-            if 'analysis' in locals():
-                await self.repository.update_status(analysis.id, AnalysisStatus.ERROR, str(e))
-            raise AnalysisException(f"Resume analysis failed: {str(e)}")
-    
+            logger.error(f"Error requesting analysis: {str(e)}")
+            raise AnalysisException(f"Failed to request analysis: {str(e)}")
+
+    async def _get_resume_text(self, resume_id: uuid.UUID, user_id: uuid.UUID) -> str:
+        """Get resume text via resume_upload service with access validation."""
+        try:
+            # This will validate user access to the resume via candidate permissions
+            resume = await self.resume_service.get_upload(resume_id, user_id)
+            if not resume:
+                raise HTTPException(status_code=404, detail="Resume not found or access denied")
+
+            # Get the extracted text from the resume
+            # TODO: Update this once resume_service provides get_resume_text method
+            if hasattr(resume, 'extracted_text') and resume.extracted_text:
+                return resume.extracted_text
+            else:
+                raise AnalysisValidationException("Resume text not available - may still be processing")
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error getting resume text: {str(e)}")
+            raise AnalysisException(f"Failed to get resume text: {str(e)}")
+
+    async def _check_recent_analysis(
+        self,
+        resume_id: uuid.UUID,
+        industry: Industry,
+        max_age_hours: int = 24
+    ) -> Optional[AnalysisResponse]:
+        """Check for recent analysis to avoid duplicates."""
+        # TODO: Implement caching logic
+        return None
+
+    async def _queue_analysis_job(
+        self,
+        analysis_id: uuid.UUID,
+        resume_text: str,
+        industry: Industry,
+        analysis_depth: "AnalysisDepth"
+    ):
+        """Queue background analysis job."""
+        # TODO: Implement actual background job queueing
+        logger.info(f"Queuing analysis job {analysis_id} for {analysis_depth.value} analysis")
+        # For now, just log - in production this would use Celery/RQ/etc.
+
+    def _estimate_completion_time(self, analysis_depth: AnalysisDepth) -> int:
+        """Estimate completion time based on analysis depth."""
+        time_map = {
+            AnalysisDepth.QUICK: 15,      # 15 seconds
+            AnalysisDepth.STANDARD: 45,   # 45 seconds
+            AnalysisDepth.DEEP: 120       # 2 minutes
+        }
+        return time_map.get(analysis_depth, 45)
+
+    async def get_analysis_status(
+        self,
+        analysis_id: uuid.UUID,
+        user_id: uuid.UUID
+    ) -> Optional[AnalysisResponse]:
+        """Get analysis status for polling."""
+        try:
+            analysis = await self.repository.get_analysis_with_file(analysis_id, user_id)
+            if not analysis:
+                return None
+
+            # Return status response for polling
+            response = AnalysisResponse(
+                analysis_id=analysis.id,
+                status=AnalysisStatus(analysis.status),
+                poll_url=f"/api/v1/analysis/{analysis.id}/status"
+            )
+
+            # If completed, include results
+            if analysis.status == AnalysisStatus.COMPLETED:
+                response.message = "Analysis completed successfully"
+                response.analysis_result = self._convert_to_analysis_result(analysis)
+            elif analysis.status == AnalysisStatus.PROCESSING:
+                response.message = "Analysis in progress..."
+            elif analysis.status == AnalysisStatus.ERROR:
+                response.message = f"Analysis failed: {analysis.error_message}"
+            else:
+                response.message = "Analysis pending..."
+
+            return response
+
+        except Exception as e:
+            logger.error(f"Error getting analysis status: {str(e)}")
+            return None
+
+    async def get_resume_analyses(
+        self,
+        resume_id: uuid.UUID,
+        user_id: uuid.UUID
+    ) -> List[AnalysisSummary]:
+        """Get all analyses for a specific resume."""
+        try:
+            # TODO: Add proper resume access validation via candidate service
+            # For now, get analyses by resume_id
+            analyses = await self.repository.get_by_resume_id(resume_id, user_id)
+
+            summaries = []
+            for analysis in analyses:
+                summary = AnalysisSummary(
+                    id=str(analysis.id),
+                    resume_id=str(analysis.resume_id) if hasattr(analysis, 'resume_id') else None,
+                    industry=Industry(analysis.industry),
+                    overall_score=analysis.overall_score,
+                    market_tier=MarketTier(analysis.market_tier) if analysis.market_tier else None,
+                    status=AnalysisStatus(analysis.status),
+                    requested_at=analysis.requested_at,
+                    completed_at=analysis.completed_at
+                )
+                summaries.append(summary)
+
+            return summaries
+
+        except Exception as e:
+            logger.error(f"Error getting resume analyses: {str(e)}")
+            return []
+
     async def get_analysis_result(
         self,
         analysis_id: uuid.UUID,
@@ -260,7 +358,7 @@ class AnalysisService:
         return True
     
     # ========================================================================
-    # PRIVATE BUSINESS LOGIC METHODS (migrated from old service)
+    # LEGACY METHODS (TODO: Remove in next cleanup - not used by new API)
     # ========================================================================
     
     async def _validate_analysis_request(

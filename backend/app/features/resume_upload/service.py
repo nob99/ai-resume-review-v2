@@ -20,7 +20,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 from database.models.resume import Resume, ResumeStatus
 from .schemas import (
-    ResumeResponse,
+    FileUploadResponse,
     UploadedFileV2,
     FileInfo,
     ProgressInfo,
@@ -281,14 +281,14 @@ class ResumeUploadService:
             endTime=int(db_upload.upload_completed_at.timestamp() * 1000) if db_upload.upload_completed_at else None
         )
     
-    async def get_upload(self, file_id: uuid.UUID, user_id: uuid.UUID) -> Optional[ResumeResponse]:
+    async def get_upload(self, file_id: uuid.UUID, user_id: uuid.UUID) -> Optional[FileUploadResponse]:
         """Get a specific upload by ID."""
         
         upload = self.repository.get(file_id)
         if not upload or upload.user_id != user_id:
             return None
         
-        return ResumeResponse.from_orm(upload)
+        return FileUploadResponse.from_orm(upload)
     
     async def get_user_uploads(
         self,
@@ -296,11 +296,11 @@ class ResumeUploadService:
         status: Optional[ResumeStatus] = None,
         limit: int = 10,
         offset: int = 0
-    ) -> List[ResumeResponse]:
+    ) -> List[FileUploadResponse]:
         """Get uploads for a user."""
 
         uploads = await self.repository.get_by_user(user_id, status, limit, offset)
-        return [ResumeResponse.from_orm(u) for u in uploads]
+        return [FileUploadResponse.from_orm(u) for u in uploads]
 
     async def get_candidate_resumes(
         self,
