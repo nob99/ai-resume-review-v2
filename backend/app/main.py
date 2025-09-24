@@ -153,11 +153,11 @@ else:
     from app.features.auth.api import router as new_auth_router
     app.include_router(new_auth_router, prefix="/api/v1/auth", tags=["auth"])
 
-# File upload feature (NEW)
-if getattr(settings, 'USE_NEW_FILE_UPLOAD', True):
-    from app.features.file_upload.api import router as file_upload_router
-    app.include_router(file_upload_router, prefix="/api/v1/files", tags=["files"])
-    logger.info("File upload feature enabled")
+# Resume upload feature (NEW - renamed from file_upload)
+if getattr(settings, 'USE_NEW_RESUME_UPLOAD', True):
+    from app.features.resume_upload.api import router as resume_upload_router
+    app.include_router(resume_upload_router, prefix="/api/v1", tags=["resumes"])
+    logger.info("Resume upload feature enabled")
 
 # Resume analysis feature (NEW)
 if getattr(settings, 'USE_NEW_ANALYSIS', True):

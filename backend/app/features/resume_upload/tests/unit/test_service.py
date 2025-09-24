@@ -1,4 +1,4 @@
-"""Unit tests for file upload service."""
+"""Unit tests for resume upload service."""
 
 import io
 import pytest
@@ -6,8 +6,8 @@ from unittest.mock import Mock, AsyncMock, patch
 from fastapi import UploadFile
 import uuid
 
-from app.features.file_upload.service import FileUploadService
-from database.models.files import FileStatus, FileType
+from app.features.resume_upload.service import ResumeUploadService
+from database.models.resume import ResumeStatus
 
 
 @pytest.fixture
@@ -17,9 +17,9 @@ def mock_db():
 
 
 @pytest.fixture
-def file_service(mock_db):
-    """Create file upload service with mock DB."""
-    return FileUploadService(mock_db)
+def resume_service(mock_db):
+    """Create resume upload service with mock DB."""
+    return ResumeUploadService(mock_db)
 
 
 @pytest.fixture

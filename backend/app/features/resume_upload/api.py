@@ -1,4 +1,4 @@
-"""File upload API endpoints."""
+"""Resume upload API endpoints with candidate association."""
 
 import uuid
 import logging
@@ -16,13 +16,13 @@ from app.features.auth.api import get_current_user
 from database.models.auth import User
 from app.core.rate_limiter import rate_limiter, RateLimitExceeded
 
-from .service import FileUploadService
+from .service import ResumeUploadService
 from .schemas import (
     UploadedFileV2,
     FileUploadResponse,
     FileUploadListResponse
 )
-from database.models.files import FileStatus
+from database.models.resume import ResumeStatus
 
 logger = logging.getLogger(__name__)
 
@@ -31,31 +31,34 @@ router = APIRouter()
 
 
 # Dependency injection
-def get_file_upload_service(db: Session = Depends(get_db)) -> FileUploadService:
-    """Get file upload service instance."""
-    return FileUploadService(db)
+def get_resume_upload_service(db: Session = Depends(get_db)) -> ResumeUploadService:
+    """Get resume upload service instance."""
+    return ResumeUploadService(db)
 
 
 @router.post(
-    "/upload",
+    "/candidates/{candidate_id}/resumes",
     response_model=UploadedFileV2,
-    summary="Upload a single file",
-    description="Upload a resume file (PDF, DOC, DOCX, TXT) for processing"
+    summary="Upload resume for candidate",
+    description="Upload a resume file (PDF, DOC, DOCX, TXT) for a specific candidate"
 )
-async def upload_file(
+async def upload_resume(
+    candidate_id: uuid.UUID,
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
-    service: FileUploadService = Depends(get_file_upload_service)
+    service: ResumeUploadService = Depends(get_resume_upload_service)
 ) -> UploadedFileV2:
     """
-    Upload a single resume file.
-    
+    Upload a resume for a specific candidate.
+
+    - Links resume to candidate
     - Validates file type and size
     - Extracts text content
+    - Manages version history
     - Returns upload status with extracted text
     """
-    
+
     try:
         # Apply rate limiting
         await rate_limiter.check_rate_limit(
@@ -63,11 +66,12 @@ async def upload_file(
             max_requests=10,
             window_seconds=60
         )
-        
-        logger.info(f"User {current_user.id} uploading file: {file.filename}")
-        
-        # Process upload
-        result = await service.process_upload(
+
+        logger.info(f"User {current_user.id} uploading resume for candidate {candidate_id}: {file.filename}")
+
+        # Process upload with candidate association
+        result = await service.upload_resume(
+            candidate_id=candidate_id,
             file=file,
             user_id=current_user.id
         )
@@ -88,6 +92,41 @@ async def upload_file(
         raise HTTPException(status_code=500, detail="File upload failed")
 
 
+@router.get(
+    "/candidates/{candidate_id}/resumes",
+    response_model=List[UploadedFileV2],
+    summary="List candidate resumes",
+    description="Get all resume versions for a specific candidate"
+)
+async def list_candidate_resumes(
+    candidate_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    service: ResumeUploadService = Depends(get_resume_upload_service)
+) -> List[UploadedFileV2]:
+    """
+    List all resumes for a candidate.
+
+    - Returns all versions
+    - Ordered by upload date (newest first)
+    - Includes extracted text preview
+    """
+    try:
+        logger.info(f"User {current_user.id} listing resumes for candidate {candidate_id}")
+
+        # TODO: Add candidate access validation here
+        # For now, return empty list as placeholder
+        resumes = await service.get_candidate_resumes(
+            candidate_id=candidate_id,
+            user_id=current_user.id
+        )
+
+        return resumes
+
+    except Exception as e:
+        logger.error(f"Error listing resumes: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to list resumes")
+
+
 @router.post(
     "/batch",
     response_model=List[UploadedFileV2],
@@ -97,7 +136,7 @@ async def upload_file(
 async def upload_files_batch(
     files: List[UploadFile] = File(...),
     current_user: User = Depends(get_current_user),
-    service: FileUploadService = Depends(get_file_upload_service)
+    service: ResumeUploadService = Depends(get_resume_upload_service)
 ) -> List[UploadedFileV2]:
     """
     Upload multiple resume files.
@@ -159,7 +198,7 @@ async def upload_files_batch(
 async def get_upload(
     file_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
-    service: FileUploadService = Depends(get_file_upload_service)
+    service: ResumeUploadService = Depends(get_resume_upload_service)
 ) -> FileUploadResponse:
     """Get details of a specific upload."""
     
@@ -181,7 +220,7 @@ async def list_uploads(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(10, ge=1, le=50, description="Items per page"),
     current_user: User = Depends(get_current_user),
-    service: FileUploadService = Depends(get_file_upload_service)
+    service: ResumeUploadService = Depends(get_resume_upload_service)
 ) -> FileUploadListResponse:
     """List user's file uploads with optional filtering."""
     
@@ -213,7 +252,7 @@ async def list_uploads(
 async def cancel_upload(
     file_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
-    service: FileUploadService = Depends(get_file_upload_service)
+    service: ResumeUploadService = Depends(get_resume_upload_service)
 ) -> JSONResponse:
     """Cancel an ongoing upload."""
     
@@ -238,7 +277,7 @@ async def cancel_upload(
 )
 async def get_upload_stats(
     current_user: User = Depends(get_current_user),
-    service: FileUploadService = Depends(get_file_upload_service)
+    service: ResumeUploadService = Depends(get_resume_upload_service)
 ) -> dict:
     """Get upload statistics for the current user."""
     

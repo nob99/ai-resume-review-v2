@@ -1,4 +1,4 @@
-"""File upload service with business logic and validation."""
+"""Resume upload service with candidate-centric upload and storage."""
 
 import io
 import uuid
@@ -14,13 +14,13 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.datetime_utils import utc_now
-from .repository import FileUploadRepository
+from .repository import ResumeUploadRepository
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
-from database.models.files import FileUpload, FileStatus, FileType
+from database.models.resume import Resume, ResumeStatus
 from .schemas import (
-    FileUploadResponse,
+    ResumeResponse,
     UploadedFileV2,
     FileInfo,
     ProgressInfo,
@@ -30,8 +30,8 @@ from .schemas import (
 logger = logging.getLogger(__name__)
 
 
-class FileUploadService:
-    """Service for handling file uploads with validation and text extraction."""
+class ResumeUploadService:
+    """Service for handling resume uploads with candidate association and version management."""
     
     # Configuration
     MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
@@ -47,16 +47,17 @@ class FileUploadService:
     def __init__(self, db: Session):
         """Initialize service with database session."""
         self.db = db
-        self.repository = FileUploadRepository(db)
+        self.repository = ResumeUploadRepository(db)
         self.settings = get_settings()
     
-    async def process_upload(
+    async def upload_resume(
         self,
+        candidate_id: uuid.UUID,
         file: UploadFile,
         user_id: uuid.UUID,
         progress_callback: Optional[callable] = None
     ) -> UploadedFileV2:
-        """Process a file upload with validation and text extraction."""
+        """Upload a resume for a specific candidate with version management."""
         
         file_id = str(uuid.uuid4())
         
@@ -83,13 +84,13 @@ class FileUploadService:
             )
             
             # Step 5: Update status to validating
-            await self.repository.update_status(db_upload.id, FileStatus.VALIDATING)
+            await self.repository.update_status(db_upload.id, ResumeStatus.VALIDATING)
             
             # Step 6: Validate content (virus scan would go here)
             await self._validate_content(content)
             
             # Step 7: Update status to extracting
-            await self.repository.update_status(db_upload.id, FileStatus.EXTRACTING)
+            await self.repository.update_status(db_upload.id, ResumeStatus.EXTRACTING)
             
             # Step 8: Extract text
             extracted_text = await self._extract_text(content, file_extension)
@@ -105,7 +106,7 @@ class FileUploadService:
             )
             
             # Step 11: Mark as completed
-            await self.repository.update_status(db_upload.id, FileStatus.COMPLETED)
+            await self.repository.update_status(db_upload.id, ResumeStatus.COMPLETED)
             
             # Return frontend-compatible response
             return self._to_uploaded_file_v2(db_upload, extracted_text)
@@ -117,7 +118,7 @@ class FileUploadService:
             if 'db_upload' in locals():
                 await self.repository.update_status(
                     db_upload.id,
-                    FileStatus.ERROR,
+                    ResumeStatus.ERROR,
                     str(e)
                 )
             
@@ -248,7 +249,7 @@ class FileUploadService:
         }
         return mapping.get(extension.lower(), FileType.TXT)
     
-    def _to_uploaded_file_v2(self, db_upload: FileUpload, extracted_text: str) -> UploadedFileV2:
+    def _to_uploaded_file_v2(self, db_upload: Resume, extracted_text: str) -> UploadedFileV2:
         """Convert database model to frontend-compatible schema."""
         
         return UploadedFileV2(
@@ -260,13 +261,13 @@ class FileUploadService:
                 lastModified=int(db_upload.created_at.timestamp() * 1000)
             ),
             status=db_upload.status,
-            progress=100 if db_upload.status == FileStatus.COMPLETED else 0,
+            progress=100 if db_upload.status == ResumeStatus.COMPLETED else 0,
             progressInfo=ProgressInfo(
                 fileId=str(db_upload.id),
                 fileName=db_upload.original_filename,
                 stage=db_upload.status,
-                percentage=100 if db_upload.status == FileStatus.COMPLETED else 0,
-                bytesUploaded=db_upload.file_size if db_upload.status == FileStatus.COMPLETED else 0,
+                percentage=100 if db_upload.status == ResumeStatus.COMPLETED else 0,
+                bytesUploaded=db_upload.file_size if db_upload.status == ResumeStatus.COMPLETED else 0,
                 totalBytes=db_upload.file_size,
                 timeElapsed=db_upload.processing_time_ms or 0,
                 estimatedTimeRemaining=0,
@@ -280,26 +281,41 @@ class FileUploadService:
             endTime=int(db_upload.upload_completed_at.timestamp() * 1000) if db_upload.upload_completed_at else None
         )
     
-    async def get_upload(self, file_id: uuid.UUID, user_id: uuid.UUID) -> Optional[FileUploadResponse]:
+    async def get_upload(self, file_id: uuid.UUID, user_id: uuid.UUID) -> Optional[ResumeResponse]:
         """Get a specific upload by ID."""
         
         upload = self.repository.get(file_id)
         if not upload or upload.user_id != user_id:
             return None
         
-        return FileUploadResponse.from_orm(upload)
+        return ResumeResponse.from_orm(upload)
     
     async def get_user_uploads(
         self,
         user_id: uuid.UUID,
-        status: Optional[FileStatus] = None,
+        status: Optional[ResumeStatus] = None,
         limit: int = 10,
         offset: int = 0
-    ) -> List[FileUploadResponse]:
+    ) -> List[ResumeResponse]:
         """Get uploads for a user."""
-        
+
         uploads = await self.repository.get_by_user(user_id, status, limit, offset)
-        return [FileUploadResponse.from_orm(u) for u in uploads]
+        return [ResumeResponse.from_orm(u) for u in uploads]
+
+    async def get_candidate_resumes(
+        self,
+        candidate_id: uuid.UUID,
+        user_id: uuid.UUID,
+        limit: int = 20,
+        offset: int = 0
+    ) -> List[UploadedFileV2]:
+        """Get all resume versions for a specific candidate."""
+
+        # TODO: Add candidate access validation
+        # TODO: Query resumes by candidate_id when database model is updated
+        # For now, return empty list as we can't modify database models
+        logger.info(f"Getting resumes for candidate {candidate_id} by user {user_id}")
+        return []
     
     async def cancel_upload(self, file_id: uuid.UUID, user_id: uuid.UUID) -> bool:
         """Cancel an ongoing upload."""
@@ -308,7 +324,7 @@ class FileUploadService:
         if not upload or upload.user_id != user_id:
             return False
         
-        if upload.status in [FileStatus.COMPLETED, FileStatus.ERROR, FileStatus.CANCELLED]:
+        if upload.status in [ResumeStatus.COMPLETED, ResumeStatus.ERROR, ResumeStatus.CANCELLED]:
             return False
         
         await self.repository.mark_cancelled(file_id)

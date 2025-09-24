@@ -1,4 +1,4 @@
-"""File upload Pydantic schemas for API requests/responses."""
+"""Resume upload Pydantic schemas for API requests/responses."""
 
 from datetime import datetime
 from enum import Enum
