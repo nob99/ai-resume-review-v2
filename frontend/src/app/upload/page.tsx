@@ -3,13 +3,14 @@
 import React, { useState, useCallback } from 'react'
 import { Container, Section, Header } from '../../components/layout'
 import { FileUpload, FilePreview, UploadProgressDashboard } from '../../components/upload'
-import { Button, Card, CardHeader, CardContent, Alert } from '../../components/ui'
+import { Button, Card, CardHeader, CardContent, Alert, CandidateSelector } from '../../components/ui'
 import { useToast } from '../../components/ui'
 import { UploadedFile, UploadedFileV2, FileUploadError } from '../../types'
 import { useUploadProgress } from '../../hooks/useUploadProgress'
 import { uploadApi } from '../../lib/api'
 
 export default function UploadPage() {
+  const [selectedCandidate, setSelectedCandidate] = useState<string>('')
   const [selectedFiles, setSelectedFiles] = useState<UploadedFileV2[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [showDetailedProgress, setShowDetailedProgress] = useState(false)
@@ -228,6 +229,7 @@ Skills: JavaScript, Python, AWS, Docker, Kubernetes`
         
         const result = await uploadApi.uploadFile(
           file,
+          selectedCandidate,
           (progressEvent) => {
             const percentage = (progressEvent.loaded / (progressEvent.total || file.size)) * 100
             updateProgress(fileId, {
@@ -275,6 +277,15 @@ Skills: JavaScript, Python, AWS, Docker, Kubernetes`
 
   const handleStartUpload = useCallback(async () => {
     if (selectedFiles.length === 0) return
+
+    if (!selectedCandidate) {
+      addToast({
+        type: 'error',
+        title: 'Candidate Required',
+        message: 'Please select a candidate before uploading files'
+      })
+      return
+    }
 
     setIsProcessing(true)
     setShowDetailedProgress(true)
@@ -324,7 +335,7 @@ Skills: JavaScript, Python, AWS, Docker, Kubernetes`
     } finally {
       setIsProcessing(false)
     }
-  }, [selectedFiles, processFile, getFileProgress, addToast])
+  }, [selectedFiles, selectedCandidate, processFile, getFileProgress, addToast])
 
   const handleProceedToAnalysis = () => {
     const completedFiles = selectedFiles.filter(f => f.status === 'completed')
@@ -426,10 +437,30 @@ Skills: JavaScript, Python, AWS, Docker, Kubernetes`
 
             {/* Upload Area */}
             <div className="space-y-8">
+              {/* Candidate Selection */}
               <Card>
                 <CardHeader>
                   <h2 className="text-xl font-semibold text-neutral-900">
-                    Select Resume Files
+                    Step 1: Select Candidate
+                  </h2>
+                  <p className="text-sm text-neutral-600">
+                    Choose the candidate for whom you're uploading the resume
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <CandidateSelector
+                    value={selectedCandidate}
+                    onSelect={setSelectedCandidate}
+                    placeholder="Select a candidate..."
+                    required={true}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <h2 className="text-xl font-semibold text-neutral-900">
+                    Step 2: Select Resume Files
                   </h2>
                   <p className="text-sm text-neutral-600">
                     Drag and drop your resume files or click to browse
@@ -439,10 +470,17 @@ Skills: JavaScript, Python, AWS, Docker, Kubernetes`
                   <FileUpload
                     onFilesSelected={handleFilesSelected}
                     onError={handleUploadError}
-                    disabled={isProcessing}
+                    disabled={isProcessing || !selectedCandidate}
                     multiple={true}
                     maxFiles={5}
                   />
+                  {!selectedCandidate && (
+                    <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                      <p className="text-sm text-yellow-800">
+                        Please select a candidate first before uploading files.
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

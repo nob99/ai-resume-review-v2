@@ -1,12 +1,14 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosProgressEvent } from 'axios'
-import { 
-  LoginRequest, 
-  LoginResponse, 
-  User, 
-  ApiError, 
-  AuthExpiredError, 
-  AuthInvalidError, 
-  NetworkError, 
+import {
+  LoginRequest,
+  LoginResponse,
+  User,
+  Candidate,
+  CandidateListResponse,
+  ApiError,
+  AuthExpiredError,
+  AuthInvalidError,
+  NetworkError,
   ApiResult,
   DetailedProgressInfo,
   UploadedFileV2,
@@ -286,6 +288,7 @@ export function isAuthenticated(): boolean {
 export const uploadApi = {
   async uploadFile(
     file: File,
+    candidateId: string,
     onProgress?: (progress: AxiosProgressEvent) => void,
     abortController?: AbortController
   ): Promise<ApiResult<UploadedFileV2>> {
@@ -293,7 +296,7 @@ export const uploadApi = {
       const formData = new FormData()
       formData.append('file', file)
 
-      const response = await api.post<UploadedFileV2>('/files/upload', formData, {
+      const response = await api.post<UploadedFileV2>(`/candidates/${candidateId}/resumes`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -338,6 +341,7 @@ export const uploadApi = {
 
   async uploadMultipleFiles(
     files: File[],
+    candidateId: string,
     onProgress?: (fileId: string, progress: AxiosProgressEvent) => void,
     abortControllers?: Map<string, AbortController>
   ): Promise<ApiResult<UploadedFileV2[]>> {
@@ -345,9 +349,10 @@ export const uploadApi = {
       const uploadPromises = files.map(async (file) => {
         const fileId = `${file.name}-${Date.now()}`
         const abortController = abortControllers?.get(fileId)
-        
+
         const result = await this.uploadFile(
           file,
+          candidateId,
           (progress) => onProgress?.(fileId, progress),
           abortController
         )
@@ -517,6 +522,48 @@ export const uploadApi = {
       }
     }
   },
+}
+
+// Candidate API functions
+export const candidateApi = {
+  async getCandidates(): Promise<ApiResult<Candidate[]>> {
+    try {
+      const response = await api.get<CandidateListResponse>('/candidates')
+
+      if (response.data.candidates) {
+        return {
+          success: true,
+          data: response.data.candidates
+        }
+      } else {
+        return {
+          success: false,
+          error: new Error('Invalid response format')
+        }
+      }
+    } catch (error: any) {
+      console.error('Error fetching candidates:', error)
+
+      // Handle different error types
+      if (error.response?.status === 401) {
+        return {
+          success: false,
+          error: new AuthExpiredError('Authentication required')
+        }
+      } else if (error.code === 'ECONNABORTED' || error.code === 'ENOTFOUND') {
+        return {
+          success: false,
+          error: new NetworkError('Network connection failed')
+        }
+      } else {
+        const errorMessage = error.response?.data?.detail || error.message || 'Failed to load candidates'
+        return {
+          success: false,
+          error: new Error(errorMessage)
+        }
+      }
+    }
+  }
 }
 
 // WebSocket connection for real-time progress updates

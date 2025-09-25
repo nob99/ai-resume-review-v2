@@ -11,6 +11,26 @@ export interface User {
   updated_at: string
 }
 
+export interface Candidate {
+  id: string
+  first_name: string
+  last_name: string
+  email?: string
+  phone?: string
+  current_company?: string
+  current_position?: string
+  years_experience?: number
+  status: string
+  created_at: string
+}
+
+export interface CandidateListResponse {
+  candidates: Candidate[]
+  total_count: number
+  limit: number
+  offset: number
+}
+
 export interface LoginRequest {
   email: string
   password: string
