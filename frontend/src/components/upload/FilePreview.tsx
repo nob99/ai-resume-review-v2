@@ -3,8 +3,18 @@
 import React from 'react'
 import { Card, CardContent, Button } from '../ui'
 import { cn } from '../../lib/utils'
-import { BaseComponentProps, UploadedFile, DetailedProgressInfo, UploadedFileV2 } from '../../types'
+import { BaseComponentProps, UploadFile } from '../../types'
 import { formatFileSize, getFileTypeDisplayName, isLikelyResume } from './FileValidation'
+
+// Legacy compatibility types
+type UploadedFile = UploadFile & {
+  extractedText?: string
+}
+
+type DetailedProgressInfo = any
+type UploadedFileV2 = UploadedFile & {
+  progressInfo?: DetailedProgressInfo
+}
 
 interface FilePreviewProps extends BaseComponentProps {
   files: (UploadedFile | UploadedFileV2)[]

@@ -1,7 +1,31 @@
 'use client'
 
 import React from 'react'
-import { DetailedProgressInfo, UploadProgressState } from '@/types'
+// Legacy compatibility types - this component is not used in the simplified upload
+type DetailedProgressInfo = {
+  fileId: string
+  fileName: string
+  stage: 'queued' | 'uploading' | 'validating' | 'extracting' | 'completed' | 'error' | 'cancelled'
+  percentage: number
+  bytesUploaded: number
+  totalBytes: number
+  timeElapsed: number
+  estimatedTimeRemaining: number
+  speed: number
+  retryCount: number
+  maxRetries: number
+}
+
+type UploadProgressState = {
+  files: Map<string, DetailedProgressInfo>
+  overallProgress: number
+  totalFiles: number
+  completedFiles: number
+  failedFiles: number
+  isUploading: boolean
+  startTime: number
+  estimatedTotalTime: number
+}
 
 interface UploadProgressDashboardProps {
   progressState: UploadProgressState

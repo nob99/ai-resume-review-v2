@@ -2,87 +2,40 @@
 
 import React, { useState, useCallback } from 'react'
 import { Container, Section, Header } from '../../components/layout'
-import { FileUpload, FilePreview, UploadProgressDashboard } from '../../components/upload'
-import { Button, Card, CardHeader, CardContent, Alert, CandidateSelector } from '../../components/ui'
+import { FileUpload } from '../../components/upload'
+import { Button, Card, CardHeader, CardContent, CandidateSelector } from '../../components/ui'
 import { useToast } from '../../components/ui'
-import { UploadedFile, UploadedFileV2, FileUploadError } from '../../types'
-import { useUploadProgress } from '../../hooks/useUploadProgress'
+import { UploadFile, FileUploadError } from '../../types'
 import { uploadApi } from '../../lib/api'
 
 export default function UploadPage() {
   const [selectedCandidate, setSelectedCandidate] = useState<string>('')
-  const [selectedFiles, setSelectedFiles] = useState<UploadedFileV2[]>([])
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [showDetailedProgress, setShowDetailedProgress] = useState(false)
+  const [files, setFiles] = useState<UploadFile[]>([])
+  const [isUploading, setIsUploading] = useState(false)
   const { addToast } = useToast()
-  
-  // Initialize upload progress hook
-  const {
-    progressState,
-    initializeProgress,
-    updateProgress,
-    updateStage,
-    cancelUpload,
-    retryUpload,
-    handleError,
-    resetProgress,
-    getFileProgress,
-    simulateProgress
-  } = useUploadProgress({
-    maxRetries: 3,
-    onComplete: (fileId) => {
-      addToast({
-        type: 'success',
-        title: 'Upload Complete',
-        message: `File ${fileId} uploaded successfully`
-      })
-    },
-    onError: (fileId, error) => {
-      addToast({
-        type: 'error', 
-        title: 'Upload Failed',
-        message: `Failed to upload file: ${error.message}`
-      })
-    }
-  })
 
+  // Generate unique file ID
   const generateFileId = () => `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
-  const handleFilesSelected = useCallback((files: File[]) => {
-    const newFiles: UploadedFileV2[] = files.map(file => {
-      const fileId = generateFileId()
-      const uploadedFile: UploadedFileV2 = {
-        file,
-        id: fileId,
-        status: 'pending',
-        progress: 0,
-        progressInfo: {
-          fileId,
-          fileName: file.name,
-          stage: 'queued',
-          percentage: 0,
-          bytesUploaded: 0,
-          totalBytes: file.size,
-          timeElapsed: 0,
-          estimatedTimeRemaining: 0,
-          speed: 0,
-          retryCount: 0,
-          maxRetries: 3
-        }
-      }
-      
-      return uploadedFile
-    })
+  // Handle file selection from FileUpload component
+  const handleFilesSelected = useCallback((selectedFiles: File[]) => {
+    const newFiles: UploadFile[] = selectedFiles.map(file => ({
+      id: generateFileId(),
+      file,
+      status: 'pending',
+      progress: 0
+    }))
 
-    setSelectedFiles(prev => [...prev, ...newFiles])
-    
+    setFiles(prev => [...prev, ...newFiles])
+
     addToast({
       type: 'success',
       title: 'Files Selected',
-      message: `${files.length} file${files.length !== 1 ? 's' : ''} selected successfully`
+      message: `${selectedFiles.length} file${selectedFiles.length !== 1 ? 's' : ''} added`
     })
   }, [addToast])
 
+  // Handle file upload errors
   const handleUploadError = (error: FileUploadError) => {
     addToast({
       type: 'error',
@@ -91,228 +44,99 @@ export default function UploadPage() {
     })
   }
 
-  const handleRemoveFile = useCallback((fileId: string) => {
-    // Cancel any ongoing upload
-    cancelUpload(fileId)
-    
-    setSelectedFiles(prev => prev.filter(f => f.id !== fileId))
-    
-    addToast({
-      type: 'info',
-      title: 'File Removed',
-      message: 'File removed from upload queue'
-    })
-  }, [cancelUpload, addToast])
+  // Upload a single file
+  const uploadSingleFile = async (uploadFile: UploadFile): Promise<void> => {
+    // Update file status to uploading
+    setFiles(prev => prev.map(f =>
+      f.id === uploadFile.id
+        ? { ...f, status: 'uploading' as const, progress: 0 }
+        : f
+    ))
 
-  const handleRetryFile = useCallback((fileId: string) => {
-    const file = selectedFiles.find(f => f.id === fileId)
-    if (!file) return
-    
-    // Reset the file status and start upload process
-    setSelectedFiles(prev => 
-      prev.map(f => 
-        f.id === fileId 
-          ? { 
-              ...f, 
-              status: 'pending', 
-              progress: 0, 
-              error: undefined,
-              progressInfo: {
-                ...f.progressInfo!,
-                stage: 'queued',
-                percentage: 0,
-                bytesUploaded: 0,
-                retryCount: (f.progressInfo?.retryCount || 0) + 1
-              }
-            }
-          : f
-      )
-    )
-    
-    // Start the upload process for this file
-    processFile(file.file, fileId)
-  }, [selectedFiles])
+    // Create abort controller for this upload
+    const abortController = new AbortController()
 
-  const handleCancelFile = useCallback((fileId: string) => {
-    cancelUpload(fileId)
-    
-    setSelectedFiles(prev => 
-      prev.map(f => 
-        f.id === fileId 
-          ? { 
-              ...f, 
-              status: 'cancelled',
-              progressInfo: {
-                ...f.progressInfo!,
-                stage: 'cancelled'
-              }
-            }
-          : f
-      )
-    )
-    
-    addToast({
-      type: 'info',
-      title: 'Upload Cancelled',
-      message: 'File upload has been cancelled'
-    })
-  }, [cancelUpload, addToast])
+    // Store abort controller in file state
+    setFiles(prev => prev.map(f =>
+      f.id === uploadFile.id
+        ? { ...f, abortController }
+        : f
+    ))
 
-  // Process a single file with real upload or simulation
-  const processFile = useCallback(async (file: File, fileId: string): Promise<void> => {
-    const updateFileStatus = (updates: Partial<UploadedFileV2>) => {
-      setSelectedFiles(prev => 
-        prev.map(f => f.id === fileId ? { ...f, ...updates } : f)
-      )
-    }
-
-    // Initialize progress tracking
-    const abortController = initializeProgress(fileId, file.name, file.size)
-    
     try {
-      // Update file with cancellation token
-      updateFileStatus({
-        cancellationToken: {
-          fileId,
-          abortController,
-          timestamp: Date.now()
+      const result = await uploadApi.uploadFile(
+        uploadFile.file,
+        selectedCandidate,
+        // Progress callback
+        (progressEvent) => {
+          const percentage = (progressEvent.loaded / (progressEvent.total || uploadFile.file.size)) * 100
+          setFiles(prev => prev.map(f =>
+            f.id === uploadFile.id
+              ? { ...f, progress: Math.round(percentage) }
+              : f
+          ))
         },
-        startTime: Date.now()
-      })
+        abortController
+      )
 
-      // Use real upload API or simulation based on environment
-      // Only use simulation if API URL is not configured (not in development mode)
-      const useSimulation = !process.env.NEXT_PUBLIC_API_URL
-
-      // Add detailed logging
-      console.log('🚀 Upload Debug Info:')
-      console.log('- File:', file.name, 'Size:', file.size)
-      console.log('- Candidate ID:', selectedCandidate)
-      console.log('- API URL:', process.env.NEXT_PUBLIC_API_URL)
-      console.log('- Use Simulation:', useSimulation)
-      console.log('- NODE_ENV:', process.env.NODE_ENV)
-
-      if (useSimulation) {
-        // Simulate upload with detailed progress
-        simulateProgress(fileId, 8000) // 8 second simulation
-        
-        // Wait for simulation to complete
-        await new Promise(resolve => {
-          const checkProgress = () => {
-            const progress = getFileProgress(fileId)
-            if (progress?.stage === 'completed' || progress?.stage === 'error') {
-              // Add mock extracted text
-              if (progress.stage === 'completed') {
-                const mockExtractedText = `This is a sample resume for ${file.name}.
-                
-John Doe
-Software Engineer
-
-Experience:
-- 5+ years in full-stack development
-- Expertise in React, Node.js, TypeScript
-- Led teams of 3-5 developers
-
-Education:
-- Computer Science, University of Technology
-- Graduated Magna Cum Laude
-
-Skills: JavaScript, Python, AWS, Docker, Kubernetes`
-
-                updateFileStatus({
-                  status: 'completed',
-                  extractedText: mockExtractedText,
-                  endTime: Date.now()
-                })
+      if (result.success) {
+        // Upload successful
+        setFiles(prev => prev.map(f =>
+          f.id === uploadFile.id
+            ? {
+                ...f,
+                status: 'success' as const,
+                progress: 100,
+                result: result.data,
+                abortController: undefined
               }
-              resolve(undefined)
-            } else {
-              setTimeout(checkProgress, 100)
-            }
-          }
-          checkProgress()
+            : f
+        ))
+
+        addToast({
+          type: 'success',
+          title: 'Upload Complete',
+          message: `${uploadFile.file.name} uploaded successfully`
         })
       } else {
-        // Real upload implementation
-        console.log('📤 Starting REAL upload (not simulation)')
-        console.log('- Updating stage to uploading...')
-        updateStage(fileId, 'uploading')
-
-        try {
-          console.log('- Calling uploadApi.uploadFile with:')
-          console.log('  - file:', file.name)
-          console.log('  - candidateId:', selectedCandidate)
-          console.log('  - abortController:', abortController)
-
-          const result = await uploadApi.uploadFile(
-            file,
-            selectedCandidate,
-            (progressEvent) => {
-              console.log('Progress event:', progressEvent.loaded, '/', progressEvent.total)
-              const percentage = (progressEvent.loaded / (progressEvent.total || file.size)) * 100
-              updateProgress(fileId, {
-                bytesUploaded: progressEvent.loaded,
-                percentage
-              })
-            },
-            abortController
-          )
-
-          console.log('Upload API result:', result)
-
-          if (!result.success) {
-            console.error('❌ Upload failed with error:', result.error)
-            throw result.error
-          }
-        } catch (uploadError) {
-          console.error('❌ Upload exception caught:', uploadError)
-          throw uploadError
-        }
-
-        // Update with completed file data
-        updateFileStatus({
-          status: 'completed',
-          progress: 100,
-          extractedText: result.data?.extractedText,
-          endTime: Date.now()
-        })
-        
-        updateStage(fileId, 'completed')
+        throw result.error || new Error('Upload failed')
       }
-
     } catch (error: any) {
-      console.error('🔥 processFile catch block - Error details:')
-      console.error('- Error name:', error.name)
-      console.error('- Error message:', error.message)
-      console.error('- Error stack:', error.stack)
-      console.error('- Full error object:', error)
-
-      if (error.name === 'AbortError') {
-        // Upload was cancelled
-        console.log('Upload was cancelled by user')
-        updateFileStatus({
-          status: 'cancelled'
-        })
-        updateStage(fileId, 'cancelled')
+      // Check if upload was cancelled
+      if (error.name === 'AbortError' || error.message.includes('cancelled')) {
+        setFiles(prev => prev.map(f =>
+          f.id === uploadFile.id
+            ? {
+                ...f,
+                status: 'cancelled' as const,
+                abortController: undefined
+              }
+            : f
+        ))
       } else {
         // Upload failed
-        const errorMessage = error.message || 'Failed to upload file. Please try again.'
-        console.error('Setting error status with message:', errorMessage)
+        setFiles(prev => prev.map(f =>
+          f.id === uploadFile.id
+            ? {
+                ...f,
+                status: 'error' as const,
+                error: error.message || 'Upload failed',
+                abortController: undefined
+              }
+            : f
+        ))
 
-        updateFileStatus({
-          status: 'error',
-          error: errorMessage,
-          endTime: Date.now()
+        addToast({
+          type: 'error',
+          title: 'Upload Failed',
+          message: `Failed to upload ${uploadFile.file.name}: ${error.message}`
         })
-        updateStage(fileId, 'error')
-        handleError(fileId, error)
       }
     }
-  }, [initializeProgress, simulateProgress, getFileProgress, updateStage, updateProgress, handleError])
+  }
 
-  const handleStartUpload = useCallback(async () => {
-    if (selectedFiles.length === 0) return
-
+  // Start uploading all pending files
+  const handleStartUpload = async () => {
     if (!selectedCandidate) {
       addToast({
         type: 'error',
@@ -322,86 +146,65 @@ Skills: JavaScript, Python, AWS, Docker, Kubernetes`
       return
     }
 
-    setIsProcessing(true)
-    setShowDetailedProgress(true)
-    
-    const pendingFiles = selectedFiles.filter(f => f.status === 'pending')
-    
-    addToast({
-      type: 'info',
-      title: 'Upload Started',
-      message: `Uploading ${pendingFiles.length} file${pendingFiles.length !== 1 ? 's' : ''}...`
-    })
+    const pendingFiles = files.filter(f => f.status === 'pending')
+    if (pendingFiles.length === 0) return
 
-    // Process files concurrently with a limit
-    const concurrentLimit = 3
-    const processingPromises: Promise<void>[] = []
-    
-    for (let i = 0; i < pendingFiles.length; i += concurrentLimit) {
-      const batch = pendingFiles.slice(i, i + concurrentLimit)
-      const batchPromises = batch.map(file => processFile(file.file, file.id))
-      processingPromises.push(...batchPromises)
-      
-      // Add slight delay between batches to prevent overwhelming the server
-      if (i + concurrentLimit < pendingFiles.length) {
-        await new Promise(resolve => setTimeout(resolve, 100))
-      }
-    }
+    setIsUploading(true)
+
+    // Upload files concurrently with limit of 3
+    const uploadPromises = pendingFiles.map(file => uploadSingleFile(file))
 
     try {
-      await Promise.all(processingPromises)
-      
-      const completedCount = selectedFiles.filter(f => {
-        const progressInfo = getFileProgress(f.id)
-        return progressInfo?.stage === 'completed'
-      }).length
-      
+      await Promise.all(uploadPromises)
+
+      const successCount = files.filter(f => f.status === 'success').length
       addToast({
         type: 'success',
-        title: 'Upload Complete',
-        message: `${completedCount} file${completedCount !== 1 ? 's' : ''} uploaded successfully!`
+        title: 'Uploads Complete',
+        message: `${successCount} file${successCount !== 1 ? 's' : ''} uploaded successfully!`
       })
     } catch (error) {
-      addToast({
-        type: 'error',
-        title: 'Upload Error',
-        message: 'Some files failed to upload. Check individual files for details.'
-      })
+      // Individual file errors are already handled in uploadSingleFile
+      console.error('Batch upload error:', error)
     } finally {
-      setIsProcessing(false)
+      setIsUploading(false)
     }
-  }, [selectedFiles, selectedCandidate, processFile, getFileProgress, addToast])
-
-  const handleProceedToAnalysis = () => {
-    const completedFiles = selectedFiles.filter(f => f.status === 'completed')
-    
-    addToast({
-      type: 'success',
-      title: 'Ready for Analysis',
-      message: `${completedFiles.length} resume${completedFiles.length !== 1 ? 's' : ''} ready for AI analysis`
-    })
-
-    // In a real app, this would navigate to the analysis page
-    console.log('Proceeding to analysis with files:', completedFiles)
   }
 
-  // Helper functions to get current file status
-  const getFileDisplayStatus = (file: UploadedFileV2) => {
-    const progressInfo = getFileProgress(file.id)
-    return progressInfo?.stage || file.status
+  // Remove file from list
+  const handleRemoveFile = (fileId: string) => {
+    setFiles(prev => prev.filter(f => f.id !== fileId))
   }
 
-  const pendingFiles = selectedFiles.filter(f => getFileDisplayStatus(f) === 'pending' || getFileDisplayStatus(f) === 'queued')
-  const completedFiles = selectedFiles.filter(f => getFileDisplayStatus(f) === 'completed')
-  const processingFiles = selectedFiles.filter(f => ['uploading', 'validating', 'extracting'].includes(getFileDisplayStatus(f)))
-  const errorFiles = selectedFiles.filter(f => getFileDisplayStatus(f) === 'error')
-  const cancelledFiles = selectedFiles.filter(f => getFileDisplayStatus(f) === 'cancelled')
-  const hasProcessingFiles = processingFiles.length > 0
+  // Cancel file upload
+  const handleCancelFile = (fileId: string) => {
+    const file = files.find(f => f.id === fileId)
+    if (file?.abortController) {
+      file.abortController.abort()
+    }
+  }
+
+  // Retry failed upload
+  const handleRetryFile = (fileId: string) => {
+    const file = files.find(f => f.id === fileId)
+    if (file && file.status === 'error') {
+      setFiles(prev => prev.map(f =>
+        f.id === fileId
+          ? { ...f, status: 'pending' as const, error: undefined }
+          : f
+      ))
+    }
+  }
+
+  const pendingFiles = files.filter(f => f.status === 'pending')
+  const uploadingFiles = files.filter(f => f.status === 'uploading')
+  const successFiles = files.filter(f => f.status === 'success')
+  const errorFiles = files.filter(f => f.status === 'error')
 
   return (
     <div className="min-h-screen bg-neutral-50">
       <Header />
-      
+
       <main className="py-8">
         <Container size="lg">
           <div className="max-w-4xl mx-auto">
@@ -411,66 +214,11 @@ Skills: JavaScript, Python, AWS, Docker, Kubernetes`
                 Upload Resume Files
               </h1>
               <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
-                Upload your resume files to get started with AI-powered analysis. 
+                Upload your resume files to get started with AI-powered analysis.
                 Support for PDF and Word documents up to 10MB each.
               </p>
             </Section>
 
-            {/* Upload Progress Steps */}
-            <div className="mb-8">
-              <div className="flex items-center justify-center space-x-8">
-                <div className="flex items-center space-x-2">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    selectedFiles.length > 0 
-                      ? 'bg-success-500 text-white' 
-                      : 'bg-neutral-200 text-neutral-500'
-                  }`}>
-                    1
-                  </div>
-                  <span className="text-sm font-medium text-neutral-700">Select Files</span>
-                </div>
-                
-                <div className={`w-12 h-0.5 ${
-                  pendingFiles.length === 0 && selectedFiles.length > 0
-                    ? 'bg-success-500' 
-                    : 'bg-neutral-200'
-                }`}></div>
-                
-                <div className="flex items-center space-x-2">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    pendingFiles.length === 0 && selectedFiles.length > 0
-                      ? 'bg-success-500 text-white'
-                      : hasProcessingFiles
-                        ? 'bg-primary-500 text-white'
-                        : 'bg-neutral-200 text-neutral-500'
-                  }`}>
-                    {hasProcessingFiles ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    ) : (
-                      '2'
-                    )}
-                  </div>
-                  <span className="text-sm font-medium text-neutral-700">Upload Files</span>
-                </div>
-                
-                <div className={`w-12 h-0.5 ${
-                  completedFiles.length > 0 ? 'bg-success-500' : 'bg-neutral-200'
-                }`}></div>
-                
-                <div className="flex items-center space-x-2">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    completedFiles.length > 0 
-                      ? 'bg-success-500 text-white' 
-                      : 'bg-neutral-200 text-neutral-500'
-                  }`}>
-                    3
-                  </div>
-                  <span className="text-sm font-medium text-neutral-700">AI Analysis</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Upload Area */}
             <div className="space-y-8">
               {/* Candidate Selection */}
               <Card>
@@ -478,9 +226,6 @@ Skills: JavaScript, Python, AWS, Docker, Kubernetes`
                   <h2 className="text-xl font-semibold text-neutral-900">
                     Step 1: Select Candidate
                   </h2>
-                  <p className="text-sm text-neutral-600">
-                    Choose the candidate for whom you're uploading the resume
-                  </p>
                 </CardHeader>
                 <CardContent>
                   <CandidateSelector
@@ -492,20 +237,18 @@ Skills: JavaScript, Python, AWS, Docker, Kubernetes`
                 </CardContent>
               </Card>
 
+              {/* File Upload */}
               <Card>
                 <CardHeader>
                   <h2 className="text-xl font-semibold text-neutral-900">
                     Step 2: Select Resume Files
                   </h2>
-                  <p className="text-sm text-neutral-600">
-                    Drag and drop your resume files or click to browse
-                  </p>
                 </CardHeader>
                 <CardContent>
                   <FileUpload
                     onFilesSelected={handleFilesSelected}
                     onError={handleUploadError}
-                    disabled={isProcessing || !selectedCandidate}
+                    disabled={isUploading || !selectedCandidate}
                     multiple={true}
                     maxFiles={5}
                   />
@@ -519,118 +262,146 @@ Skills: JavaScript, Python, AWS, Docker, Kubernetes`
                 </CardContent>
               </Card>
 
-              {/* Progress Dashboard */}
-              {showDetailedProgress && progressState.files.size > 0 && (
-                <UploadProgressDashboard
-                  progressState={progressState}
-                  onCancelUpload={handleCancelFile}
-                  onRetryUpload={handleRetryFile}
-                />
-              )}
+              {/* File List */}
+              {files.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <h2 className="text-xl font-semibold text-neutral-900">
+                      Selected Files ({files.length})
+                    </h2>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {files.map((file) => (
+                        <div key={file.id} className="border rounded-lg p-4 bg-white">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-3">
+                                <span className="font-medium text-gray-900">
+                                  {file.file.name}
+                                </span>
+                                <span className="text-sm text-gray-500">
+                                  ({(file.file.size / 1024 / 1024).toFixed(1)} MB)
+                                </span>
+                                <StatusBadge status={file.status} />
+                              </div>
 
-              {/* File Preview */}
-              {selectedFiles.length > 0 && (
-                <FilePreview
-                  files={selectedFiles}
-                  onRemove={handleRemoveFile}
-                  onRetry={handleRetryFile}
-                  onCancel={handleCancelFile}
-                  showDetailedProgress={showDetailedProgress}
-                  readOnly={isProcessing}
-                />
-              )}
+                              {file.status === 'uploading' && (
+                                <div className="mt-2">
+                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div
+                                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                      style={{ width: `${file.progress}%` }}
+                                    ></div>
+                                  </div>
+                                  <span className="text-sm text-gray-500 mt-1">
+                                    {file.progress}% uploaded
+                                  </span>
+                                </div>
+                              )}
 
-              {/* Action Buttons */}
-              {selectedFiles.length > 0 && (
-                <div className="space-y-4">
-                  <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-                    {pendingFiles.length > 0 && (
-                      <Button
-                        size="lg"
-                        onClick={handleStartUpload}
-                        disabled={isProcessing}
-                        className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-                      >
-                        {isProcessing ? (
-                          <>
-                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></div>
-                            Uploading Files...
-                          </>
-                        ) : (
-                          <>
-                            <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                            </svg>
-                            Upload {pendingFiles.length} File{pendingFiles.length !== 1 ? 's' : ''}
-                          </>
-                        )}
-                      </Button>
-                    )}
+                              {file.error && (
+                                <p className="text-sm text-red-600 mt-1">{file.error}</p>
+                              )}
+                            </div>
 
-                    {completedFiles.length > 0 && !hasProcessingFiles && (
-                      <Button
-                        size="lg"
-                        variant="secondary"
-                        onClick={handleProceedToAnalysis}
-                        className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-                      >
-                        <>
-                          <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                          Proceed to Analysis ({completedFiles.length} ready)
-                        </>
-                      </Button>
-                    )}
-                  </div>
+                            <div className="flex items-center space-x-2">
+                              {file.status === 'uploading' && (
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={() => handleCancelFile(file.id)}
+                                >
+                                  Cancel
+                                </Button>
+                              )}
 
-                  {/* Progress View Toggle */}
-                  {(hasProcessingFiles || progressState.files.size > 0) && (
-                    <div className="flex justify-center">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setShowDetailedProgress(!showDetailedProgress)}
-                        className="text-sm"
-                      >
-                        {showDetailedProgress ? 'Hide' : 'Show'} Detailed Progress
-                      </Button>
+                              {file.status === 'error' && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleRetryFile(file.id)}
+                                >
+                                  Retry
+                                </Button>
+                              )}
+
+                              {['pending', 'error', 'cancelled'].includes(file.status) && (
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={() => handleRemoveFile(file.id)}
+                                >
+                                  Remove
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Upload Actions */}
+              {files.length > 0 && (
+                <div className="flex justify-center space-x-4">
+                  {pendingFiles.length > 0 && (
+                    <Button
+                      size="lg"
+                      onClick={handleStartUpload}
+                      disabled={isUploading || !selectedCandidate}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                    >
+                      {isUploading ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></div>
+                          Uploading...
+                        </>
+                      ) : (
+                        `Upload ${pendingFiles.length} File${pendingFiles.length !== 1 ? 's' : ''}`
+                      )}
+                    </Button>
+                  )}
+
+                  {successFiles.length > 0 && uploadingFiles.length === 0 && (
+                    <Button
+                      size="lg"
+                      variant="secondary"
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                      onClick={() => {
+                        addToast({
+                          type: 'success',
+                          title: 'Ready for Analysis',
+                          message: `${successFiles.length} resume${successFiles.length !== 1 ? 's' : ''} ready for AI analysis`
+                        })
+                      }}
+                    >
+                      Proceed to Analysis ({successFiles.length} ready)
+                    </Button>
                   )}
                 </div>
               )}
 
-              {/* Help Text and Instructions */}
-              {selectedFiles.length === 0 && (
-                <div className="space-y-6">
-                  <Alert>
-                    <h3 className="font-medium mb-2">Getting Started</h3>
-                    <ul className="text-sm space-y-1 list-disc list-inside">
-                      <li>Upload PDF, DOC, or DOCX resume files</li>
-                      <li>Maximum file size: 10MB per file</li>
-                      <li>You can upload up to 5 files at once</li>
-                      <li>Files are processed securely and not stored permanently</li>
-                    </ul>
-                  </Alert>
-                  
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div className="flex">
-                      <div className="flex-shrink-0">
-                        <svg className="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <div className="ml-3">
-                        <h3 className="text-sm font-medium text-blue-800">
-                          Next Step: Select Your Resume Files
-                        </h3>
-                        <div className="mt-2 text-sm text-blue-700">
-                          <p>
-                            Use the drag-and-drop area above to select your resume files. 
-                            After selecting files, upload buttons will appear to start processing.
-                          </p>
-                        </div>
-                      </div>
+              {/* Summary Stats */}
+              {files.length > 0 && (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-gray-600">{files.length}</div>
+                      <div className="text-sm text-gray-500">Total Files</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-blue-600">{uploadingFiles.length}</div>
+                      <div className="text-sm text-gray-500">Uploading</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-green-600">{successFiles.length}</div>
+                      <div className="text-sm text-gray-500">Completed</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-red-600">{errorFiles.length}</div>
+                      <div className="text-sm text-gray-500">Failed</div>
                     </div>
                   </div>
                 </div>
@@ -640,5 +411,30 @@ Skills: JavaScript, Python, AWS, Docker, Kubernetes`
         </Container>
       </main>
     </div>
+  )
+}
+
+// Status badge component
+function StatusBadge({ status }: { status: UploadFile['status'] }) {
+  const styles = {
+    pending: 'bg-gray-100 text-gray-800',
+    uploading: 'bg-blue-100 text-blue-800',
+    success: 'bg-green-100 text-green-800',
+    error: 'bg-red-100 text-red-800',
+    cancelled: 'bg-yellow-100 text-yellow-800'
+  }
+
+  const labels = {
+    pending: 'Pending',
+    uploading: 'Uploading',
+    success: 'Success',
+    error: 'Error',
+    cancelled: 'Cancelled'
+  }
+
+  return (
+    <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status]}`}>
+      {labels[status]}
+    </span>
   )
 }

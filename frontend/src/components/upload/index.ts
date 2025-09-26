@@ -5,6 +5,6 @@ export { default as UploadProgressDashboard } from './UploadProgressDashboard'
 export * from './FileValidation'
 
 // Export types
-export type { FileUploadProps, UploadedFile, FileValidationResult } from '../../types'
+export type { FileUploadProps, UploadFile, FileValidationResult } from '../../types'
 export type { FilePreviewProps, FilePreviewItemProps } from './FilePreview'
 export type { FileValidationConfig } from './FileValidation'
