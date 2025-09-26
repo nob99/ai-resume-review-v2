@@ -22,6 +22,46 @@ class ResumeUploadRepository(BaseRepository[Resume]):
         """Initialize repository with database session."""
         super().__init__(Resume, db)
     
+    async def create_resume(
+        self,
+        candidate_id: uuid.UUID,
+        uploaded_by_user_id: uuid.UUID,
+        original_filename: str,
+        stored_filename: str,
+        file_hash: str,
+        file_size: int,
+        mime_type: str,
+        extracted_text: Optional[str] = None
+    ) -> Resume:
+        """Create a new resume record with proper fields."""
+        # Get the latest version number for this candidate
+        existing_resumes = self.db.query(Resume).filter(
+            Resume.candidate_id == candidate_id
+        ).order_by(desc(Resume.version_number)).first()
+
+        version_number = 1
+        if existing_resumes:
+            version_number = existing_resumes.version_number + 1
+
+        resume = Resume(
+            candidate_id=candidate_id,
+            uploaded_by_user_id=uploaded_by_user_id,
+            original_filename=original_filename,
+            stored_filename=stored_filename,
+            file_hash=file_hash,
+            file_size=file_size,
+            mime_type=mime_type,
+            version_number=version_number,
+            status=ResumeStatus.PENDING.value,
+            extracted_text=extracted_text
+        )
+
+        self.db.add(resume)
+        self.db.commit()
+        self.db.refresh(resume)
+
+        return resume
+
     async def create_upload(
         self,
         filename: str,
@@ -31,17 +71,9 @@ class ResumeUploadRepository(BaseRepository[Resume]):
         user_id: uuid.UUID,
         mime_type: Optional[str] = None
     ) -> Resume:
-        """Create a new file upload record."""
-        file_upload = Resume(
-            filename=filename,
-            original_filename=original_filename,
-            file_type=file_type,
-            file_size=file_size,
-            mime_type=mime_type,
-            user_id=user_id,
-            status=ResumeStatus.PENDING,
-            upload_started_at=utc_now()
-        )
+        """Legacy method - kept for compatibility but should not be used."""
+        # This method has wrong field mappings, use create_resume instead
+        raise NotImplementedError("Use create_resume method instead")
         
         self.db.add(file_upload)
         self.db.commit()

@@ -181,8 +181,17 @@ export default function UploadPage() {
       })
 
       // Use real upload API or simulation based on environment
-      const useSimulation = process.env.NODE_ENV === 'development' || !process.env.NEXT_PUBLIC_API_URL
-      
+      // Only use simulation if API URL is not configured (not in development mode)
+      const useSimulation = !process.env.NEXT_PUBLIC_API_URL
+
+      // Add detailed logging
+      console.log('🚀 Upload Debug Info:')
+      console.log('- File:', file.name, 'Size:', file.size)
+      console.log('- Candidate ID:', selectedCandidate)
+      console.log('- API URL:', process.env.NEXT_PUBLIC_API_URL)
+      console.log('- Use Simulation:', useSimulation)
+      console.log('- NODE_ENV:', process.env.NODE_ENV)
+
       if (useSimulation) {
         // Simulate upload with detailed progress
         simulateProgress(fileId, 8000) // 8 second simulation
@@ -225,23 +234,39 @@ Skills: JavaScript, Python, AWS, Docker, Kubernetes`
         })
       } else {
         // Real upload implementation
+        console.log('📤 Starting REAL upload (not simulation)')
+        console.log('- Updating stage to uploading...')
         updateStage(fileId, 'uploading')
-        
-        const result = await uploadApi.uploadFile(
-          file,
-          selectedCandidate,
-          (progressEvent) => {
-            const percentage = (progressEvent.loaded / (progressEvent.total || file.size)) * 100
-            updateProgress(fileId, {
-              bytesUploaded: progressEvent.loaded,
-              percentage
-            })
-          },
-          abortController
-        )
 
-        if (!result.success) {
-          throw result.error
+        try {
+          console.log('- Calling uploadApi.uploadFile with:')
+          console.log('  - file:', file.name)
+          console.log('  - candidateId:', selectedCandidate)
+          console.log('  - abortController:', abortController)
+
+          const result = await uploadApi.uploadFile(
+            file,
+            selectedCandidate,
+            (progressEvent) => {
+              console.log('Progress event:', progressEvent.loaded, '/', progressEvent.total)
+              const percentage = (progressEvent.loaded / (progressEvent.total || file.size)) * 100
+              updateProgress(fileId, {
+                bytesUploaded: progressEvent.loaded,
+                percentage
+              })
+            },
+            abortController
+          )
+
+          console.log('Upload API result:', result)
+
+          if (!result.success) {
+            console.error('❌ Upload failed with error:', result.error)
+            throw result.error
+          }
+        } catch (uploadError) {
+          console.error('❌ Upload exception caught:', uploadError)
+          throw uploadError
         }
 
         // Update with completed file data
@@ -256,17 +281,27 @@ Skills: JavaScript, Python, AWS, Docker, Kubernetes`
       }
 
     } catch (error: any) {
+      console.error('🔥 processFile catch block - Error details:')
+      console.error('- Error name:', error.name)
+      console.error('- Error message:', error.message)
+      console.error('- Error stack:', error.stack)
+      console.error('- Full error object:', error)
+
       if (error.name === 'AbortError') {
         // Upload was cancelled
+        console.log('Upload was cancelled by user')
         updateFileStatus({
           status: 'cancelled'
         })
         updateStage(fileId, 'cancelled')
       } else {
         // Upload failed
+        const errorMessage = error.message || 'Failed to upload file. Please try again.'
+        console.error('Setting error status with message:', errorMessage)
+
         updateFileStatus({
           status: 'error',
-          error: error.message || 'Failed to upload file. Please try again.',
+          error: errorMessage,
           endTime: Date.now()
         })
         updateStage(fileId, 'error')

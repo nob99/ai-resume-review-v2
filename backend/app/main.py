@@ -161,7 +161,7 @@ logger.info("Candidate management feature enabled")
 # Resume upload feature (NEW - renamed from file_upload)
 if getattr(settings, 'USE_NEW_RESUME_UPLOAD', True):
     from app.features.resume_upload.api import router as resume_upload_router
-    app.include_router(resume_upload_router, prefix="/api/v1", tags=["resumes"])
+    app.include_router(resume_upload_router, prefix="/api/v1/resume_upload", tags=["resumes"])
     logger.info("Resume upload feature enabled")
 
 # Resume analysis feature (NEW)

@@ -60,16 +60,19 @@ class CancellationToken(BaseModel):
 class UploadedFileV2(BaseModel):
     """Frontend-compatible uploaded file schema."""
     id: str
+    candidate_id: Optional[str] = None  # Added for candidate association
+    filename: Optional[str] = None  # Added for compatibility
     file: FileInfo
-    status: FileStatus
+    status: str  # Changed from FileStatus to str for flexibility
     progress: int = 0
     progressInfo: Optional[ProgressInfo] = None
-    extractedText: Optional[str] = None
+    extracted_text: Optional[str] = None  # Support both naming conventions
+    extractedText: Optional[str] = None  # Keep for backward compatibility
     error: Optional[str] = None
     startTime: Optional[int] = None
     endTime: Optional[int] = None
     cancellationToken: Optional[CancellationToken] = None
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 

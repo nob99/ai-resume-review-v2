@@ -14,7 +14,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 from database.connection import get_db
 from app.features.auth.api import get_current_user
 from database.models.auth import User
-from app.core.rate_limiter import rate_limiter, RateLimitExceeded
+from app.core.rate_limiter import rate_limiter, RateLimitExceeded, RateLimitType
 
 from .service import ResumeUploadService
 from .schemas import (
@@ -61,11 +61,12 @@ async def upload_resume(
 
     try:
         # Apply rate limiting
-        await rate_limiter.check_rate_limit(
-            key=f"upload:{current_user.id}",
-            max_requests=10,
-            window_seconds=60
+        is_allowed, rate_info = await rate_limiter.check_rate_limit(
+            limit_type=RateLimitType.FILE_UPLOAD,
+            identifier=str(current_user.id)
         )
+        if not is_allowed:
+            raise RateLimitExceeded("Upload rate limit exceeded")
 
         logger.info(f"User {current_user.id} uploading resume for candidate {candidate_id}: {file.filename}")
 
@@ -154,11 +155,12 @@ async def upload_files_batch(
     
     try:
         # Apply rate limiting
-        await rate_limiter.check_rate_limit(
-            key=f"batch_upload:{current_user.id}",
-            max_requests=2,
-            window_seconds=60
+        is_allowed, rate_info = await rate_limiter.check_rate_limit(
+            limit_type=RateLimitType.FILE_UPLOAD,
+            identifier=str(current_user.id)
         )
+        if not is_allowed:
+            raise RateLimitExceeded("Upload rate limit exceeded")
         
         results = []
         errors = []

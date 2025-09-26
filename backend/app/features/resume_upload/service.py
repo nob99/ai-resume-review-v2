@@ -24,7 +24,8 @@ from .schemas import (
     UploadedFileV2,
     FileInfo,
     ProgressInfo,
-    FileValidationError
+    FileValidationError,
+    FileType
 )
 
 logger = logging.getLogger(__name__)
@@ -69,43 +70,30 @@ class ResumeUploadService:
             content = await file.read()
             file_size = len(content)
             
-            # Step 3: Generate unique filename
+            # Step 3: Generate unique filename and hash
             file_extension = Path(file.filename).suffix.lower()
             unique_filename = f"{file_id}{file_extension}"
-            
-            # Step 4: Create database record
-            db_upload = await self.repository.create_upload(
-                filename=unique_filename,
-                original_filename=file.filename,
-                file_type=self._get_file_type(file_extension),
-                file_size=file_size,
-                user_id=user_id,
-                mime_type=file.content_type
-            )
-            
-            # Step 5: Update status to validating
-            await self.repository.update_status(db_upload.id, ResumeStatus.VALIDATING)
-            
-            # Step 6: Validate content (virus scan would go here)
-            await self._validate_content(content)
-            
-            # Step 7: Update status to extracting
-            await self.repository.update_status(db_upload.id, ResumeStatus.EXTRACTING)
-            
-            # Step 8: Extract text
+
+            # Generate file hash for deduplication
+            import hashlib
+            file_hash = hashlib.sha256(content).hexdigest()
+
+            # Step 4: Extract text early (needed for database record)
             extracted_text = await self._extract_text(content, file_extension)
-            
-            # Step 9: Calculate metadata
-            metadata = self._calculate_metadata(extracted_text, content)
-            
-            # Step 10: Update with extracted text
-            await self.repository.update_extracted_text(
-                db_upload.id,
-                extracted_text,
-                metadata
+
+            # Step 5: Create database record with proper Resume model fields
+            db_upload = await self.repository.create_resume(
+                candidate_id=candidate_id,
+                uploaded_by_user_id=user_id,
+                original_filename=file.filename,
+                stored_filename=unique_filename,
+                file_hash=file_hash,
+                file_size=file_size,
+                mime_type=file.content_type or 'application/octet-stream',
+                extracted_text=extracted_text
             )
             
-            # Step 11: Mark as completed
+            # Step 6: Update status to completed (text already extracted)
             await self.repository.update_status(db_upload.id, ResumeStatus.COMPLETED)
             
             # Return frontend-compatible response
@@ -251,34 +239,44 @@ class ResumeUploadService:
     
     def _to_uploaded_file_v2(self, db_upload: Resume, extracted_text: str) -> UploadedFileV2:
         """Convert database model to frontend-compatible schema."""
-        
+
+        # Map MIME type to simple file type
+        file_type = 'txt'
+        if db_upload.mime_type:
+            if 'pdf' in db_upload.mime_type:
+                file_type = 'pdf'
+            elif 'msword' in db_upload.mime_type or 'document' in db_upload.mime_type:
+                file_type = 'docx'
+
         return UploadedFileV2(
             id=str(db_upload.id),
+            candidate_id=str(db_upload.candidate_id),
+            filename=db_upload.original_filename,
             file=FileInfo(
                 name=db_upload.original_filename,
                 size=db_upload.file_size,
-                type=db_upload.file_type,
-                lastModified=int(db_upload.created_at.timestamp() * 1000)
+                type=file_type,
+                lastModified=int(db_upload.uploaded_at.timestamp() * 1000)
             ),
             status=db_upload.status,
-            progress=100 if db_upload.status == ResumeStatus.COMPLETED else 0,
+            progress=db_upload.progress or (100 if db_upload.status == ResumeStatus.COMPLETED.value else 0),
             progressInfo=ProgressInfo(
                 fileId=str(db_upload.id),
                 fileName=db_upload.original_filename,
                 stage=db_upload.status,
-                percentage=100 if db_upload.status == ResumeStatus.COMPLETED else 0,
-                bytesUploaded=db_upload.file_size if db_upload.status == ResumeStatus.COMPLETED else 0,
+                percentage=db_upload.progress or (100 if db_upload.status == ResumeStatus.COMPLETED.value else 0),
+                bytesUploaded=db_upload.file_size if db_upload.status == ResumeStatus.COMPLETED.value else 0,
                 totalBytes=db_upload.file_size,
-                timeElapsed=db_upload.processing_time_ms or 0,
+                timeElapsed=0,
                 estimatedTimeRemaining=0,
                 speed=0,
                 retryCount=0,
                 maxRetries=3
             ),
-            extractedText=extracted_text,
-            error=db_upload.error_message,
-            startTime=int(db_upload.upload_started_at.timestamp() * 1000) if db_upload.upload_started_at else None,
-            endTime=int(db_upload.upload_completed_at.timestamp() * 1000) if db_upload.upload_completed_at else None
+            extracted_text=extracted_text or db_upload.extracted_text,
+            error=None,
+            startTime=int(db_upload.uploaded_at.timestamp() * 1000),
+            endTime=int(db_upload.processed_at.timestamp() * 1000) if db_upload.processed_at else None
         )
     
     async def get_upload(self, file_id: uuid.UUID, user_id: uuid.UUID) -> Optional[FileUploadResponse]:

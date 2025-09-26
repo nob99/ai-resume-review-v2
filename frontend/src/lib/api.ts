@@ -292,11 +292,20 @@ export const uploadApi = {
     onProgress?: (progress: AxiosProgressEvent) => void,
     abortController?: AbortController
   ): Promise<ApiResult<UploadedFileV2>> {
+    console.log('📡 uploadApi.uploadFile called with:')
+    console.log('- file:', file.name, file.size, 'bytes')
+    console.log('- candidateId:', candidateId)
+    console.log('- abortController:', abortController)
+    console.log('- abortController.signal:', abortController?.signal)
+    console.log('- abortController.signal.aborted:', abortController?.signal.aborted)
+
     try {
       const formData = new FormData()
       formData.append('file', file)
 
-      const response = await api.post<UploadedFileV2>(`/candidates/${candidateId}/resumes`, formData, {
+      console.log('- Making POST request to:', `/resume_upload/candidates/${candidateId}/resumes`)
+
+      const response = await api.post<UploadedFileV2>(`/resume_upload/candidates/${candidateId}/resumes`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -304,12 +313,20 @@ export const uploadApi = {
         signal: abortController?.signal,
       })
 
+      console.log('✅ Upload successful:', response.data)
+
       return {
         success: true,
         data: response.data
       }
     } catch (error) {
+      console.error('🔥 uploadApi.uploadFile error:', error)
+      console.error('- Error type:', typeof error)
+      console.error('- Error constructor:', error?.constructor?.name)
+      console.error('- Is axios cancel?', axios.isCancel(error))
+
       if (axios.isCancel(error)) {
+        console.error('❌ Upload was cancelled by axios')
         return {
           success: false,
           error: new Error('Upload cancelled')
@@ -380,7 +397,7 @@ export const uploadApi = {
 
   async getFileStatus(fileId: string): Promise<ApiResult<UploadedFileV2>> {
     try {
-      const response = await api.get<UploadedFileV2>(`/files/${fileId}/status`)
+      const response = await api.get<UploadedFileV2>(`/resume_upload/${fileId}/status`)
       return {
         success: true,
         data: response.data
@@ -411,7 +428,7 @@ export const uploadApi = {
 
   async cancelUpload(fileId: string): Promise<ApiResult<void>> {
     try {
-      await api.post(`/files/${fileId}/cancel`)
+      await api.delete(`/resume_upload/${fileId}/cancel`)
       return {
         success: true
       }
@@ -441,7 +458,7 @@ export const uploadApi = {
 
   async deleteFile(fileId: string): Promise<ApiResult<void>> {
     try {
-      await api.delete(`/files/${fileId}`)
+      await api.delete(`/resume_upload/${fileId}`)
       return {
         success: true
       }
@@ -480,7 +497,7 @@ export const uploadApi = {
       formData.append('file', file)
       formData.append('retry_file_id', fileId)
 
-      const response = await api.post<UploadedFileV2>('/files/retry', formData, {
+      const response = await api.post<UploadedFileV2>('/resume_upload/batch', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
