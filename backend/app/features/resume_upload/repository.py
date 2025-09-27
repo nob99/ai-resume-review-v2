@@ -35,7 +35,7 @@ class ResumeUploadRepository(BaseRepository[Resume]):
     ) -> Resume:
         """Create a new resume record with proper fields."""
         # Get the latest version number for this candidate
-        query = select(Resume).where(Resume.candidate_id == candidate_id).order_by(desc(Resume.version_number))
+        query = select(Resume).where(Resume.candidate_id == candidate_id).order_by(desc(Resume.version_number)).limit(1)
         result = await self.session.execute(query)
         existing_resumes = result.scalar_one_or_none()
 

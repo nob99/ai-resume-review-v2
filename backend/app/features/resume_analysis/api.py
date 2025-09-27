@@ -14,7 +14,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 from database.connection import get_db
 from app.features.auth.api import get_current_user
 from database.models.auth import User
-from app.core.rate_limiter import rate_limiter, RateLimitExceeded
+from app.core.rate_limiter import rate_limiter, RateLimitExceeded, RateLimitType
 
 from .service import AnalysisService, AnalysisValidationException, AnalysisException
 from .schemas import (
@@ -23,7 +23,8 @@ from .schemas import (
     AnalysisResult,
     AnalysisListResponse,
     AnalysisSummary,
-    AnalysisStats
+    AnalysisStats,
+    AnalysisDepth
 )
 from database.models.analysis import AnalysisStatus, Industry
 
@@ -64,11 +65,13 @@ async def request_resume_analysis(
     
     try:
         # Apply rate limiting
-        await rate_limiter.check_rate_limit(
-            key=f"analysis:{current_user.id}",
-            max_requests=5,
-            window_seconds=300  # 5 analyses per 5 minutes
+        is_allowed, rate_info = await rate_limiter.check_rate_limit(
+            limit_type=RateLimitType.ANALYSIS,
+            identifier=str(current_user.id)
         )
+
+        if not is_allowed:
+            raise RateLimitExceeded("Too many analysis requests. Please wait before analyzing more resumes.")
         
         logger.info(f"User {current_user.id} requesting analysis for resume {resume_id}, industry: {request.industry}")
 

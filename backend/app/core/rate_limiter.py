@@ -30,6 +30,7 @@ class RateLimitType(str, Enum):
     PASSWORD_RESET = "password_reset"
     API_GENERAL = "api_general"
     FILE_UPLOAD = "file_upload"
+    ANALYSIS = "analysis"
 
 
 @dataclass
@@ -73,6 +74,12 @@ class RateLimitConfigs:
         block_duration=1800  # block for 30 minutes
     )
 
+    ANALYSIS = RateLimitConfig(
+        requests=5,        # 5 analysis requests
+        window=300,        # per 5 minutes
+        block_duration=600   # block for 10 minutes
+    )
+
 
 class RedisRateLimiter:
     """
@@ -96,6 +103,7 @@ class RedisRateLimiter:
             RateLimitType.PASSWORD_RESET: RateLimitConfigs.PASSWORD_RESET,
             RateLimitType.API_GENERAL: RateLimitConfigs.API_GENERAL,
             RateLimitType.FILE_UPLOAD: RateLimitConfigs.FILE_UPLOAD,
+            RateLimitType.ANALYSIS: RateLimitConfigs.ANALYSIS,
         }
     
     async def connect(self):

@@ -4,6 +4,7 @@ import logging
 import uuid
 from typing import Optional, List, Dict, Any
 
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
