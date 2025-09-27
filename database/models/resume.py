@@ -46,7 +46,7 @@ class Resume(Base):
     uploaded_by_user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
     original_filename = Column(String(255), nullable=False)
     stored_filename = Column(String(255), nullable=False)
-    file_hash = Column(String(64), unique=True, nullable=False)  # SHA-256 hash for deduplication
+    file_hash = Column(String(64), nullable=False)  # SHA-256 hash - allows duplicates for resume iterations
     file_size = Column(Integer, nullable=False)
     mime_type = Column(String(100), nullable=False)
     version_number = Column(Integer, default=1, nullable=False)  # Version tracking

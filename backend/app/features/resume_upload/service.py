@@ -10,7 +10,7 @@ from pathlib import Path
 import PyPDF2
 import docx
 from fastapi import UploadFile, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.datetime_utils import utc_now
@@ -45,10 +45,10 @@ class ResumeUploadService:
         'text/plain'
     }
     
-    def __init__(self, db: Session):
+    def __init__(self, session: AsyncSession):
         """Initialize service with database session."""
-        self.db = db
-        self.repository = ResumeUploadRepository(db)
+        self.session = session
+        self.repository = ResumeUploadRepository(session)
         self.settings = get_settings()
     
     async def upload_resume(
@@ -282,8 +282,8 @@ class ResumeUploadService:
     async def get_upload(self, file_id: uuid.UUID, user_id: uuid.UUID) -> Optional[FileUploadResponse]:
         """Get a specific upload by ID."""
         
-        upload = self.repository.get(file_id)
-        if not upload or upload.user_id != user_id:
+        upload = await self.repository.get_by_id(file_id)
+        if not upload or upload.uploaded_by_user_id != user_id:
             return None
         
         return FileUploadResponse.from_orm(upload)
@@ -318,8 +318,8 @@ class ResumeUploadService:
     async def cancel_upload(self, file_id: uuid.UUID, user_id: uuid.UUID) -> bool:
         """Cancel an ongoing upload."""
         
-        upload = self.repository.get(file_id)
-        if not upload or upload.user_id != user_id:
+        upload = await self.repository.get_by_id(file_id)
+        if not upload or upload.uploaded_by_user_id != user_id:
             return False
         
         if upload.status in [ResumeStatus.COMPLETED, ResumeStatus.ERROR, ResumeStatus.CANCELLED]:

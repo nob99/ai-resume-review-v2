@@ -4,8 +4,8 @@ import uuid
 from typing import Optional, List
 from datetime import datetime
 
-from sqlalchemy.orm import Session
-from sqlalchemy import desc, and_
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import desc, and_, select
 
 from infrastructure.persistence.postgres.base import BaseRepository
 from app.core.datetime_utils import utc_now
@@ -18,9 +18,9 @@ from database.models.resume import Resume, ResumeStatus
 class ResumeUploadRepository(BaseRepository[Resume]):
     """Repository for resume upload database operations."""
     
-    def __init__(self, db: Session):
+    def __init__(self, session: AsyncSession):
         """Initialize repository with database session."""
-        super().__init__(Resume, db)
+        super().__init__(session, Resume)
     
     async def create_resume(
         self,
@@ -35,9 +35,9 @@ class ResumeUploadRepository(BaseRepository[Resume]):
     ) -> Resume:
         """Create a new resume record with proper fields."""
         # Get the latest version number for this candidate
-        existing_resumes = self.db.query(Resume).filter(
-            Resume.candidate_id == candidate_id
-        ).order_by(desc(Resume.version_number)).first()
+        query = select(Resume).where(Resume.candidate_id == candidate_id).order_by(desc(Resume.version_number))
+        result = await self.session.execute(query)
+        existing_resumes = result.scalar_one_or_none()
 
         version_number = 1
         if existing_resumes:
@@ -56,9 +56,9 @@ class ResumeUploadRepository(BaseRepository[Resume]):
             extracted_text=extracted_text
         )
 
-        self.db.add(resume)
-        self.db.commit()
-        self.db.refresh(resume)
+        self.session.add(resume)
+        await self.session.commit()
+        await self.session.refresh(resume)
 
         return resume
 
@@ -75,9 +75,9 @@ class ResumeUploadRepository(BaseRepository[Resume]):
         # This method has wrong field mappings, use create_resume instead
         raise NotImplementedError("Use create_resume method instead")
         
-        self.db.add(file_upload)
-        self.db.commit()
-        self.db.refresh(file_upload)
+        self.session.add(file_upload)
+        await self.session.commit()
+        await self.session.refresh(file_upload)
         
         return file_upload
     
@@ -88,7 +88,7 @@ class ResumeUploadRepository(BaseRepository[Resume]):
         error_message: Optional[str] = None
     ) -> Optional[Resume]:
         """Update file upload status."""
-        file_upload = self.get(file_id)
+        file_upload = await self.get_by_id(file_id)
         if not file_upload:
             return None
         
@@ -103,9 +103,9 @@ class ResumeUploadRepository(BaseRepository[Resume]):
             if file_upload.upload_started_at:
                 delta = file_upload.upload_completed_at - file_upload.upload_started_at
                 file_upload.processing_time_ms = int(delta.total_seconds() * 1000)
-        
-        self.db.commit()
-        self.db.refresh(file_upload)
+
+        await self.session.commit()
+        await self.session.refresh(file_upload)
         
         return file_upload
     
@@ -116,7 +116,7 @@ class ResumeUploadRepository(BaseRepository[Resume]):
         extraction_metadata: Optional[dict] = None
     ) -> Optional[Resume]:
         """Update extracted text and metadata."""
-        file_upload = self.get(file_id)
+        file_upload = await self.get_by_id(file_id)
         if not file_upload:
             return None
         
@@ -124,8 +124,8 @@ class ResumeUploadRepository(BaseRepository[Resume]):
         file_upload.extraction_metadata = extraction_metadata
         file_upload.updated_at = utc_now()
         
-        self.db.commit()
-        self.db.refresh(file_upload)
+        await self.session.commit()
+        await self.session.refresh(file_upload)
         
         return file_upload
     
@@ -137,12 +137,14 @@ class ResumeUploadRepository(BaseRepository[Resume]):
         offset: int = 0
     ) -> List[Resume]:
         """Get file uploads by user."""
-        query = self.db.query(Resume).filter(Resume.user_id == user_id)
-        
+        query = select(Resume).where(Resume.uploaded_by_user_id == user_id)
+
         if status:
-            query = query.filter(Resume.status == status)
-        
-        return query.order_by(desc(Resume.created_at)).limit(limit).offset(offset).all()
+            query = query.where(Resume.status == status)
+
+        query = query.order_by(desc(Resume.created_at)).limit(limit).offset(offset)
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
     
     async def get_recent_uploads(
         self,
@@ -155,12 +157,14 @@ class ResumeUploadRepository(BaseRepository[Resume]):
         
         cutoff_time = utc_now() - timedelta(hours=hours)
         
-        return self.db.query(Resume).filter(
+        query = select(Resume).where(
             and_(
-                Resume.user_id == user_id,
+                Resume.uploaded_by_user_id == user_id,
                 Resume.created_at >= cutoff_time
             )
-        ).order_by(desc(Resume.created_at)).limit(limit).all()
+        ).order_by(desc(Resume.created_at)).limit(limit)
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
     
     async def delete_old_uploads(
         self,
@@ -172,20 +176,31 @@ class ResumeUploadRepository(BaseRepository[Resume]):
         
         cutoff_time = utc_now() - timedelta(days=days)
         
-        query = self.db.query(Resume).filter(Resume.created_at < cutoff_time)
-        
+        from sqlalchemy import delete, func
+
+        # First get count
+        count_query = select(func.count()).select_from(Resume).where(Resume.created_at < cutoff_time)
         if status:
-            query = query.filter(Resume.status == status)
-        
-        count = query.count()
-        query.delete()
-        self.db.commit()
+            count_query = count_query.where(Resume.status == status)
+
+        count_result = await self.session.execute(count_query)
+        count = count_result.scalar()
+
+        # Then delete
+        delete_query = delete(Resume).where(Resume.created_at < cutoff_time)
+        if status:
+            delete_query = delete_query.where(Resume.status == status)
+
+        await self.session.execute(delete_query)
+        await self.session.commit()
         
         return count
     
     async def get_upload_stats(self, user_id: uuid.UUID) -> dict:
         """Get upload statistics for a user."""
-        uploads = self.db.query(Resume).filter(Resume.user_id == user_id).all()
+        query = select(Resume).where(Resume.uploaded_by_user_id == user_id)
+        result = await self.session.execute(query)
+        uploads = list(result.scalars().all())
         
         total_count = len(uploads)
         completed_count = sum(1 for u in uploads if u.status == ResumeStatus.COMPLETED)
@@ -206,9 +221,9 @@ class ResumeUploadRepository(BaseRepository[Resume]):
     
     async def get_pending_uploads(self, user_id: uuid.UUID) -> List[Resume]:
         """Get all pending uploads for a user."""
-        return self.db.query(Resume).filter(
+        query = select(Resume).where(
             and_(
-                Resume.user_id == user_id,
+                Resume.uploaded_by_user_id == user_id,
                 Resume.status.in_([
                     ResumeStatus.PENDING,
                     ResumeStatus.UPLOADING,
@@ -216,4 +231,6 @@ class ResumeUploadRepository(BaseRepository[Resume]):
                     ResumeStatus.EXTRACTING
                 ])
             )
-        ).all()
+        )
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
