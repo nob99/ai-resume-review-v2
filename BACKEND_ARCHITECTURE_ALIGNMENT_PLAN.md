@@ -152,14 +152,14 @@ class ReviewRequestRepository(BaseRepository[ReviewRequest]):
         self,
         user_id: uuid.UUID,
         resume_id: uuid.UUID,
-        industry: str,
+        target_industry: str,
         review_type: str = "comprehensive"
     ) -> ReviewRequest:
         """Create a new review request"""
         request = ReviewRequest(
             resume_id=resume_id,
             requested_by_user_id=user_id,
-            target_industry=industry,
+            target_industry=target_industry,
             review_type=review_type,
             status="pending",
             requested_at=utc_now()
@@ -220,15 +220,21 @@ class ReviewResultRepository(BaseRepository[ReviewResult]):
         self,
         request_id: uuid.UUID,
         overall_score: int,
+        ats_score: int,
+        content_score: int,
+        formatting_score: int,
         executive_summary: str,
         detailed_scores: dict,
         ai_model_used: str,
         processing_time_ms: int
     ) -> ReviewResult:
-        """Save analysis results"""
+        """Save analysis results with granular scoring"""
         result = ReviewResult(
             review_request_id=request_id,
             overall_score=overall_score,
+            ats_score=ats_score,
+            content_score=content_score,
+            formatting_score=formatting_score,
             executive_summary=executive_summary,
             detailed_scores=detailed_scores,
             ai_model_used=ai_model_used,
@@ -269,7 +275,7 @@ class AnalysisRepository:
         return await self.request_repo.create_review_request(
             user_id=user_id,
             resume_id=file_upload_id,
-            industry=industry.value,
+            target_industry=industry.value,
             review_type="comprehensive"
         )
 
@@ -277,16 +283,22 @@ class AnalysisRepository:
         self,
         request_id: uuid.UUID,
         overall_score: int,
+        ats_score: int,
+        content_score: int,
+        formatting_score: int,
         executive_summary: str,
         detailed_scores: dict,
         ai_model_used: str,
         processing_time_ms: int
     ) -> ReviewResult:
-        """Save analysis results (Step 2 of 2)"""
+        """Save analysis results with granular scoring (Step 2 of 2)"""
         # Save results
         result = await self.result_repo.save_analysis_results(
             request_id=request_id,
             overall_score=overall_score,
+            ats_score=ats_score,
+            content_score=content_score,
+            formatting_score=formatting_score,
             executive_summary=executive_summary,
             detailed_scores=detailed_scores,
             ai_model_used=ai_model_used,
@@ -381,10 +393,13 @@ class AnalysisService:
         )
 
     def _build_result_response(self, request: ReviewRequest, result: ReviewResult) -> dict:
-        """Build API response combining request + result data"""
+        """Build API response combining request + result data with granular scoring"""
         return {
             "analysis_id": str(request.id),
             "overall_score": result.overall_score,
+            "ats_score": result.ats_score,
+            "content_score": result.content_score,
+            "formatting_score": result.formatting_score,
             "industry": request.target_industry,
             "executive_summary": result.executive_summary,
             "detailed_scores": result.detailed_scores,
@@ -431,10 +446,13 @@ class ReviewRequestSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class ReviewResultSchema(BaseModel):
-    """Schema for review results"""
+    """Schema for review results with granular scoring"""
     id: UUID
     review_request_id: UUID
     overall_score: Optional[int] = None
+    ats_score: Optional[int] = None
+    content_score: Optional[int] = None
+    formatting_score: Optional[int] = None
     executive_summary: Optional[str] = None
     detailed_scores: Optional[dict] = None
     ai_model_used: Optional[str] = None
@@ -571,11 +589,14 @@ Content-Type: application/json
 GET /api/v1/analysis/analysis/{analysis_id}/status
 ```
 
-### Results Format (Unchanged)
+### Results Format (Enhanced with Granular Scoring)
 ```json
 {
   "analysis_id": "550e8400-e29b-41d4-a716-446655440000",
   "overall_score": 85,
+  "ats_score": 78,
+  "content_score": 90,
+  "formatting_score": 88,
   "industry": "strategy_tech",
   "executive_summary": "Strong technical background...",
   "detailed_scores": {...},
