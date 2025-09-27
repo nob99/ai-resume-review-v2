@@ -4,8 +4,9 @@ import uuid
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 
-from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import desc, and_, func
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
+from sqlalchemy import desc, and_, func, select
 
 from infrastructure.persistence.postgres.base import BaseRepository
 from app.core.datetime_utils import utc_now
@@ -18,9 +19,9 @@ from database.models.analysis import ResumeAnalysis, AnalysisStatus, Industry, M
 class AnalysisRepository(BaseRepository[ResumeAnalysis]):
     """Repository for resume analysis database operations."""
     
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         """Initialize repository with database session."""
-        super().__init__(ResumeAnalysis, db)
+        super().__init__(db, ResumeAnalysis)
     
     async def create_analysis(
         self,
@@ -37,9 +38,9 @@ class AnalysisRepository(BaseRepository[ResumeAnalysis]):
             analysis_started_at=utc_now()
         )
         
-        self.db.add(analysis)
-        self.db.commit()
-        self.db.refresh(analysis)
+        self.session.add(analysis)
+        await self.session.commit()
+        await self.session.refresh(analysis)
         
         return analysis
     
@@ -66,8 +67,8 @@ class AnalysisRepository(BaseRepository[ResumeAnalysis]):
                 delta = analysis.analysis_completed_at - analysis.analysis_started_at
                 analysis.processing_time_seconds = delta.total_seconds()
         
-        self.db.commit()
-        self.db.refresh(analysis)
+        await self.session.commit()
+        await self.session.refresh(analysis)
         
         return analysis
     
@@ -104,8 +105,8 @@ class AnalysisRepository(BaseRepository[ResumeAnalysis]):
         analysis.ai_tokens_used = ai_tokens_used
         analysis.updated_at = utc_now()
         
-        self.db.commit()
-        self.db.refresh(analysis)
+        await self.session.commit()
+        await self.session.refresh(analysis)
         
         return analysis
     
@@ -119,7 +120,7 @@ class AnalysisRepository(BaseRepository[ResumeAnalysis]):
         include_file_info: bool = False
     ) -> List[ResumeAnalysis]:
         """Get analyses by user with optional filtering."""
-        query = self.db.query(ResumeAnalysis).filter(ResumeAnalysis.user_id == user_id)
+        query = select(ResumeAnalysis).filter(ResumeAnalysis.user_id == user_id)
         
         if status:
             query = query.filter(ResumeAnalysis.status == status)
@@ -206,8 +207,8 @@ class AnalysisRepository(BaseRepository[ResumeAnalysis]):
         analysis.retry_count = (analysis.retry_count or 0) + 1
         analysis.updated_at = utc_now()
         
-        self.db.commit()
-        self.db.refresh(analysis)
+        await self.session.commit()
+        await self.session.refresh(analysis)
         
         return analysis
     
@@ -235,7 +236,7 @@ class AnalysisRepository(BaseRepository[ResumeAnalysis]):
         """Delete old analyses older than specified days."""
         cutoff_time = utc_now() - timedelta(days=days)
         
-        query = self.db.query(ResumeAnalysis).filter(ResumeAnalysis.created_at < cutoff_time)
+        query = select(ResumeAnalysis).filter(ResumeAnalysis.created_at < cutoff_time)
         
         if status:
             query = query.filter(ResumeAnalysis.status == status)

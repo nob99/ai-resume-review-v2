@@ -3,8 +3,9 @@
 from datetime import datetime
 from enum import Enum
 from typing import Optional, Dict, Any
+from uuid import UUID
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_serializer
 
 
 # Enums
@@ -86,17 +87,19 @@ class FileUploadRequest(BaseModel):
 
 class FileUploadResponse(BaseModel):
     """File upload response schema."""
-    id: str
-    filename: str
-    file_type: str
+    id: UUID
+    original_filename: str  # Match Resume model field name
     file_size: int
-    status: FileStatus
+    status: str  # Use str instead of FileStatus enum to match Resume model
     extracted_text: Optional[str] = None
-    extraction_metadata: Optional[Dict[str, Any]] = None
-    created_at: datetime
-    processing_time_ms: Optional[int] = None
-    
+    uploaded_at: datetime  # Match Resume model field name
+
     model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer('id')
+    def serialize_id(self, value: UUID) -> str:
+        """Convert UUID to string for API response."""
+        return str(value)
 
 
 class FileUploadListResponse(BaseModel):

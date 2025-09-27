@@ -286,7 +286,7 @@ class ResumeUploadService:
         if not upload or upload.uploaded_by_user_id != user_id:
             return None
         
-        return FileUploadResponse.from_orm(upload)
+        return FileUploadResponse.model_validate(upload)
     
     async def get_user_uploads(
         self,
@@ -298,7 +298,7 @@ class ResumeUploadService:
         """Get uploads for a user."""
 
         uploads = await self.repository.get_by_user(user_id, status, limit, offset)
-        return [FileUploadResponse.from_orm(u) for u in uploads]
+        return [FileUploadResponse.model_validate(u) for u in uploads]
 
     async def get_candidate_resumes(
         self,

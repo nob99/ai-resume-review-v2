@@ -5,7 +5,7 @@ import uuid
 from typing import Optional, List, Dict, Any
 
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.datetime_utils import utc_now
@@ -57,7 +57,7 @@ class AnalysisService:
     - Data persistence: uses repository pattern
     """
     
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         """Initialize the analysis service."""
         self.db = db
         self.repository = AnalysisRepository(db)
@@ -128,13 +128,9 @@ class AnalysisService:
 
             # Step 3: Create analysis record
             analysis_record = await self.repository.create_analysis(
-                resume_id=resume_id,
-                requested_by_user_id=user_id,
+                user_id=user_id,
                 industry=industry,
-                analysis_depth=analysis_depth.value,
-                focus_areas=focus_areas,
-                compare_to_market=compare_to_market,
-                status=AnalysisStatus.PENDING
+                file_upload_id=resume_id
             )
 
             # Step 4: Queue background analysis job

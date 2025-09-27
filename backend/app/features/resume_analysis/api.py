@@ -6,12 +6,12 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
-from database.connection import get_db
+from infrastructure.persistence.postgres.connection import get_async_session
 from app.features.auth.api import get_current_user
 from database.models.auth import User
 from app.core.rate_limiter import rate_limiter, RateLimitExceeded, RateLimitType
@@ -35,7 +35,7 @@ router = APIRouter()
 
 
 # Dependency injection
-def get_analysis_service(db: Session = Depends(get_db)) -> AnalysisService:
+def get_analysis_service(db: AsyncSession = Depends(get_async_session)) -> AnalysisService:
     """Get analysis service instance."""
     return AnalysisService(db)
 
