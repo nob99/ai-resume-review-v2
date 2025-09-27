@@ -17,9 +17,8 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 // Create axios instance with default configuration
 const api: AxiosInstance = axios.create({
   baseURL: `${BASE_URL}/api/v1`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  // Don't set default Content-Type - let axios auto-detect based on request data
+  // This allows FormData to use multipart/form-data automatically
   timeout: 10000, // 10 second timeout
 })
 
@@ -293,6 +292,10 @@ export const uploadApi = {
       const formData = new FormData()
       formData.append('file', file)
 
+      // Debug logging
+      console.log('Upload debug - File:', file.name, file.size, 'bytes, type:', file.type)
+      console.log('Upload debug - FormData has file:', formData.has('file'))
+
       const response = await api.post(`/resume_upload/candidates/${candidateId}/resumes`, formData, {
         // Don't set Content-Type header - let axios handle it for FormData
         onUploadProgress: onProgress,
@@ -555,6 +558,113 @@ export const candidateApi = {
         return {
           success: false,
           error: new Error(errorMessage)
+        }
+      }
+    }
+  }
+}
+
+// Analysis API functions
+export const analysisApi = {
+  async requestAnalysis(
+    resumeId: string,
+    industry: string,
+    analysisDepth: string = 'standard'
+  ): Promise<ApiResult<any>> {
+    try {
+      const response = await api.post(`/analysis/resumes/${resumeId}/analyze`, {
+        industry,
+        analysis_depth: analysisDepth,
+        compare_to_market: false
+      })
+
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+        // This line should never be reached since handleApiError always throws
+        return {
+          success: false,
+          error: new Error('Unexpected error occurred')
+        }
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+    }
+  },
+
+  async getAnalysisStatus(analysisId: string): Promise<ApiResult<any>> {
+    try {
+      const response = await api.get(`/analysis/analysis/${analysisId}/status`)
+
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+        // This line should never be reached since handleApiError always throws
+        return {
+          success: false,
+          error: new Error('Unexpected error occurred')
+        }
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+    }
+  },
+
+  async getAnalysisResult(analysisId: string): Promise<ApiResult<any>> {
+    try {
+      const response = await api.get(`/analysis/analysis/${analysisId}`)
+
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+        // This line should never be reached since handleApiError always throws
+        return {
+          success: false,
+          error: new Error('Unexpected error occurred')
+        }
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
         }
       }
     }
