@@ -45,15 +45,6 @@ class AnalysisDepth(str, Enum):
 class AnalysisRequest(BaseModel):
     """Request to analyze an uploaded resume."""
     industry: Industry
-    analysis_depth: AnalysisDepth = AnalysisDepth.STANDARD
-    focus_areas: Optional[List[str]] = Field(
-        None,
-        description="Specific areas to focus on: structure, content, formatting, impact, relevance"
-    )
-    compare_to_market: bool = Field(
-        False,
-        description="Include market tier comparison analysis"
-    )
 
 
 class ScoreDetails(BaseModel):
@@ -83,39 +74,52 @@ class FeedbackSection(BaseModel):
 
 
 class AnalysisResult(BaseModel):
-    """Complete analysis result."""
+    """Complete analysis result with granular scoring."""
     analysis_id: str
-    overall_score: float = Field(..., ge=0, le=100)
-    market_tier: MarketTier
-    industry: Industry
-    
-    # Detailed scores
+    overall_score: int = Field(..., ge=0, le=100)
+    ats_score: int = Field(..., ge=0, le=100)
+    content_score: int = Field(..., ge=0, le=100)
+    formatting_score: int = Field(..., ge=0, le=100)
+    industry: str
+
+    # Executive summary and detailed breakdown
+    executive_summary: Optional[str] = None
+    detailed_scores: Optional[Dict[str, Any]] = None
+
+    # Legacy fields for backward compatibility
+    market_tier: Optional[MarketTier] = None
     structure_scores: Optional[ScoreDetails] = None
     appeal_scores: Optional[ScoreDetails] = None
     confidence_metrics: Optional[ConfidenceMetrics] = None
-    
-    # Feedback
     structure_feedback: Optional[FeedbackSection] = None
     appeal_feedback: Optional[FeedbackSection] = None
-    analysis_summary: Optional[str] = None
     improvement_suggestions: Optional[List[str]] = None
-    
+
     # Metadata
-    processing_time_seconds: Optional[float] = None
-    ai_model_version: Optional[str] = None
-    created_at: datetime
-    
+    processing_time_ms: Optional[int] = None
+    ai_model_used: Optional[str] = None
+    completed_at: Optional[datetime] = None
+
     model_config = ConfigDict(from_attributes=True)
 
 
 class AnalysisResponse(BaseModel):
-    """API response for analysis."""
-    success: bool = True
+    """API response for analysis request."""
     analysis_id: str
-    status: AnalysisStatus
-    result: Optional[AnalysisResult] = None
-    error: Optional[str] = None
-    
+    status: str
+    message: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AnalysisStatusResponse(BaseModel):
+    """API response for analysis status check."""
+    analysis_id: str
+    status: str
+    requested_at: datetime
+    completed_at: Optional[datetime] = None
+    result: Optional[Dict[str, Any]] = None
+
     model_config = ConfigDict(from_attributes=True)
 
 

@@ -1,11 +1,11 @@
-"""Resume analysis repository for database operations."""
+"""Resume analysis repository for database operations using two-table architecture."""
 
 import uuid
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple
 from datetime import datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy import desc, and_, func, select
 
 from infrastructure.persistence.postgres.base import BaseRepository
@@ -13,266 +13,330 @@ from app.core.datetime_utils import utc_now
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
-from database.models.analysis import ResumeAnalysis, AnalysisStatus, Industry, MarketTier
+from database.models import ReviewRequest, ReviewResult, ReviewFeedbackItem
 
 
-class AnalysisRepository(BaseRepository[ResumeAnalysis]):
-    """Repository for resume analysis database operations."""
-    
-    def __init__(self, db: AsyncSession):
-        """Initialize repository with database session."""
-        super().__init__(db, ResumeAnalysis)
-    
-    async def create_analysis(
+class ReviewRequestRepository(BaseRepository[ReviewRequest]):
+    """Repository for review requests (Schema v1.1)"""
+
+    def __init__(self, session: AsyncSession):
+        super().__init__(session, ReviewRequest)
+
+    async def create_review_request(
         self,
         user_id: uuid.UUID,
-        industry: Industry,
-        file_upload_id: Optional[uuid.UUID] = None
-    ) -> ResumeAnalysis:
-        """Create a new analysis record."""
-        analysis = ResumeAnalysis(
-            user_id=user_id,
-            industry=industry.value,
-            file_upload_id=file_upload_id,
-            status=AnalysisStatus.PENDING,
-            analysis_started_at=utc_now()
+        resume_id: uuid.UUID,
+        target_industry: str,
+        review_type: str = "comprehensive"
+    ) -> ReviewRequest:
+        """Create a new review request"""
+        request = ReviewRequest(
+            resume_id=resume_id,
+            requested_by_user_id=user_id,
+            target_industry=target_industry,
+            review_type=review_type,
+            status="pending",
+            requested_at=utc_now()
         )
-        
-        self.session.add(analysis)
+
+        self.session.add(request)
         await self.session.commit()
-        await self.session.refresh(analysis)
-        
-        return analysis
-    
+        await self.session.refresh(request)
+        return request
+
     async def update_status(
         self,
-        analysis_id: uuid.UUID,
-        status: AnalysisStatus,
-        error_message: Optional[str] = None
-    ) -> Optional[ResumeAnalysis]:
-        """Update analysis status."""
-        analysis = self.get(analysis_id)
-        if not analysis:
-            return None
-        
-        analysis.status = status
-        analysis.updated_at = utc_now()
-        
-        if error_message:
-            analysis.error_message = error_message
-        
-        if status == AnalysisStatus.COMPLETED:
-            analysis.analysis_completed_at = utc_now()
-            if analysis.analysis_started_at:
-                delta = analysis.analysis_completed_at - analysis.analysis_started_at
-                analysis.processing_time_seconds = delta.total_seconds()
-        
+        request_id: uuid.UUID,
+        status: str,
+        completed_at: Optional[datetime] = None
+    ) -> ReviewRequest:
+        """Update request status"""
+        request = await self.get_by_id(request_id)
+        if not request:
+            raise ValueError(f"Review request {request_id} not found")
+
+        request.status = status
+        if completed_at:
+            request.completed_at = completed_at
+        elif status == "completed":
+            request.completed_at = utc_now()
+
         await self.session.commit()
-        await self.session.refresh(analysis)
-        
-        return analysis
-    
-    async def save_results(
+        await self.session.refresh(request)
+        return request
+
+    async def get_by_resume_and_user(
         self,
-        analysis_id: uuid.UUID,
-        overall_score: float,
-        market_tier: MarketTier,
-        structure_scores: Optional[Dict[str, Any]] = None,
-        appeal_scores: Optional[Dict[str, Any]] = None,
-        confidence_metrics: Optional[Dict[str, Any]] = None,
-        structure_feedback: Optional[str] = None,
-        appeal_feedback: Optional[str] = None,
-        analysis_summary: Optional[str] = None,
-        improvement_suggestions: Optional[str] = None,
-        ai_model_version: Optional[str] = None,
-        ai_tokens_used: Optional[int] = None
-    ) -> Optional[ResumeAnalysis]:
-        """Save analysis results."""
-        analysis = self.get(analysis_id)
-        if not analysis:
-            return None
-        
-        analysis.overall_score = overall_score
-        analysis.market_tier = market_tier.value
-        analysis.structure_scores = structure_scores
-        analysis.appeal_scores = appeal_scores
-        analysis.confidence_metrics = confidence_metrics
-        analysis.structure_feedback = structure_feedback
-        analysis.appeal_feedback = appeal_feedback
-        analysis.analysis_summary = analysis_summary
-        analysis.improvement_suggestions = improvement_suggestions
-        analysis.ai_model_version = ai_model_version
-        analysis.ai_tokens_used = ai_tokens_used
-        analysis.updated_at = utc_now()
-        
-        await self.session.commit()
-        await self.session.refresh(analysis)
-        
-        return analysis
-    
+        resume_id: uuid.UUID,
+        user_id: uuid.UUID
+    ) -> Optional[ReviewRequest]:
+        """Get recent request for resume by user"""
+        query = select(ReviewRequest).where(
+            and_(
+                ReviewRequest.resume_id == resume_id,
+                ReviewRequest.requested_by_user_id == user_id
+            )
+        ).order_by(desc(ReviewRequest.requested_at))
+
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
+
     async def get_by_user(
         self,
         user_id: uuid.UUID,
-        status: Optional[AnalysisStatus] = None,
-        industry: Optional[Industry] = None,
+        status: Optional[str] = None,
+        industry: Optional[str] = None,
         limit: int = 10,
-        offset: int = 0,
-        include_file_info: bool = False
-    ) -> List[ResumeAnalysis]:
-        """Get analyses by user with optional filtering."""
-        query = select(ResumeAnalysis).filter(ResumeAnalysis.user_id == user_id)
-        
+        offset: int = 0
+    ) -> List[ReviewRequest]:
+        """Get requests by user with optional filtering"""
+        query = select(ReviewRequest).where(ReviewRequest.requested_by_user_id == user_id)
+
         if status:
-            query = query.filter(ResumeAnalysis.status == status)
-        
+            query = query.where(ReviewRequest.status == status)
+
         if industry:
-            query = query.filter(ResumeAnalysis.industry == industry.value)
-        
-        if include_file_info:
-            query = query.options(joinedload(ResumeAnalysis.file_upload))
-        
-        return query.order_by(desc(ResumeAnalysis.created_at)).limit(limit).offset(offset).all()
-    
+            query = query.where(ReviewRequest.target_industry == industry)
+
+        query = query.order_by(desc(ReviewRequest.requested_at)).limit(limit).offset(offset)
+
+        result = await self.session.execute(query)
+        return result.scalars().all()
+
+    async def get_pending_requests(self, user_id: uuid.UUID) -> List[ReviewRequest]:
+        """Get all pending/processing requests for a user"""
+        query = select(ReviewRequest).where(
+            and_(
+                ReviewRequest.requested_by_user_id == user_id,
+                ReviewRequest.status.in_(["pending", "processing"])
+            )
+        )
+
+        result = await self.session.execute(query)
+        return result.scalars().all()
+
+
+class ReviewResultRepository(BaseRepository[ReviewResult]):
+    """Repository for review results (Schema v1.1)"""
+
+    def __init__(self, session: AsyncSession):
+        super().__init__(session, ReviewResult)
+
+    async def save_analysis_results(
+        self,
+        request_id: uuid.UUID,
+        overall_score: int,
+        ats_score: int,
+        content_score: int,
+        formatting_score: int,
+        executive_summary: str,
+        detailed_scores: dict,
+        ai_model_used: str,
+        processing_time_ms: int
+    ) -> ReviewResult:
+        """Save analysis results with granular scoring"""
+        result = ReviewResult(
+            review_request_id=request_id,
+            overall_score=overall_score,
+            ats_score=ats_score,
+            content_score=content_score,
+            formatting_score=formatting_score,
+            executive_summary=executive_summary,
+            detailed_scores=detailed_scores,
+            ai_model_used=ai_model_used,
+            processing_time_ms=processing_time_ms,
+            created_at=utc_now()
+        )
+
+        self.session.add(result)
+        await self.session.commit()
+        await self.session.refresh(result)
+        return result
+
+    async def get_by_request_id(self, request_id: uuid.UUID) -> Optional[ReviewResult]:
+        """Get result by request ID"""
+        query = select(ReviewResult).where(ReviewResult.review_request_id == request_id)
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
+
+    async def get_with_feedback(self, request_id: uuid.UUID) -> Optional[ReviewResult]:
+        """Get result with feedback items"""
+        query = select(ReviewResult).options(
+            selectinload(ReviewResult.feedback_items)
+        ).where(ReviewResult.review_request_id == request_id)
+
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
+
+
+class AnalysisRepository:
+    """Updated repository using two-table architecture"""
+
+    def __init__(self, session: AsyncSession):
+        self.session = session
+        self.request_repo = ReviewRequestRepository(session)
+        self.result_repo = ReviewResultRepository(session)
+
+    async def create_analysis(
+        self,
+        user_id: uuid.UUID,
+        resume_id: uuid.UUID,
+        target_industry: str,
+        review_type: str = "comprehensive"
+    ) -> ReviewRequest:
+        """Create analysis request (Step 1 of 2)"""
+        return await self.request_repo.create_review_request(
+            user_id=user_id,
+            resume_id=resume_id,
+            target_industry=target_industry,
+            review_type=review_type
+        )
+
+    async def save_results(
+        self,
+        request_id: uuid.UUID,
+        overall_score: int,
+        ats_score: int,
+        content_score: int,
+        formatting_score: int,
+        executive_summary: str,
+        detailed_scores: dict,
+        ai_model_used: str,
+        processing_time_ms: int
+    ) -> ReviewResult:
+        """Save analysis results with granular scoring (Step 2 of 2)"""
+        # Save results
+        result = await self.result_repo.save_analysis_results(
+            request_id=request_id,
+            overall_score=overall_score,
+            ats_score=ats_score,
+            content_score=content_score,
+            formatting_score=formatting_score,
+            executive_summary=executive_summary,
+            detailed_scores=detailed_scores,
+            ai_model_used=ai_model_used,
+            processing_time_ms=processing_time_ms
+        )
+
+        # Update request status
+        await self.request_repo.update_status(
+            request_id=request_id,
+            status="completed",
+            completed_at=utc_now()
+        )
+
+        return result
+
+    async def get_analysis_with_results(self, request_id: uuid.UUID) -> Optional[Tuple[ReviewRequest, Optional[ReviewResult]]]:
+        """Get complete analysis data"""
+        request = await self.request_repo.get_by_id(request_id)
+        if not request:
+            return None
+
+        result = await self.result_repo.get_by_request_id(request_id)
+        return (request, result)
+
+    async def update_request_status(
+        self,
+        request_id: uuid.UUID,
+        status: str,
+        error_message: Optional[str] = None
+    ) -> ReviewRequest:
+        """Update request status with optional error message"""
+        request = await self.request_repo.update_status(request_id, status)
+
+        # For now, we don't have an error field in ReviewRequest
+        # This could be added to detailed_scores or handled differently
+        if error_message and status == "failed":
+            # We could store error in a result record or handle it differently
+            pass
+
+        return request
+
+    async def get_user_analyses(
+        self,
+        user_id: uuid.UUID,
+        status: Optional[str] = None,
+        industry: Optional[str] = None,
+        limit: int = 10,
+        offset: int = 0
+    ) -> List[ReviewRequest]:
+        """Get user's analysis requests"""
+        return await self.request_repo.get_by_user(
+            user_id=user_id,
+            status=status,
+            industry=industry,
+            limit=limit,
+            offset=offset
+        )
+
     async def get_recent_analyses(
         self,
         user_id: uuid.UUID,
         hours: int = 24,
         limit: int = 10
-    ) -> List[ResumeAnalysis]:
-        """Get recent analyses within specified hours."""
+    ) -> List[ReviewRequest]:
+        """Get recent analyses within specified hours"""
         cutoff_time = utc_now() - timedelta(hours=hours)
-        
-        return self.db.query(ResumeAnalysis).filter(
+
+        query = select(ReviewRequest).where(
             and_(
-                ResumeAnalysis.user_id == user_id,
-                ResumeAnalysis.created_at >= cutoff_time
+                ReviewRequest.requested_by_user_id == user_id,
+                ReviewRequest.requested_at >= cutoff_time
             )
-        ).order_by(desc(ResumeAnalysis.created_at)).limit(limit).all()
-    
-    async def get_analysis_with_file(
-        self,
-        analysis_id: uuid.UUID,
-        user_id: uuid.UUID
-    ) -> Optional[ResumeAnalysis]:
-        """Get analysis with file upload information."""
-        return self.db.query(ResumeAnalysis).options(
-            joinedload(ResumeAnalysis.file_upload)
-        ).filter(
-            and_(
-                ResumeAnalysis.id == analysis_id,
-                ResumeAnalysis.user_id == user_id
-            )
-        ).first()
-    
+        ).order_by(desc(ReviewRequest.requested_at)).limit(limit)
+
+        result = await self.session.execute(query)
+        return result.scalars().all()
+
     async def get_user_stats(self, user_id: uuid.UUID) -> Dict[str, Any]:
-        """Get analysis statistics for a user."""
-        analyses = self.db.query(ResumeAnalysis).filter(ResumeAnalysis.user_id == user_id).all()
-        
-        total_count = len(analyses)
-        completed_count = sum(1 for a in analyses if a.status == AnalysisStatus.COMPLETED)
-        failed_count = sum(1 for a in analyses if a.status == AnalysisStatus.ERROR)
-        
-        # Calculate average score for completed analyses
-        completed_analyses = [a for a in analyses if a.status == AnalysisStatus.COMPLETED and a.overall_score is not None]
-        average_score = sum(a.overall_score for a in completed_analyses) / len(completed_analyses) if completed_analyses else None
-        
-        # Industry breakdown
+        """Get analysis statistics for a user"""
+        # Get all requests for user
+        requests = await self.request_repo.get_by_user(user_id, limit=1000)
+
+        total_count = len(requests)
+        completed_count = sum(1 for r in requests if r.status == "completed")
+        failed_count = sum(1 for r in requests if r.status == "failed")
+
+        # Get results for completed requests
+        completed_request_ids = [r.id for r in requests if r.status == "completed"]
+
+        average_score = None
         industry_breakdown = {}
-        for analysis in analyses:
-            industry = analysis.industry
+        score_breakdown = {}
+
+        if completed_request_ids:
+            # Get results for completed requests
+            query = select(ReviewResult).where(
+                ReviewResult.review_request_id.in_(completed_request_ids)
+            )
+            result = await self.session.execute(query)
+            results = result.scalars().all()
+
+            # Calculate average score
+            scores = [r.overall_score for r in results if r.overall_score is not None]
+            if scores:
+                average_score = sum(scores) / len(scores)
+
+            # Score breakdown
+            for score in scores:
+                range_key = f"{score//10*10}-{score//10*10+9}"
+                score_breakdown[range_key] = score_breakdown.get(range_key, 0) + 1
+
+        # Industry breakdown
+        for request in requests:
+            industry = request.target_industry
             industry_breakdown[industry] = industry_breakdown.get(industry, 0) + 1
-        
-        # Tier breakdown
-        tier_breakdown = {}
-        for analysis in completed_analyses:
-            if analysis.market_tier:
-                tier = analysis.market_tier
-                tier_breakdown[tier] = tier_breakdown.get(tier, 0) + 1
-        
+
         return {
             "total_analyses": total_count,
             "completed_analyses": completed_count,
             "failed_analyses": failed_count,
             "average_score": round(average_score, 2) if average_score else None,
             "industry_breakdown": industry_breakdown,
-            "tier_breakdown": tier_breakdown
+            "score_breakdown": score_breakdown
         }
-    
-    async def increment_retry_count(self, analysis_id: uuid.UUID) -> Optional[ResumeAnalysis]:
-        """Increment retry count for failed analysis."""
-        analysis = self.get(analysis_id)
-        if not analysis:
-            return None
-        
-        analysis.retry_count = (analysis.retry_count or 0) + 1
-        analysis.updated_at = utc_now()
-        
-        await self.session.commit()
-        await self.session.refresh(analysis)
-        
-        return analysis
-    
-    async def mark_cancelled(self, analysis_id: uuid.UUID) -> Optional[ResumeAnalysis]:
-        """Mark an analysis as cancelled."""
-        return await self.update_status(analysis_id, AnalysisStatus.CANCELLED)
-    
-    async def get_pending_analyses(self, user_id: uuid.UUID) -> List[ResumeAnalysis]:
-        """Get all pending analyses for a user."""
-        return self.db.query(ResumeAnalysis).filter(
-            and_(
-                ResumeAnalysis.user_id == user_id,
-                ResumeAnalysis.status.in_([
-                    AnalysisStatus.PENDING,
-                    AnalysisStatus.PROCESSING
-                ])
-            )
-        ).all()
-    
-    async def delete_old_analyses(
-        self,
-        days: int = 90,
-        status: Optional[AnalysisStatus] = None
-    ) -> int:
-        """Delete old analyses older than specified days."""
-        cutoff_time = utc_now() - timedelta(days=days)
-        
-        query = select(ResumeAnalysis).filter(ResumeAnalysis.created_at < cutoff_time)
-        
-        if status:
-            query = query.filter(ResumeAnalysis.status == status)
-        
-        count = query.count()
-        query.delete()
-        self.db.commit()
-        
-        return count
-    
-    async def get_analyses_by_score_range(
-        self,
-        user_id: uuid.UUID,
-        min_score: float = 0,
-        max_score: float = 100
-    ) -> List[ResumeAnalysis]:
-        """Get analyses within a score range."""
-        return self.db.query(ResumeAnalysis).filter(
-            and_(
-                ResumeAnalysis.user_id == user_id,
-                ResumeAnalysis.overall_score >= min_score,
-                ResumeAnalysis.overall_score <= max_score,
-                ResumeAnalysis.status == AnalysisStatus.COMPLETED
-            )
-        ).order_by(desc(ResumeAnalysis.overall_score)).all()
-    
-    async def get_top_analyses(
-        self,
-        user_id: uuid.UUID,
-        limit: int = 5
-    ) -> List[ResumeAnalysis]:
-        """Get top analyses by score for a user."""
-        return self.db.query(ResumeAnalysis).filter(
-            and_(
-                ResumeAnalysis.user_id == user_id,
-                ResumeAnalysis.status == AnalysisStatus.COMPLETED,
-                ResumeAnalysis.overall_score.isnot(None)
-            )
-        ).order_by(desc(ResumeAnalysis.overall_score)).limit(limit).all()
+
+    async def get_pending_analyses(self, user_id: uuid.UUID) -> List[ReviewRequest]:
+        """Get all pending analyses for a user"""
+        return await self.request_repo.get_pending_requests(user_id)

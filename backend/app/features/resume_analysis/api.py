@@ -23,8 +23,7 @@ from .schemas import (
     AnalysisResult,
     AnalysisListResponse,
     AnalysisSummary,
-    AnalysisStats,
-    AnalysisDepth
+    AnalysisStats
 )
 from database.models.analysis import AnalysisStatus, Industry
 
@@ -78,11 +77,8 @@ async def request_resume_analysis(
         # Request analysis (async processing)
         result = await service.request_analysis(
             resume_id=resume_id,
-            industry=request.industry,
             user_id=current_user.id,
-            analysis_depth=request.analysis_depth,
-            focus_areas=request.focus_areas,
-            compare_to_market=request.compare_to_market
+            industry=request.industry
         )
         
         logger.info(f"Analysis completed: {result.analysis_id}")
@@ -317,24 +313,10 @@ async def validate_request(
         if request.industry not in service.get_supported_industries():
             raise AnalysisValidationException("Unsupported industry")
 
-        # Validate analysis depth
-        if request.analysis_depth not in [depth.value for depth in AnalysisDepth]:
-            raise AnalysisValidationException("Invalid analysis depth")
-
-        # Validate focus areas if provided
-        if request.focus_areas:
-            valid_areas = ["structure", "content", "formatting", "impact", "relevance"]
-            invalid_areas = [area for area in request.focus_areas if area not in valid_areas]
-            if invalid_areas:
-                raise AnalysisValidationException(f"Invalid focus areas: {', '.join(invalid_areas)}")
-
         return {
             "valid": True,
             "message": "Request is valid",
-            "industry": request.industry.value,
-            "analysis_depth": request.analysis_depth.value,
-            "focus_areas": request.focus_areas or [],
-            "compare_to_market": request.compare_to_market
+            "industry": request.industry.value
         }
 
     except AnalysisValidationException as e:
