@@ -93,16 +93,11 @@ class ResumeUploadRepository(BaseRepository[Resume]):
             return None
         
         file_upload.status = status
-        file_upload.updated_at = utc_now()
         
-        if error_message:
-            file_upload.error_message = error_message
+        # Note: error_message field not implemented in Resume model
         
         if status == ResumeStatus.COMPLETED:
-            file_upload.upload_completed_at = utc_now()
-            if file_upload.upload_started_at:
-                delta = file_upload.upload_completed_at - file_upload.upload_started_at
-                file_upload.processing_time_ms = int(delta.total_seconds() * 1000)
+            file_upload.processed_at = utc_now()
 
         await self.session.commit()
         await self.session.refresh(file_upload)
@@ -121,8 +116,7 @@ class ResumeUploadRepository(BaseRepository[Resume]):
             return None
         
         file_upload.extracted_text = extracted_text
-        file_upload.extraction_metadata = extraction_metadata
-        file_upload.updated_at = utc_now()
+        # Note: extraction_metadata and updated_at fields not implemented in Resume model
         
         await self.session.commit()
         await self.session.refresh(file_upload)
