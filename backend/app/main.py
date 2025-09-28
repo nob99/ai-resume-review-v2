@@ -170,6 +170,11 @@ if getattr(settings, 'USE_NEW_ANALYSIS', True):
     app.include_router(analysis_router, prefix="/api/v1/analysis", tags=["analysis"])
     logger.info("Resume analysis feature enabled")
 
+# Admin user management feature (NEW)
+from app.features.admin.api import router as admin_router
+app.include_router(admin_router, prefix="/api/v1/admin", tags=["admin"])
+logger.info("Admin user management feature enabled")
+
 # Global exception handlers
 @app.exception_handler(SecurityError)
 async def security_error_handler(request: Request, exc: SecurityError):
