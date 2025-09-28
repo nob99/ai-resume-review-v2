@@ -119,6 +119,8 @@ const UserMenu: React.FC<{ isOpen: boolean; onToggle: () => void }> = ({ isOpen,
 
 // Main navigation items
 const NavigationItems: React.FC = () => {
+  const { user } = useAuth()
+
   return (
     <nav className="hidden md:flex items-center space-x-8">
       <a
@@ -145,12 +147,21 @@ const NavigationItems: React.FC = () => {
       >
         Review History
       </a>
+      {user?.role === 'admin' && (
+        <a
+          href="/admin"
+          className="text-neutral-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+        >
+          User Management
+        </a>
+      )}
     </nav>
   )
 }
 
 // Mobile menu component
 const MobileMenu: React.FC<{ isOpen: boolean; onToggle: () => void }> = ({ isOpen, onToggle }) => {
+  const { user } = useAuth()
   return (
     <>
       {/* Mobile menu button */}
@@ -219,6 +230,15 @@ const MobileMenu: React.FC<{ isOpen: boolean; onToggle: () => void }> = ({ isOpe
             >
               Review History
             </a>
+            {user?.role === 'admin' && (
+              <a
+                href="/admin"
+                className="block px-3 py-2 text-base font-medium text-neutral-700 hover:text-primary-600 hover:bg-neutral-50 rounded-md"
+                onClick={onToggle}
+              >
+                User Management
+              </a>
+            )}
           </div>
         </div>
       )}

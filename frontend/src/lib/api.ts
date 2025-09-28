@@ -777,6 +777,183 @@ export class UploadWebSocket {
   }
 }
 
+// Admin user management API functions
+export const adminApi = {
+  async getUsers(params?: {
+    page?: number
+    page_size?: number
+    search?: string
+    role?: string
+    is_active?: boolean
+  }): Promise<ApiResult<any>> {
+    try {
+      const response = await api.get('/admin/users', { params })
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+
+      return {
+        success: false,
+        error: new Error('Failed to load users')
+      }
+    }
+  },
+
+  async createUser(userData: {
+    email: string
+    first_name: string
+    last_name: string
+    role: string
+    temporary_password: string
+  }): Promise<ApiResult<any>> {
+    try {
+      const response = await api.post('/admin/users', userData)
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+
+      return {
+        success: false,
+        error: new Error('Failed to create user')
+      }
+    }
+  },
+
+  async updateUser(userId: string, userData: {
+    is_active?: boolean
+    role?: string
+    email_verified?: boolean
+  }): Promise<ApiResult<any>> {
+    try {
+      const response = await api.patch(`/admin/users/${userId}`, userData)
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+
+      return {
+        success: false,
+        error: new Error('Failed to update user')
+      }
+    }
+  },
+
+  async getUserDetail(userId: string): Promise<ApiResult<any>> {
+    try {
+      const response = await api.get(`/admin/users/${userId}`)
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+
+      return {
+        success: false,
+        error: new Error('Failed to get user details')
+      }
+    }
+  },
+
+  async resetPassword(userId: string, passwordData: {
+    new_password: string
+    force_password_change?: boolean
+  }): Promise<ApiResult<any>> {
+    try {
+      const response = await api.post(`/admin/users/${userId}/reset-password`, passwordData)
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+
+      return {
+        success: false,
+        error: new Error('Failed to reset password')
+      }
+    }
+  }
+}
+
 // Export the configured axios instance for custom requests
 export default api
 
