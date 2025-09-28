@@ -20,6 +20,7 @@ from .service import AnalysisService, AnalysisValidationException, AnalysisExcep
 from .schemas import (
     AnalysisRequest,
     AnalysisResponse,
+    AnalysisStatusResponse,
     AnalysisResult,
     AnalysisListResponse,
     AnalysisSummary,
@@ -102,7 +103,7 @@ async def request_resume_analysis(
 
 @router.get(
     "/analysis/{analysis_id}/status",
-    response_model=AnalysisResponse,
+    response_model=AnalysisStatusResponse,
     summary="Get analysis status",
     description="Poll analysis status and get results when ready"
 )
@@ -110,7 +111,7 @@ async def get_analysis_status(
     analysis_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
     service: AnalysisService = Depends(get_analysis_service)
-) -> AnalysisResponse:
+) -> AnalysisStatusResponse:
     """
     Poll analysis status and get results when complete.
 

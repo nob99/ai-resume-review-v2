@@ -6,32 +6,11 @@ from typing import Optional, Dict, Any, List
 
 from pydantic import BaseModel, Field, ConfigDict
 
-
-# Enums
-class Industry(str, Enum):
-    """Supported industries for analysis."""
-    STRATEGY_TECH = "strategy_tech"
-    MA_FINANCIAL = "ma_financial"
-    CONSULTING = "consulting"
-    SYSTEM_INTEGRATOR = "system_integrator"
-    GENERAL = "general"
-
-
-class AnalysisStatus(str, Enum):
-    """Analysis processing status."""
-    PENDING = "pending"
-    PROCESSING = "processing"
-    COMPLETED = "completed"
-    ERROR = "error"
-    CANCELLED = "cancelled"
-
-
-class MarketTier(str, Enum):
-    """Market tier classification."""
-    TIER_1 = "tier_1"
-    TIER_2 = "tier_2"
-    TIER_3 = "tier_3"
-    UNKNOWN = "unknown"
+# Import enums from database models to avoid duplication
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent.parent.parent))
+from database.models.analysis import Industry, AnalysisStatus, MarketTier
 
 
 class AnalysisDepth(str, Enum):
@@ -176,7 +155,7 @@ class CompleteAnalysisResult(BaseModel):
             analysis_id=result.analysis_id,
             overall_score=result.overall_score,
             market_tier=result.market_tier.value if result.market_tier else "unknown",
-            summary=result.analysis_summary or "",
+            summary=result.executive_summary or "",
             structure_analysis={
                 "scores": result.structure_scores.dict() if result.structure_scores else {},
                 "feedback": result.structure_feedback.dict() if result.structure_feedback else {},
@@ -187,6 +166,6 @@ class CompleteAnalysisResult(BaseModel):
                 "feedback": result.appeal_feedback.dict() if result.appeal_feedback else {}
             },
             confidence_metrics=result.confidence_metrics.dict() if result.confidence_metrics else {},
-            processing_time_seconds=result.processing_time_seconds or 0,
-            ai_model_version=result.ai_model_version
+            processing_time_seconds=(result.processing_time_ms or 0) / 1000,  # Convert ms to seconds
+            ai_model_version=result.ai_model_used
         )
