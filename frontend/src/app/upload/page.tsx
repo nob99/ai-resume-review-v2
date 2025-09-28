@@ -4,9 +4,10 @@ import React, { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Container, Section, Header } from '../../components/layout'
 import { FileUpload } from '../../components/upload'
+import { AnalysisResults } from '../../components/analysis'
 import { Button, Card, CardHeader, CardContent, CandidateSelector } from '../../components/ui'
 import { useToast } from '../../components/ui'
-import { UploadFile, FileUploadError } from '../../types'
+import { UploadFile, FileUploadError, AnalysisStatusResponse } from '../../types'
 import { uploadApi, analysisApi } from '../../lib/api'
 
 // Industry options for analysis
@@ -29,7 +30,7 @@ export default function UploadPage() {
   const [selectedIndustry, setSelectedIndustry] = useState<string>('')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisId, setAnalysisId] = useState<string | null>(null)
-  const [analysisResult, setAnalysisResult] = useState<any>(null)
+  const [analysisResult, setAnalysisResult] = useState<AnalysisStatusResponse | null>(null)
   const [analysisStatus, setAnalysisStatus] = useState<string>('')
 
   // Generate unique file ID
@@ -225,7 +226,7 @@ export default function UploadPage() {
           setAnalysisStatus(result.data.status)
 
           if (result.data.status === 'completed') {
-            setAnalysisResult(result.data.result)
+            setAnalysisResult(result.data)
             setIsAnalyzing(false)
             clearInterval(pollInterval)
             addToast({
@@ -299,6 +300,20 @@ export default function UploadPage() {
         message: error.message || 'Failed to start analysis'
       })
     }
+  }
+
+  // Analysis result handlers
+  const handleAnalyzeAgain = () => {
+    setAnalysisResult(null)
+    setAnalysisId(null)
+    setSelectedIndustry('')
+  }
+
+  const handleUploadNew = () => {
+    setFiles([])
+    setAnalysisResult(null)
+    setAnalysisId(null)
+    setSelectedIndustry('')
   }
 
   const pendingFiles = files.filter(f => f.status === 'pending')
@@ -513,124 +528,12 @@ export default function UploadPage() {
 
               {/* Analysis Results */}
               {analysisResult && (
-                <Card className="border-2 border-green-500">
-                  <CardHeader className="bg-green-50">
-                    <h2 className="text-xl font-bold text-neutral-900">Analysis Results</h2>
-                  </CardHeader>
-                  <CardContent className="p-6 space-y-6">
-                    {/* Scores */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="text-center">
-                        <div className="text-4xl font-bold text-primary-600">
-                          {analysisResult.overall_score}/100
-                        </div>
-                        <div className="text-sm text-neutral-600">Overall Score</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-lg font-semibold text-neutral-900">
-                          {INDUSTRY_OPTIONS.find(i => i.value === analysisResult.industry)?.label}
-                        </div>
-                        <div className="text-sm text-neutral-600">Industry</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-lg font-semibold text-neutral-900">
-                          {analysisResult.market_tier?.replace('_', ' ').toUpperCase()}
-                        </div>
-                        <div className="text-sm text-neutral-600">Market Tier</div>
-                      </div>
-                    </div>
-
-                    {/* Summary */}
-                    {analysisResult.analysis_summary && (
-                      <div>
-                        <h3 className="font-semibold text-neutral-900 mb-2">Summary</h3>
-                        <p className="text-neutral-700">{analysisResult.analysis_summary}</p>
-                      </div>
-                    )}
-
-                    {/* Feedback */}
-                    {(analysisResult.structure_feedback || analysisResult.appeal_feedback) && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {analysisResult.structure_feedback && (
-                          <div>
-                            <h3 className="font-semibold text-neutral-900 mb-3">Structure Feedback</h3>
-                            {analysisResult.structure_feedback.strengths?.length > 0 && (
-                              <div className="mb-3">
-                                <h4 className="text-sm font-medium text-green-700 mb-1">Strengths</h4>
-                                <ul className="text-sm text-neutral-600 space-y-1">
-                                  {analysisResult.structure_feedback.strengths.map((s: string, i: number) => (
-                                    <li key={i}>• {s}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                            {analysisResult.structure_feedback.improvements?.length > 0 && (
-                              <div>
-                                <h4 className="text-sm font-medium text-orange-700 mb-1">Improvements</h4>
-                                <ul className="text-sm text-neutral-600 space-y-1">
-                                  {analysisResult.structure_feedback.improvements.map((s: string, i: number) => (
-                                    <li key={i}>• {s}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {analysisResult.appeal_feedback && (
-                          <div>
-                            <h3 className="font-semibold text-neutral-900 mb-3">Appeal Feedback</h3>
-                            {analysisResult.appeal_feedback.strengths?.length > 0 && (
-                              <div className="mb-3">
-                                <h4 className="text-sm font-medium text-green-700 mb-1">Strengths</h4>
-                                <ul className="text-sm text-neutral-600 space-y-1">
-                                  {analysisResult.appeal_feedback.strengths.map((s: string, i: number) => (
-                                    <li key={i}>• {s}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                            {analysisResult.appeal_feedback.improvements?.length > 0 && (
-                              <div>
-                                <h4 className="text-sm font-medium text-orange-700 mb-1">Improvements</h4>
-                                <ul className="text-sm text-neutral-600 space-y-1">
-                                  {analysisResult.appeal_feedback.improvements.map((s: string, i: number) => (
-                                    <li key={i}>• {s}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Action Buttons */}
-                    <div className="pt-4 border-t flex gap-3">
-                      <Button
-                        onClick={() => {
-                          setAnalysisResult(null)
-                          setAnalysisId(null)
-                          setSelectedIndustry('')
-                        }}
-                        variant="secondary"
-                      >
-                        Analyze Again
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          setFiles([])
-                          setAnalysisResult(null)
-                          setAnalysisId(null)
-                          setSelectedIndustry('')
-                        }}
-                        variant="secondary"
-                      >
-                        Upload New Resume
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <AnalysisResults
+                  analysis={analysisResult}
+                  industryOptions={INDUSTRY_OPTIONS}
+                  onAnalyzeAgain={handleAnalyzeAgain}
+                  onUploadNew={handleUploadNew}
+                />
               )}
 
               {/* Summary Stats */}

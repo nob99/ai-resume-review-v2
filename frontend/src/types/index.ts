@@ -127,3 +127,105 @@ export interface FileUploadProps extends BaseComponentProps {
   multiple?: boolean
   disabled?: boolean
 }
+
+// AI Analysis Types
+export interface StructureScores {
+  format: number
+  organization: number
+  tone: number
+  completeness: number
+}
+
+export interface AppealScores {
+  achievement_relevance: number
+  skills_alignment: number
+  experience_fit: number
+  competitive_positioning: number
+}
+
+export interface StructureFeedback {
+  issues: string[]
+  recommendations: string[]
+  missing_sections: string[]
+  strengths: string[]
+}
+
+export interface AppealFeedback {
+  relevant_achievements: string[]
+  missing_skills: string[]
+  competitive_advantages: string[]
+  improvement_areas: string[]
+  transferable_experience: string[]
+}
+
+export interface StructureAnalysis {
+  scores: StructureScores
+  feedback: StructureFeedback
+  metadata: {
+    total_sections: number
+    word_count: number
+    reading_time: number
+  }
+}
+
+export interface AppealAnalysis {
+  scores: AppealScores
+  feedback: AppealFeedback
+}
+
+export interface DetailedScores {
+  structure_analysis: StructureAnalysis
+  appeal_analysis: AppealAnalysis
+  market_tier: string
+  ai_analysis_id: string
+  conversion_timestamp: string
+}
+
+export interface AnalysisResult {
+  analysis_id: string
+  overall_score: number
+  ats_score: number
+  content_score: number
+  formatting_score: number
+  industry: string
+  executive_summary: string
+  detailed_scores: DetailedScores
+  ai_model_used: string
+  processing_time_ms: number
+  completed_at: string
+}
+
+export interface AnalysisStatusResponse {
+  analysis_id: string
+  status: string
+  requested_at: string
+  completed_at?: string
+  result?: AnalysisResult
+}
+
+export interface ParsedAIFeedback {
+  // Structure feedback
+  issues: string[]
+  recommendations: string[]
+  missingSection: string[]
+  strengths: string[]
+
+  // Appeal feedback
+  relevantAchievements: string[]
+  missingSkills: string[]
+  competitiveAdvantages: string[]
+  improvementAreas: string[]
+  transferableExperience: string[]
+
+  // Detailed scores
+  structureScores: StructureScores
+  appealScores: AppealScores
+
+  // Metadata
+  marketTier: string
+  metadata: {
+    total_sections: number
+    word_count: number
+    reading_time: number
+  }
+}
