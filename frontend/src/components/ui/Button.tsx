@@ -110,7 +110,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {loading ? (
           <span className="opacity-0">{children}</span>
         ) : (
-          <span className="text-white">{children}</span>
+          children
         )}
       </button>
     )

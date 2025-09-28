@@ -6,7 +6,7 @@ import { ProtectedRoute } from '@/lib/auth-context'
 import { Container, Section, Header } from '@/components/layout'
 import { Card, CardHeader, CardContent, Button } from '@/components/ui'
 import { useToastActions } from '@/components/ui/Toast'
-import Modal from '@/components/ui/Modal'
+import Modal, { ModalContent } from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import { adminApi } from '@/lib/api'
 
@@ -381,14 +381,16 @@ const AdminPage: React.FC = () => {
           title={editingUser ? 'Edit User' : 'Create New User'}
           size="md"
         >
-          <UserForm
-            user={editingUser}
-            onSave={handleSaveUser}
-            onCancel={() => {
-              setShowCreateModal(false)
-              setEditingUser(null)
-            }}
-          />
+          <ModalContent>
+            <UserForm
+              user={editingUser}
+              onSave={handleSaveUser}
+              onCancel={() => {
+                setShowCreateModal(false)
+                setEditingUser(null)
+              }}
+            />
+          </ModalContent>
         </Modal>
       </div>
     </ProtectedRoute>
@@ -418,14 +420,15 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSave, onCancel }) => {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-neutral-700 mb-1">
-            First Name *
+            First Name <span className="text-red-500">*</span>
           </label>
           <Input
             type="text"
+            placeholder="Enter first name"
             value={formData.first_name}
             onChange={(e) => setFormData(prev => ({ ...prev, first_name: e.target.value }))}
             required
@@ -433,10 +436,11 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSave, onCancel }) => {
         </div>
         <div>
           <label className="block text-sm font-medium text-neutral-700 mb-1">
-            Last Name *
+            Last Name <span className="text-red-500">*</span>
           </label>
           <Input
             type="text"
+            placeholder="Enter last name"
             value={formData.last_name}
             onChange={(e) => setFormData(prev => ({ ...prev, last_name: e.target.value }))}
             required
@@ -446,24 +450,26 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSave, onCancel }) => {
 
       <div>
         <label className="block text-sm font-medium text-neutral-700 mb-1">
-          Email Address *
+          Email Address <span className="text-red-500">*</span>
         </label>
         <Input
           type="email"
+          placeholder="Enter email address"
           value={formData.email}
           onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
           required
+          disabled={!!user} // Disable email editing for existing users
         />
       </div>
 
       <div>
         <label className="block text-sm font-medium text-neutral-700 mb-1">
-          Role *
+          Role <span className="text-red-500">*</span>
         </label>
         <select
           value={formData.role}
           onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
-          className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
           required
         >
           <option value="junior_recruiter">Junior Recruiter</option>
@@ -475,13 +481,13 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSave, onCancel }) => {
       {!user && (
         <div>
           <label className="block text-sm font-medium text-neutral-700 mb-1">
-            Temporary Password *
+            Temporary Password <span className="text-red-500">*</span>
           </label>
           <Input
             type="password"
+            placeholder="Enter temporary password"
             value={formData.temporary_password}
             onChange={(e) => setFormData(prev => ({ ...prev, temporary_password: e.target.value }))}
-            placeholder="Enter temporary password"
             required={!user}
           />
         </div>
@@ -493,7 +499,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSave, onCancel }) => {
           id="is_active"
           checked={formData.is_active}
           onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
-          className="rounded border-neutral-300"
+          className="h-4 w-4 text-blue-600 border-neutral-300 rounded focus:ring-blue-500"
         />
         <label htmlFor="is_active" className="text-sm text-neutral-700">
           Active user
@@ -501,19 +507,19 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSave, onCancel }) => {
       </div>
 
       <div className="flex justify-end gap-3 pt-4">
-        <button
+        <Button
           type="button"
-          className="px-4 py-2 text-sm border border-neutral-300 rounded hover:bg-neutral-50 transition-colors"
+          variant="outline"
           onClick={onCancel}
         >
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
           type="submit"
-          className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          variant="primary"
         >
           {user ? 'Update User' : 'Create User'}
-        </button>
+        </Button>
       </div>
     </form>
   )
