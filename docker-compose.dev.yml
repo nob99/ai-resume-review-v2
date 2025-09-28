@@ -114,8 +114,8 @@ services:
       - ./frontend/package-lock.json:/app/package-lock.json:ro
       # Mount Next.js config
       - ./frontend/next.config.ts:/app/next.config.ts:ro
-      # Mount for hot reload
-      - ./frontend/.next:/app/.next
+      # Note: .next directory mount removed to prevent build cache corruption
+      # Container will manage its own .next cache internally for stability
     environment:
       # API configuration - using localhost for browser requests (not internal Docker hostname)
       NEXT_PUBLIC_API_URL: http://localhost:8000
