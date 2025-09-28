@@ -3,8 +3,9 @@
 import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/auth-context'
 import { candidateApi } from '@/lib/api'
-import { CandidateFormData, CandidateCreateRequest } from '@/types'
+import { CandidateFormData, CandidateCreateRequest, AuthExpiredError, AuthInvalidError, NetworkError } from '@/types'
 import { Card, CardHeader, CardContent } from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
@@ -21,6 +22,7 @@ const CandidateRegistrationForm: React.FC<CandidateRegistrationFormProps> = ({
   onSuccess,
 }) => {
   const router = useRouter()
+  const { handleAuthExpired } = useAuth()
   const { showSuccess, showError } = useToastActions()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -78,8 +80,22 @@ const CandidateRegistrationForm: React.FC<CandidateRegistrationFormProps> = ({
         showError(errorMessage)
       }
     } catch (error) {
-      console.error('Unexpected error:', error)
-      showError('An unexpected error occurred. Please try again.')
+      console.error('Candidate registration error:', error)
+
+      // Handle specific auth errors like other pages do
+      if (error instanceof AuthExpiredError) {
+        // Token expired - redirect to login
+        handleAuthExpired()
+        return
+      } else if (error instanceof AuthInvalidError) {
+        showError('Authentication failed. Please login again.')
+        handleAuthExpired()
+        return
+      } else if (error instanceof NetworkError) {
+        showError('Network error. Please check your connection and try again.')
+      } else {
+        showError('An unexpected error occurred. Please try again.')
+      }
     } finally {
       setIsSubmitting(false)
     }
