@@ -40,6 +40,9 @@ class AdminUserCreate(BaseModel):
 
 class AdminUserUpdate(BaseModel):
     """Admin updating a user."""
+    first_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    last_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    email: Optional[EmailStr] = None
     is_active: Optional[bool] = None
     role: Optional[UserRole] = None
     email_verified: Optional[bool] = None

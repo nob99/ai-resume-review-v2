@@ -158,10 +158,14 @@ const AdminPage: React.FC = () => {
     try {
       if (editingUser) {
         // Update existing user
-        const result = await adminApi.updateUser(editingUser.id, {
+        const updatePayload = {
+          first_name: userData.first_name,
+          last_name: userData.last_name,
           is_active: userData.is_active,
           role: userData.role
-        })
+        }
+
+        const result = await adminApi.updateUser(editingUser.id, updatePayload)
 
         if (result.success) {
           showSuccess('User updated successfully')
@@ -172,13 +176,15 @@ const AdminPage: React.FC = () => {
         }
       } else {
         // Create new user
-        const result = await adminApi.createUser({
+        const createPayload = {
           email: userData.email,
           first_name: userData.first_name,
           last_name: userData.last_name,
           role: userData.role,
           temporary_password: userData.temporary_password
-        })
+        }
+
+        const result = await adminApi.createUser(createPayload)
 
         if (result.success) {
           showSuccess('User created successfully')

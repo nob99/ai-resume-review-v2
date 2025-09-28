@@ -17,7 +17,8 @@ from app.core.security import password_hasher
 
 class UserRole(str, Enum):
     """User role enumeration."""
-    CONSULTANT = "consultant"
+    JUNIOR_RECRUITER = "junior_recruiter"
+    SENIOR_RECRUITER = "senior_recruiter"
     ADMIN = "admin"
 
 
@@ -34,7 +35,7 @@ class UserBase(BaseModel):
     email: EmailStr
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
-    role: UserRole = Field(default=UserRole.CONSULTANT)
+    role: UserRole = Field(default=UserRole.JUNIOR_RECRUITER)
 
 
 class UserCreate(UserBase):

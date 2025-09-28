@@ -25,14 +25,14 @@ from .schemas import (
     UserRole
 )
 from database.models.auth import User
-from app.features.auth.schemas import UserResponse
+from .schemas import UserListItem as AdminUserResponse
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
-@router.post("/users", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/users", response_model=AdminUserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(
     user_data: AdminUserCreate,
     current_user: User = Depends(require_admin),
@@ -52,7 +52,7 @@ async def create_user(
 
         logger.info(f"Admin {current_user.email} created new user: {new_user.email}")
 
-        return UserResponse.model_validate(new_user)
+        return AdminUserResponse.model_validate(new_user)
 
     except SecurityError as e:
         raise HTTPException(
@@ -141,7 +141,7 @@ async def get_user_details(
         )
 
 
-@router.patch("/users/{user_id}", response_model=UserResponse)
+@router.patch("/users/{user_id}", response_model=AdminUserResponse)
 async def update_user(
     user_id: UUID,
     update_data: AdminUserUpdate,
@@ -174,7 +174,7 @@ async def update_user(
 
         logger.info(f"Admin {current_user.email} updated user {user_id}")
 
-        return UserResponse.model_validate(updated_user)
+        return AdminUserResponse.model_validate(updated_user)
 
     except HTTPException:
         raise

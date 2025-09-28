@@ -854,6 +854,9 @@ export const adminApi = {
   },
 
   async updateUser(userId: string, userData: {
+    first_name?: string
+    last_name?: string
+    email?: string
     is_active?: boolean
     role?: string
     email_verified?: boolean

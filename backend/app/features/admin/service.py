@@ -268,6 +268,21 @@ class AdminService:
             return None
 
         # Update fields if provided
+        if update_data.first_name is not None:
+            old_first_name = user.first_name
+            user.first_name = update_data.first_name.strip()
+            logger.info(f"Admin {updated_by_user_id} changed user {user_id} first_name from '{old_first_name}' to '{user.first_name}'")
+
+        if update_data.last_name is not None:
+            old_last_name = user.last_name
+            user.last_name = update_data.last_name.strip()
+            logger.info(f"Admin {updated_by_user_id} changed user {user_id} last_name from '{old_last_name}' to '{user.last_name}'")
+
+        if update_data.email is not None:
+            old_email = user.email
+            user.email = update_data.email.lower().strip()
+            logger.info(f"Admin {updated_by_user_id} changed user {user_id} email from '{old_email}' to '{user.email}'")
+
         if update_data.is_active is not None:
             user.is_active = update_data.is_active
             logger.info(f"Admin {updated_by_user_id} {'activated' if update_data.is_active else 'deactivated'} user {user_id}")
@@ -278,7 +293,9 @@ class AdminService:
             logger.info(f"Admin {updated_by_user_id} changed user {user_id} role from {old_role} to {update_data.role.value}")
 
         if update_data.email_verified is not None:
+            old_verified = user.email_verified
             user.email_verified = update_data.email_verified
+            logger.info(f"Admin {updated_by_user_id} changed user {user_id} email_verified from {old_verified} to {update_data.email_verified}")
 
         user.updated_at = utc_now()
 

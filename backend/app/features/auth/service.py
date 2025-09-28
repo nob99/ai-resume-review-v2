@@ -284,7 +284,7 @@ class AuthService:
                 password_hash=hash_password(user_data.password),
                 first_name=user_data.first_name,
                 last_name=user_data.last_name,
-                role=user_data.role.value if user_data.role else UserRole.CONSULTANT.value
+                role=user_data.role.value if user_data.role else UserRole.JUNIOR_RECRUITER.value
             )
             
             await self.user_repo.commit()
