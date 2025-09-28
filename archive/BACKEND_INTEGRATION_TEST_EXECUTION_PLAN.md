@@ -16,7 +16,7 @@
 ### **CURRENT PROGRESS**
 - **Priority 1 (Auth)**: ✅ **75% Complete** - Core functionality working, edge cases remain
 - **Priority 2 (File Upload)**: ⏳ Ready to begin testing
-- **Priority 3 (Resume Analysis)**: ⏳ Pending - dependencies on file upload
+- **Priority 3 (Resume Analysis       )**: ⏳ Pending - dependencies on file upload
 - **Priority 4 (Candidate Logic)**: ⏳ Pending - new feature development
 
 ### **IMMEDIATE NEXT STEPS**
