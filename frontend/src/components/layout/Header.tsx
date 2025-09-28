@@ -128,6 +128,12 @@ const NavigationItems: React.FC = () => {
         Dashboard
       </a>
       <a
+        href="/register-candidate"
+        className="text-neutral-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+      >
+        Register Candidate
+      </a>
+      <a
         href="/upload"
         className="text-neutral-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
       >
@@ -191,6 +197,13 @@ const MobileMenu: React.FC<{ isOpen: boolean; onToggle: () => void }> = ({ isOpe
               onClick={onToggle}
             >
               Dashboard
+            </a>
+            <a
+              href="/register-candidate"
+              className="block px-3 py-2 text-base font-medium text-neutral-700 hover:text-primary-600 hover:bg-neutral-50 rounded-md"
+              onClick={onToggle}
+            >
+              Register Candidate
             </a>
             <a
               href="/upload"

@@ -5,6 +5,8 @@ import {
   User,
   Candidate,
   CandidateListResponse,
+  CandidateCreateRequest,
+  CandidateCreateResponse,
   AuthExpiredError,
   AuthInvalidError,
   NetworkError,
@@ -558,6 +560,36 @@ export const candidateApi = {
         return {
           success: false,
           error: new Error(errorMessage)
+        }
+      }
+    }
+  },
+
+  async createCandidate(data: CandidateCreateRequest): Promise<ApiResult<CandidateCreateResponse>> {
+    try {
+      const response = await api.post<CandidateCreateResponse>('/candidates/', data)
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+        return {
+          success: false,
+          error: new Error('Unexpected error occurred')
+        }
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
         }
       }
     }

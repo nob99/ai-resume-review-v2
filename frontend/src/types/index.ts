@@ -31,6 +31,34 @@ export interface CandidateListResponse {
   offset: number
 }
 
+// Candidate form types
+export interface CandidateFormData {
+  firstName: string
+  lastName: string
+  email?: string
+  phone?: string
+  currentCompany?: string
+  currentPosition?: string
+  yearsExperience?: number
+}
+
+export interface CandidateCreateRequest {
+  first_name: string
+  last_name: string
+  email?: string
+  phone?: string
+  current_company?: string
+  current_position?: string
+  years_experience?: number
+}
+
+export interface CandidateCreateResponse {
+  success: boolean
+  message: string
+  candidate?: Candidate
+  error?: string
+}
+
 export interface LoginRequest {
   email: string
   password: string
