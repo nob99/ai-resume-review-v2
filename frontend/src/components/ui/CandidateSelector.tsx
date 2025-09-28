@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { cn } from '../../lib/utils'
 import { BaseComponentProps, Candidate } from '../../types'
 import { candidateApi } from '../../lib/api'
@@ -23,6 +23,11 @@ export const CandidateSelector: React.FC<CandidateSelectorProps> = ({
   const [candidates, setCandidates] = useState<Candidate[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [highlightedIndex, setHighlightedIndex] = useState(-1)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const loadCandidates = async () => {
@@ -48,11 +53,113 @@ export const CandidateSelector: React.FC<CandidateSelectorProps> = ({
     loadCandidates()
   }, [])
 
-  const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedValue = event.target.value
-    if (selectedValue) {
-      onSelect(selectedValue)
+  const handleCandidateSelect = (candidateId: string) => {
+    const selectedCandidate = candidates.find(c => c.id === candidateId)
+    if (selectedCandidate) {
+      setSearchTerm(`${selectedCandidate.first_name} ${selectedCandidate.last_name}`)
+      setIsDropdownOpen(false)
+      setHighlightedIndex(-1)
+      onSelect(candidateId)
     }
+  }
+
+  // Filter candidates based on search term
+  const filteredCandidates = candidates.filter(candidate => {
+    if (!searchTerm) return candidates.slice(0, 10) // Show first 10 when no search
+    const fullName = `${candidate.first_name} ${candidate.last_name}`.toLowerCase()
+    return fullName.includes(searchTerm.toLowerCase())
+  })
+
+  // Clear search and selection
+  const handleClearSearch = () => {
+    setSearchTerm('')
+    setIsDropdownOpen(false)
+    setHighlightedIndex(-1)
+    onSelect('') // Clear selection
+  }
+
+  // Handle input focus
+  const handleInputFocus = () => {
+    setIsDropdownOpen(true)
+  }
+
+  // Handle input change
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value
+    setSearchTerm(newValue)
+    setIsDropdownOpen(true)
+    setHighlightedIndex(-1)
+
+    // Clear selection if user is typing and doesn't match exactly
+    if (value) {
+      const selectedCandidate = candidates.find(c => c.id === value)
+      if (selectedCandidate) {
+        const exactMatch = `${selectedCandidate.first_name} ${selectedCandidate.last_name}`
+        if (newValue !== exactMatch) {
+          onSelect('') // Clear selection when user starts typing again
+        }
+      }
+    }
+  }
+
+  // Handle keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isDropdownOpen) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter') {
+        setIsDropdownOpen(true)
+        return
+      }
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setHighlightedIndex(prev =>
+          prev < filteredCandidates.length - 1 ? prev + 1 : 0
+        )
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setHighlightedIndex(prev =>
+          prev > 0 ? prev - 1 : filteredCandidates.length - 1
+        )
+        break
+      case 'Enter':
+        e.preventDefault()
+        if (highlightedIndex >= 0 && highlightedIndex < filteredCandidates.length) {
+          handleCandidateSelect(filteredCandidates[highlightedIndex].id)
+        }
+        break
+      case 'Escape':
+        setIsDropdownOpen(false)
+        setHighlightedIndex(-1)
+        inputRef.current?.blur()
+        break
+    }
+  }
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false)
+        setHighlightedIndex(-1)
+      }
+    }
+
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isDropdownOpen])
+
+  // Get display value for input
+  const getDisplayValue = () => {
+    if (value && !searchTerm) {
+      const selectedCandidate = candidates.find(c => c.id === value)
+      return selectedCandidate ? `${selectedCandidate.first_name} ${selectedCandidate.last_name}` : ''
+    }
+    return searchTerm
   }
 
   if (loading) {
@@ -77,31 +184,111 @@ export const CandidateSelector: React.FC<CandidateSelectorProps> = ({
       <label className="block text-sm font-medium text-neutral-700">
         Select Candidate {required && <span className="text-red-500">*</span>}
       </label>
-      <select
-        value={value || ''}
-        onChange={handleSelectChange}
-        disabled={disabled}
-        required={required}
-        className={cn(
-          'block w-full px-3 py-2 border border-neutral-300 rounded-md',
-          'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
-          'bg-white text-neutral-900',
-          'disabled:bg-neutral-100 disabled:text-neutral-500 disabled:cursor-not-allowed',
-          className
-        )}
-      >
-        <option value="">{placeholder}</option>
-        {candidates.map((candidate) => (
-          <option key={candidate.id} value={candidate.id}>
-            {candidate.first_name} {candidate.last_name}
-            {candidate.email && ` (${candidate.email})`}
-          </option>
-        ))}
-      </select>
 
-      {candidates.length === 0 && (
-        <p className="text-sm text-neutral-600">
+      {/* Custom typeahead dropdown */}
+      {candidates.length > 0 ? (
+        <div className="relative" ref={dropdownRef}>
+          <div className="relative">
+            <input
+              ref={inputRef}
+              type="text"
+              value={getDisplayValue()}
+              onChange={handleInputChange}
+              onFocus={handleInputFocus}
+              onKeyDown={handleKeyDown}
+              placeholder="Type to search candidates..."
+              disabled={disabled}
+              required={required}
+              className={cn(
+                'block w-full px-3 py-2 pr-10 border border-neutral-300 rounded-md',
+                'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                'bg-white text-neutral-900 placeholder-neutral-400',
+                'disabled:bg-neutral-100 disabled:text-neutral-500 disabled:cursor-not-allowed',
+                isDropdownOpen && 'border-blue-500 ring-2 ring-blue-500'
+              )}
+            />
+
+            {/* Dropdown arrow */}
+            <button
+              type="button"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              disabled={disabled}
+              className="absolute right-8 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600 focus:outline-none"
+              aria-label="Toggle dropdown"
+            >
+              <svg className={cn('w-4 h-4 transition-transform', isDropdownOpen && 'rotate-180')} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {/* Clear button */}
+            {(searchTerm || value) && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                disabled={disabled}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600 focus:outline-none"
+                aria-label="Clear selection"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Dropdown list */}
+          {isDropdownOpen && (
+            <div className="absolute z-50 w-full mt-1 bg-white border border-neutral-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+              {filteredCandidates.length > 0 ? (
+                filteredCandidates.map((candidate, index) => (
+                  <button
+                    key={candidate.id}
+                    type="button"
+                    onClick={() => handleCandidateSelect(candidate.id)}
+                    className={cn(
+                      'w-full px-3 py-2 text-left hover:bg-blue-50 focus:bg-blue-50 focus:outline-none border-none',
+                      'first:rounded-t-md last:rounded-b-md',
+                      highlightedIndex === index && 'bg-blue-50',
+                      value === candidate.id && 'bg-blue-100 text-blue-900 font-medium'
+                    )}
+                    onMouseEnter={() => setHighlightedIndex(index)}
+                  >
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-neutral-900">
+                        {candidate.first_name} {candidate.last_name}
+                      </span>
+                      {candidate.email && (
+                        <span className="text-xs text-neutral-500">
+                          {candidate.email}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="px-3 py-2 text-sm text-neutral-500">
+                  {searchTerm ? `No candidates match "${searchTerm}"` : 'No candidates available'}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Loading/Error states */
+        <div className="text-sm text-neutral-600">
           No candidates found. You may need to create one first.
+        </div>
+      )}
+
+      {/* Status info */}
+      {candidates.length > 0 && (
+        <p className="text-xs text-neutral-500">
+          {searchTerm ? (
+            <>Showing {filteredCandidates.length} of {candidates.length} candidates</>
+          ) : (
+            <>Total: {candidates.length} candidates</>
+          )}
         </p>
       )}
     </div>
