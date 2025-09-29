@@ -6,7 +6,7 @@ import { ProtectedRoute } from '@/contexts/AuthContext'
 import { Container, Section, Header } from '@/components/layout'
 import { Card, CardHeader, CardContent } from '@/components/ui'
 import Modal, { ModalContent } from '@/components/ui/Modal'
-import SearchHeader from '@/features/admin/components/SearchHeader'
+import UserSearchBar from '@/features/admin/components/UserSearchBar'
 import UsersTable from '@/features/admin/components/UsersTable'
 import UserForm from '@/features/admin/components/UserForm'
 import Pagination from '@/features/admin/components/Pagination'
@@ -84,11 +84,28 @@ const AdminPage: React.FC = () => {
         <Section spacing="lg">
           <Container>
             <div className="space-y-6">
-              {/* Search Header */}
-              <SearchHeader
+              {/* Page Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold text-neutral-900">
+                    Admin Page for User Management
+                  </h1>
+                  <p className="text-neutral-600 mt-1">
+                    Manage system users and their permissions
+                  </p>
+                </div>
+                <button
+                  onClick={handleCreateUser}
+                  className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors font-medium"
+                >
+                  + Add User
+                </button>
+              </div>
+
+              {/* Search Bar */}
+              <UserSearchBar
                 searchTerm={searchTerm}
                 onSearch={handleSearch}
-                onCreateUser={handleCreateUser}
               />
 
               {/* Users Table */}

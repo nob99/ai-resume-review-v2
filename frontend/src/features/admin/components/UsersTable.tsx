@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { AdminUser } from '../types'
-import { mapRoleForDisplay } from '../utils'
+import { mapRoleForDisplay } from '../hooks/useUserManagement'
 
 export interface UsersTableProps {
   users: AdminUser[]

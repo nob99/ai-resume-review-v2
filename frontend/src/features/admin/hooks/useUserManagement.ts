@@ -1,8 +1,31 @@
 import { useState, useEffect } from 'react'
 import { useToastActions } from '@/components/ui/Toast'
+import { adminApi } from '@/lib/api'
 import { AdminUser, UserFormData } from '../types'
-import adminService from '../services/adminService'
-import { generateTempPassword } from '../utils'
+
+/**
+ * Map backend role to display-friendly format
+ */
+export const mapRoleForDisplay = (backendRole: string): string => {
+  switch (backendRole) {
+    case 'admin':
+      return 'Admin'
+    case 'junior_recruiter':
+      return 'Junior Recruiter'
+    case 'senior_recruiter':
+      return 'Senior Recruiter'
+    default:
+      return 'Consultant'
+  }
+}
+
+/**
+ * Generate temporary password
+ * In production, use a more secure method
+ */
+const generateTempPassword = (): string => {
+  return 'TempPass123!'
+}
 
 /**
  * Custom hook for user management functionality
@@ -22,7 +45,7 @@ export function useUserManagement() {
   const loadUsers = async () => {
     setLoading(true)
     try {
-      const result = await adminService.getUsers({
+      const result = await adminApi.getUsers({
         page: currentPage,
         page_size: 20,
         search: searchTerm || undefined
@@ -65,7 +88,7 @@ export function useUserManagement() {
           role: userData.role
         }
 
-        const result = await adminService.updateUser(editingUser.id, updatePayload)
+        const result = await adminApi.updateUser(editingUser.id, updatePayload)
 
         if (result.success) {
           showSuccess('User updated successfully')
@@ -85,7 +108,7 @@ export function useUserManagement() {
           temporary_password: userData.temporary_password
         }
 
-        const result = await adminService.createUser(createPayload)
+        const result = await adminApi.createUser(createPayload)
 
         if (result.success) {
           showSuccess('User created successfully')
@@ -108,7 +131,7 @@ export function useUserManagement() {
     if (!user) return
 
     try {
-      const result = await adminService.toggleUserStatus(userId, !user.is_active)
+      const result = await adminApi.updateUser(userId, { is_active: !user.is_active })
 
       if (result.success) {
         showSuccess('User status updated successfully')
@@ -126,7 +149,7 @@ export function useUserManagement() {
     const newPassword = generateTempPassword()
 
     try {
-      const result = await adminService.resetPassword(user.id, {
+      const result = await adminApi.resetPassword(user.id, {
         new_password: newPassword,
         force_password_change: true
       })

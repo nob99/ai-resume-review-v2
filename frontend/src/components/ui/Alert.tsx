@@ -18,10 +18,10 @@ export interface AlertProps extends BaseComponentProps {
 
 // Variant styles mapping
 const variantStyles: Record<AlertVariant, string> = {
-  info: 'bg-primary-50 border-primary-200 text-primary-800',
-  success: 'bg-secondary-50 border-secondary-200 text-secondary-800',
-  warning: 'bg-warning-50 border-warning-200 text-warning-800',
-  error: 'bg-error-50 border-error-200 text-error-800',
+  info: 'bg-white border-2 border-primary-400 text-primary-900',
+  success: 'bg-white border-2 border-secondary-400 text-secondary-900',
+  warning: 'bg-white border-2 border-warning-400 text-warning-900',
+  error: 'bg-white border-2 border-error-400 text-error-900',
 }
 
 // Icon color styles mapping
