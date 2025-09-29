@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/auth-context'
+import { useAuth } from '@/contexts/AuthContext'
 import { candidateApi } from '@/lib/api'
 import { CandidateFormData, CandidateCreateRequest, AuthExpiredError, AuthInvalidError, NetworkError } from '@/types'
 import { Card, CardHeader, CardContent } from '@/components/ui/Card'

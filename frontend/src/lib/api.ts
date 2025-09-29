@@ -961,4 +961,4 @@ export const adminApi = {
 export default api
 
 // Export token storage for auth context
-export { TokenStorage }
+export { TokenStorage, BASE_URL }

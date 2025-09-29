@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { ProtectedRoute } from '@/lib/auth-context'
+import { ProtectedRoute } from '@/contexts/AuthContext'
 import { Container, Section, Header } from '@/components/layout'
 import CandidateRegistrationForm from '@/components/forms/CandidateRegistrationForm'
 

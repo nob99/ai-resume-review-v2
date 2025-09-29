@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useAuth } from '@/lib/auth-context'
+import { useAuth } from '@/contexts/AuthContext'
 import { useToastActions } from '@/components/ui/Toast'
 import { cn } from '@/lib/utils'
 import Button from '@/components/ui/Button'
