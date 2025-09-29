@@ -21,9 +21,10 @@ src/
 
 ### `features/`
 - **Purpose**: Business domain organization
-- **Structure**: `features/{domain}/{components|hooks|services|types|utils}/`
+- **Structure**: `features/{domain}/{components|hooks|types|utils}/`
 - **Example**: `features/upload/components/FileUpload.tsx`
 - **Rule**: Feature-specific code only, no cross-feature dependencies
+- **Note**: No `services/` folders - API calls belong in `/lib/api.ts`
 
 ### `components/`
 - **Purpose**: Shared UI components used across features
@@ -36,7 +37,9 @@ src/
 
 ### `lib/`
 - **Purpose**: Shared utilities, API client, external integrations
+- **Contains**: `api.ts` (all HTTP calls), `utils.ts`, configuration files
 - **Rule**: Pure functions and cross-cutting concerns
+- **API Pattern**: All backend API calls consolidated in `api.ts`
 
 ### `types/`
 - **Purpose**: Global TypeScript definitions
@@ -48,3 +51,30 @@ src/
 2. **Feature-first** - Group by business domain, not technical layer
 3. **Shared at top level** - Common code in root directories
 4. **Clear ownership** - Each file has obvious purpose and location
+5. **Single source of truth** - No duplicate implementations (e.g., API calls only in `/lib/api.ts`)
+
+## API Call Guidelines
+
+### ✅ Correct Pattern
+```typescript
+// All API calls in lib/api.ts
+import { authApi, candidateApi } from '@/lib/api'
+
+// Components and contexts import from lib
+import { authApi } from '@/lib/api'
+```
+
+### ❌ Avoid This
+```typescript
+// Don't create feature-specific API services
+import authService from '@/features/auth/services/authService'
+
+// Don't duplicate API implementations
+```
+
+## Import Guidelines
+
+- **Pages**: Import from `@/features/`, `@/components/`, `@/contexts/`
+- **Features**: Import from `@/lib/`, `@/components/`, `@/types/`
+- **Components**: Import from `@/lib/`, `@/types/`
+- **Contexts**: Import from `@/lib/`, `@/types/`

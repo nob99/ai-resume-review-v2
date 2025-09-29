@@ -15,10 +15,12 @@ const LoginPage: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth()
   const router = useRouter()
 
-  // Redirect to dashboard if already authenticated
+  // Redirect to upload if already authenticated
   useEffect(() => {
+    console.log('🏠 LOGIN PAGE: Checking redirect conditions - isAuthenticated:', isAuthenticated, 'isLoading:', isLoading)
     if (isAuthenticated && !isLoading) {
-      router.push('/dashboard')
+      console.log('🏠 LOGIN PAGE: ⚠️ REDIRECTING TO UPLOAD!')
+      router.push('/upload')
     }
   }, [isAuthenticated, isLoading, router])
 
@@ -40,14 +42,14 @@ const LoginPage: React.FC = () => {
       <Loading
         variant="spinner"
         size="lg"
-        text="Redirecting to dashboard..."
+        text="Redirecting to upload..."
         fullScreen
       />
     )
   }
 
   const handleLoginSuccess = () => {
-    router.push('/dashboard')
+    router.push('/upload')
   }
 
   return (

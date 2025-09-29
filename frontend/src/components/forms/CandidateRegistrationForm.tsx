@@ -72,8 +72,8 @@ const CandidateRegistrationForm: React.FC<CandidateRegistrationFormProps> = ({
         if (onSuccess) {
           onSuccess(result.data.candidate.id)
         } else {
-          // Default navigation to dashboard
-          router.push('/dashboard')
+          // Default navigation to upload page
+          router.push('/upload')
         }
       } else {
         const errorMessage = result.data?.error || result.error?.message || 'Failed to register candidate'

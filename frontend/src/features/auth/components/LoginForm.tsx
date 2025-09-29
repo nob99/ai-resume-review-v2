@@ -32,7 +32,6 @@ const LoginForm: React.FC<LoginFormProps> = ({
     register,
     handleSubmit,
     formState: { errors },
-    watch,
     clearErrors,
   } = useForm<FormData>({
     mode: 'onSubmit',
@@ -43,30 +42,9 @@ const LoginForm: React.FC<LoginFormProps> = ({
     },
   })
 
-  // Watch form values for real-time validation
-  const emailValue = watch('email')
-  const passwordValue = watch('password')
-  
-  // Track previous values to detect actual changes (not just existence)
-  const [prevEmailValue, setPrevEmailValue] = useState('')
-  const [prevPasswordValue, setPrevPasswordValue] = useState('')
-
-  // Clear auth error only when user starts typing (values change)
-  React.useEffect(() => {
-    const emailChanged = emailValue !== prevEmailValue
-    const passwordChanged = passwordValue !== prevPasswordValue
-    
-    if (error && (emailChanged || passwordChanged)) {
-      clearError()
-    }
-    
-    // Update previous values
-    setPrevEmailValue(emailValue)
-    setPrevPasswordValue(passwordValue)
-  }, [emailValue, passwordValue, error, clearError, prevEmailValue, prevPasswordValue])
-
   // Submit handler
   const onSubmit = async (data: FormData) => {
+    console.log('📝 LOGIN FORM: Submit handler started')
     setIsSubmitting(true)
     // Don't clear error here - let auth context handle it
     clearErrors()
@@ -76,14 +54,20 @@ const LoginForm: React.FC<LoginFormProps> = ({
       password: data.password,
     }
 
+    console.log('📝 LOGIN FORM: Calling login() with credentials for:', credentials.email)
     const success = await login(credentials)
-    
+    console.log('📝 LOGIN FORM: login() returned:', success)
+
     // Only call success callback if login was successful
     if (success) {
+      console.log('📝 LOGIN FORM: Login successful, calling onSuccess callback')
       onSuccess?.()
+    } else {
+      console.log('📝 LOGIN FORM: Login failed, not calling onSuccess')
     }
-    
+
     setIsSubmitting(false)
+    console.log('📝 LOGIN FORM: Submit handler complete')
   }
 
   const isFormLoading = isLoading || isSubmitting
