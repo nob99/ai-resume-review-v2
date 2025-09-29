@@ -44,9 +44,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
   // Submit handler
   const onSubmit = async (data: FormData) => {
-    console.log('📝 LOGIN FORM: Submit handler started')
     setIsSubmitting(true)
-    // Don't clear error here - let auth context handle it
     clearErrors()
 
     const credentials: LoginRequest = {
@@ -54,20 +52,14 @@ const LoginForm: React.FC<LoginFormProps> = ({
       password: data.password,
     }
 
-    console.log('📝 LOGIN FORM: Calling login() with credentials for:', credentials.email)
     const success = await login(credentials)
-    console.log('📝 LOGIN FORM: login() returned:', success)
 
     // Only call success callback if login was successful
     if (success) {
-      console.log('📝 LOGIN FORM: Login successful, calling onSuccess callback')
       onSuccess?.()
-    } else {
-      console.log('📝 LOGIN FORM: Login failed, not calling onSuccess')
     }
 
     setIsSubmitting(false)
-    console.log('📝 LOGIN FORM: Submit handler complete')
   }
 
   const isFormLoading = isLoading || isSubmitting
@@ -82,9 +74,9 @@ const LoginForm: React.FC<LoginFormProps> = ({
       )}
       
       <CardContent>
-        <form 
-          onSubmit={handleSubmit(onSubmit)} 
-          className="space-y-4" 
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4"
           noValidate
           autoComplete="off"
         >
@@ -101,6 +93,11 @@ const LoginForm: React.FC<LoginFormProps> = ({
               disabled={isFormLoading}
               error={!!errors.email}
               errorMessage={errors.email?.message}
+              onFocus={() => {
+                if (error) {
+                  clearError()
+                }
+              }}
               {...register('email', {
                 required: 'Email address is required',
                 validate: (value) => {
@@ -126,6 +123,11 @@ const LoginForm: React.FC<LoginFormProps> = ({
               disabled={isFormLoading}
               error={!!errors.password}
               errorMessage={errors.password?.message}
+              onFocus={() => {
+                if (error) {
+                  clearError()
+                }
+              }}
               {...register('password', {
                 required: 'Password is required',
                 minLength: {

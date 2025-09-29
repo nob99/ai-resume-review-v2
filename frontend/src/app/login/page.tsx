@@ -17,9 +17,7 @@ const LoginPage: React.FC = () => {
 
   // Redirect to upload if already authenticated
   useEffect(() => {
-    console.log('🏠 LOGIN PAGE: Checking redirect conditions - isAuthenticated:', isAuthenticated, 'isLoading:', isLoading)
     if (isAuthenticated && !isLoading) {
-      console.log('🏠 LOGIN PAGE: ⚠️ REDIRECTING TO UPLOAD!')
       router.push('/upload')
     }
   }, [isAuthenticated, isLoading, router])
