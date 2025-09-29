@@ -24,7 +24,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-neutral-900">
-            User Management
+            Admin Page for User Management
           </h1>
           <p className="text-neutral-600 mt-1">
             Manage system users and their permissions
