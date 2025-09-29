@@ -1,9 +1,9 @@
 'use client'
 
 import React from 'react'
-import { Card, CardContent, Button } from '../ui'
-import { cn } from '../../lib/utils'
-import { BaseComponentProps, UploadFile } from '../../types'
+import { Card, CardContent, Button } from '../../../components/ui'
+import { cn } from '../../../lib/utils'
+import { BaseComponentProps, UploadFile } from '../../../types'
 import { formatFileSize, getFileTypeDisplayName, isLikelyResume } from './FileValidation'
 
 // Legacy compatibility types

@@ -89,7 +89,7 @@ export const authService = {
    */
   async getCurrentUser(): Promise<ApiResult<User>> {
     try {
-      const response = await api.get<User>('/users/me')
+      const response = await api.get<User>('/auth/me')
       return {
         success: true,
         data: response.data
