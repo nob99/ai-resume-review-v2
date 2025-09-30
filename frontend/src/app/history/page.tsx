@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ProtectedRoute } from '@/contexts/AuthContext'
-import { Container, Section, Header } from '@/components/layout'
+import { Container, Header } from '@/components/layout'
 import { Card, CardHeader, CardContent, CandidateSelector } from '@/components/ui'
 import { useHistoryData } from '@/features/history/hooks'
 import { HistoryTable, AnalysisDetailModal } from '@/features/history/components'
@@ -50,19 +50,18 @@ const HistoryPage: React.FC = () => {
 
         <main className="py-8">
           <Container size="lg">
-            <div className="max-w-6xl mx-auto">
-              {/* Page Header */}
-              <Section className="mb-8">
-                <h1 className="text-3xl font-bold text-neutral-900 mb-4">
-                  Review History
-                </h1>
-                <p className="text-lg text-neutral-600">
-                  View and manage all past resume analyses
-                </p>
-              </Section>
+            {/* Page Header */}
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-neutral-900 mb-4">
+                Review History
+              </h1>
+              <p className="text-lg text-neutral-600">
+                View and manage all past resume analyses
+              </p>
+            </div>
 
-              {/* Filters */}
-              <Card className="mb-6">
+            {/* Filters */}
+            <Card className="mb-6">
                 <CardHeader>
                   <h2 className="text-lg font-semibold text-neutral-900">
                     Filter Reviews
@@ -117,17 +116,16 @@ const HistoryPage: React.FC = () => {
                 onUploadClick={analyses.length === 0 && !selectedCandidate ? handleUploadClick : undefined}
               />
 
-              {/* Pagination */}
-              {!loading && totalPages > 1 && (
-                <div className="mt-6">
-                  <Pagination
-                    currentPage={page}
-                    totalPages={totalPages}
-                    onPageChange={handlePageChange}
-                  />
-                </div>
-              )}
-            </div>
+            {/* Pagination */}
+            {!loading && totalPages > 1 && (
+              <div className="mt-6">
+                <Pagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              </div>
+            )}
           </Container>
         </main>
 

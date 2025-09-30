@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Modal } from '@/components/ui'
+import { Modal, ModalHeader, ModalContent } from '@/components/ui'
 import { Loading } from '@/components/ui'
 import { analysisApi } from '@/lib/api'
 import AnalysisResults from '@/features/upload/components/AnalysisResults'
@@ -54,44 +54,51 @@ const AnalysisDetailModal: React.FC<AnalysisDetailModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="full">
-      <div className="max-w-4xl mx-auto py-8 px-4">
-        {loading && (
-          <div className="flex items-center justify-center py-12">
-            <Loading size="lg" />
-          </div>
-        )}
+      <ModalHeader
+        title="Analysis Details"
+        onClose={onClose}
+        showCloseButton={true}
+      />
+      <ModalContent>
+        <div className="max-w-4xl mx-auto py-4">
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <Loading size="lg" />
+            </div>
+          )}
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-            <h3 className="text-lg font-semibold text-red-900 mb-2">
-              Error Loading Analysis
-            </h3>
-            <p className="text-red-700">{error}</p>
-          </div>
-        )}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+              <h3 className="text-lg font-semibold text-red-900 mb-2">
+                Error Loading Analysis
+              </h3>
+              <p className="text-red-700">{error}</p>
+            </div>
+          )}
 
-        {!loading && !error && analysisData && (
-          <div>
-            {analysisData.status === 'completed' && analysisData.result ? (
-              <AnalysisResults
-                analysis={analysisData}
-                industryOptions={INDUSTRY_OPTIONS}
-                onAnalyzeAgain={() => {}} // Not needed in history view
-                onUploadNew={() => {}}    // Not needed in history view
-              />
-            ) : (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-                <h3 className="text-lg font-semibold text-yellow-900 mb-2">
-                  Analysis Not Completed
-                </h3>
-                <p className="text-yellow-700">
-                  This analysis is currently {analysisData.status}. Please check back later.
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+          {!loading && !error && analysisData && (
+            <div>
+              {analysisData.status === 'completed' && analysisData.result ? (
+                <AnalysisResults
+                  analysis={analysisData}
+                  industryOptions={INDUSTRY_OPTIONS}
+                  onAnalyzeAgain={() => {}} // Not needed in history view
+                  onUploadNew={() => {}}    // Not needed in history view
+                />
+              ) : (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+                  <h3 className="text-lg font-semibold text-yellow-900 mb-2">
+                    Analysis Not Completed
+                  </h3>
+                  <p className="text-yellow-700">
+                    This analysis is currently {analysisData.status}. Please check back later.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </ModalContent>
     </Modal>
   )
 }
