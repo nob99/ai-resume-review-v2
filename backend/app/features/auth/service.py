@@ -8,7 +8,7 @@ Transaction Management:
 """
 
 from datetime import timedelta
-from typing import Optional, Tuple, List, Dict, Any
+from typing import Optional, List
 from uuid import UUID, uuid4
 import logging
 
@@ -24,11 +24,6 @@ from app.core.security import (
     PasswordValidationResult,
     blacklist_token,
     is_token_blacklisted
-)
-from app.core.rate_limiter import (
-    check_rate_limit_middleware,
-    get_client_identifier,
-    RateLimitType
 )
 from app.core.datetime_utils import utc_now
 from database.models.auth import User, RefreshToken, SessionStatus, UserRole
@@ -73,29 +68,22 @@ class AuthService:
         self,
         login_request: LoginRequest,
         client_ip: str,
-        user_agent: Optional[str] = None,
-        request: Any = None  # For rate limiting compatibility
+        user_agent: Optional[str] = None
     ) -> LoginResponse:
         """
         Authenticate user and create tokens.
-        
+
         Args:
             login_request: Login credentials
-            client_ip: Client IP address for rate limiting
+            client_ip: Client IP address for session tracking
             user_agent: Client user agent string
-            
+
         Returns:
             Login response with tokens and user info
-            
+
         Raises:
             SecurityError: If authentication fails
-            HTTPException: If rate limited
         """
-        # Check rate limiting
-        if request:
-            await check_rate_limit_middleware(request, RateLimitType.LOGIN, login_request.email)
-        # If no request (for testing), skip rate limiting check
-        
         # Get user by email
         user = await self.user_repo.get_by_email(login_request.email)
         if not user:
@@ -248,26 +236,20 @@ class AuthService:
     
     async def register_user(
         self,
-        user_data: UserCreate,
-        client_ip: str
+        user_data: UserCreate
     ) -> UserResponse:
         """
         Register a new user.
-        
+
         Args:
             user_data: User registration data
-            client_ip: Client IP address for rate limiting
-            
+
         Returns:
             Created user response
-            
+
         Raises:
             SecurityError: If registration fails
-            HTTPException: If rate limited
         """
-        # Check rate limiting
-        await check_rate_limit_middleware(client_ip, RateLimitType.REGISTRATION)
-        
         # Check if email already exists
         if await self.user_repo.email_exists(user_data.email):
             raise SecurityError("Email already registered")

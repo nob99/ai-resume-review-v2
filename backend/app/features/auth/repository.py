@@ -6,7 +6,7 @@ Implements data access patterns for User and RefreshToken models.
 from typing import Optional, List
 from uuid import UUID
 
-from sqlalchemy import select, and_, or_
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from infrastructure.persistence.postgres.base import BaseRepository
@@ -22,107 +22,35 @@ class UserRepository(BaseRepository[User]):
     async def get_by_email(self, email: str) -> Optional[User]:
         """
         Get user by email address.
-        
+
         Args:
             email: User's email address
-            
+
         Returns:
             User if found, None otherwise
         """
-        # Make email lookup case-insensitive
-        query = select(User).where(User.email.ilike(email.lower()))
+        query = select(User).where(User.email.ilike(email))
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
     
     async def email_exists(self, email: str, exclude_user_id: Optional[UUID] = None) -> bool:
         """
         Check if email already exists in the system.
-        
+
         Args:
             email: Email to check
             exclude_user_id: Optional user ID to exclude from check (for updates)
-            
+
         Returns:
             True if email exists, False otherwise
         """
-        query = select(User).where(User.email.ilike(email.lower()))
-        
+        query = select(User).where(User.email.ilike(email))
+
         if exclude_user_id:
             query = query.where(User.id != exclude_user_id)
-        
+
         result = await self.session.execute(query)
         return result.scalar_one_or_none() is not None
-    
-    async def get_active_users(self, skip: int = 0, limit: int = 100) -> List[User]:
-        """
-        Get all active users with pagination.
-        
-        Args:
-            skip: Number of records to skip
-            limit: Maximum number of records to return
-            
-        Returns:
-            List of active users
-        """
-        query = (
-            select(User)
-            .where(User.is_active == True)
-            .order_by(User.created_at.desc())
-            .offset(skip)
-            .limit(limit)
-        )
-        
-        result = await self.session.execute(query)
-        return list(result.scalars().all())
-    
-    async def search_users(
-        self,
-        search_term: str,
-        skip: int = 0,
-        limit: int = 100
-    ) -> List[User]:
-        """
-        Search users by email, first name, or last name.
-        
-        Args:
-            search_term: Term to search for
-            skip: Number of records to skip
-            limit: Maximum number of records to return
-            
-        Returns:
-            List of matching users
-        """
-        search_pattern = f"%{search_term.lower()}%"
-        
-        query = (
-            select(User)
-            .where(
-                or_(
-                    User.email.ilike(search_pattern),
-                    User.first_name.ilike(search_pattern),
-                    User.last_name.ilike(search_pattern)
-                )
-            )
-            .order_by(User.created_at.desc())
-            .offset(skip)
-            .limit(limit)
-        )
-        
-        result = await self.session.execute(query)
-        return list(result.scalars().all())
-    
-    async def deactivate_user(self, user_id: UUID) -> bool:
-        """
-        Deactivate a user account.
-        
-        Args:
-            user_id: ID of the user to deactivate
-            
-        Returns:
-            True if user was deactivated, False if not found
-        """
-        updated_user = await self.update(user_id, is_active=False)
-        return updated_user is not None
 
 
 class RefreshTokenRepository(BaseRepository[RefreshToken]):

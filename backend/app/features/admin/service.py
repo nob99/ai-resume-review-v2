@@ -7,7 +7,7 @@ from typing import Optional, List, Dict, Any
 from uuid import UUID
 import logging
 
-from sqlalchemy import select, func, or_
+from sqlalchemy import select, func, or_, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 

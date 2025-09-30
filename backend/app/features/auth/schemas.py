@@ -8,25 +8,11 @@ separated from SQLAlchemy database models.
 from datetime import datetime
 from typing import Optional, List
 from uuid import UUID
-from enum import Enum
 
 from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict, computed_field
 
 from app.core.security import password_hasher
-
-
-class UserRole(str, Enum):
-    """User role enumeration."""
-    JUNIOR_RECRUITER = "junior_recruiter"
-    SENIOR_RECRUITER = "senior_recruiter"
-    ADMIN = "admin"
-
-
-class SessionStatus(str, Enum):
-    """Session status enumeration."""
-    ACTIVE = "active"
-    EXPIRED = "expired"
-    REVOKED = "revoked"
+from database.models.auth import UserRole, SessionStatus
 
 
 # User schemas

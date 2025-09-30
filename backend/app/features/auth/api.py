@@ -15,7 +15,7 @@ from app.core.security import (
     verify_token,
     SecurityError
 )
-from app.core.rate_limiter import rate_limiter, RateLimitType
+from app.core.rate_limiter import check_rate_limit_middleware, RateLimitType
 from infrastructure.persistence.postgres.connection import get_async_session
 from .repository import UserRepository, RefreshTokenRepository
 from .service import AuthService
@@ -40,51 +40,18 @@ security = HTTPBearer()
 
 
 async def get_auth_service(session: AsyncSession = Depends(get_async_session)) -> AuthService:
-    """
-    Dependency to get auth service with repositories.
-    
-    Args:
-        session: Database session
-        
-    Returns:
-        Configured AuthService instance
-    """
+    """Dependency to get auth service with repositories."""
     user_repo = UserRepository(session)
     token_repo = RefreshTokenRepository(session)
     return AuthService(user_repo, token_repo)
 
 
 def get_client_ip(request: Request) -> str:
-    """Get client IP address from request."""
+    """Extract client IP from request headers or connection."""
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded:
         return forwarded.split(",")[0].strip()
-    # Handle test environment where request.client might be None
     return request.client.host if request.client else "127.0.0.1"
-
-
-def get_user_agent(request: Request) -> Optional[str]:
-    """Get user agent from request."""
-    return request.headers.get("User-Agent")
-
-
-def get_current_user_from_token(token: str) -> dict:
-    """
-    Extract user information from access token.
-    
-    Args:
-        token: JWT access token
-        
-    Returns:
-        User data from token
-        
-    Raises:
-        SecurityError: If token is invalid
-    """
-    user_data = verify_token(token)
-    if not user_data:
-        raise SecurityError("Invalid or expired token")
-    return user_data
 
 
 @router.post("/login", response_model=LoginResponse, status_code=status.HTTP_200_OK)
@@ -95,7 +62,7 @@ async def login(
 ) -> LoginResponse:
     """
     Authenticate user and return access/refresh tokens.
-    
+
     This endpoint:
     - Validates user credentials
     - Applies rate limiting
@@ -103,13 +70,18 @@ async def login(
     - Returns JWT tokens
     """
     try:
+        # Rate limiting (HTTP layer concern)
+        await check_rate_limit_middleware(request, RateLimitType.LOGIN, login_request.email)
+
+        # Extract request metadata
         client_ip = get_client_ip(request)
-        user_agent = get_user_agent(request)
-        
-        response = await auth_service.login(login_request, client_ip, user_agent, request)
-        
+        user_agent = request.headers.get("User-Agent")
+
+        # Call service layer (business logic)
+        response = await auth_service.login(login_request, client_ip, user_agent)
+
         return response
-        
+
     except SecurityError as e:
         logger.warning(f"Login failed from {get_client_ip(request)}: {e}")
         raise HTTPException(
@@ -133,21 +105,24 @@ async def register(
 ) -> UserResponse:
     """
     Register a new user account.
-    
+
     This endpoint:
     - Validates registration data
-    - Applies rate limiting  
+    - Applies rate limiting
     - Creates new user account
     - Returns user information
     """
     try:
+        # Rate limiting (HTTP layer concern)
         client_ip = get_client_ip(request)
-        
-        response = await auth_service.register_user(user_data, client_ip)
-        
+        await check_rate_limit_middleware(client_ip, RateLimitType.REGISTRATION)
+
+        # Call service layer (business logic)
+        response = await auth_service.register_user(user_data)
+
         logger.info(f"User registered successfully: {user_data.email}")
         return response
-        
+
     except SecurityError as e:
         logger.warning(f"Registration failed from {get_client_ip(request)}: {e}")
         raise HTTPException(
@@ -170,24 +145,26 @@ async def refresh_token(
 ) -> TokenRefreshResponse:
     """
     Refresh access token using refresh token.
-    
+
     This endpoint:
     - Validates refresh token
     - Rotates refresh token
     - Returns new tokens
     """
     try:
+        # Extract request metadata
         client_ip = get_client_ip(request)
-        user_agent = get_user_agent(request)
-        
+        user_agent = request.headers.get("User-Agent")
+
+        # Call service layer (business logic)
         response = await auth_service.refresh_token(
             token_request.refresh_token,
             client_ip,
             user_agent
         )
-        
+
         return response
-        
+
     except SecurityError as e:
         logger.warning(f"Token refresh failed from {get_client_ip(request)}: {e}")
         raise HTTPException(
@@ -246,24 +223,27 @@ async def get_current_user(
 ) -> UserResponse:
     """
     Get current user information.
-    
+
     This endpoint:
     - Validates access token
     - Returns user profile
     """
     try:
-        access_token = credentials.credentials
-        user_data = get_current_user_from_token(access_token)
-        
+        # Verify token and extract user data
+        user_data = verify_token(credentials.credentials)
+        if not user_data:
+            raise SecurityError("Invalid or expired token")
+
+        # Get user from database
         user = await auth_service.user_repo.get_by_id(UUID(user_data["sub"]))
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
-        
+
         return UserResponse.model_validate(user)
-        
+
     except SecurityError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -285,19 +265,21 @@ async def get_user_sessions(
 ) -> SessionListResponse:
     """
     Get all active sessions for the current user.
-    
+
     This endpoint:
     - Validates access token
     - Returns list of active sessions
     """
     try:
-        access_token = credentials.credentials
-        user_data = get_current_user_from_token(access_token)
-        user_id = UUID(user_data["sub"])
-        
-        sessions = await auth_service.get_user_sessions(user_id)
+        # Verify token and extract user data
+        user_data = verify_token(credentials.credentials)
+        if not user_data:
+            raise SecurityError("Invalid or expired token")
+
+        # Get user sessions
+        sessions = await auth_service.get_user_sessions(UUID(user_data["sub"]))
         return sessions
-        
+
     except SecurityError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -320,23 +302,25 @@ async def revoke_session(
 ) -> SessionRevokeResponse:
     """
     Revoke a specific user session.
-    
+
     This endpoint:
     - Validates access token
     - Revokes specified session
     """
     try:
-        access_token = credentials.credentials
-        user_data = get_current_user_from_token(access_token)
-        user_id = UUID(user_data["sub"])
-        
-        success = await auth_service.revoke_session(user_id, session_request.session_id)
-        
+        # Verify token and extract user data
+        user_data = verify_token(credentials.credentials)
+        if not user_data:
+            raise SecurityError("Invalid or expired token")
+
+        # Revoke the session
+        success = await auth_service.revoke_session(UUID(user_data["sub"]), session_request.session_id)
+
         return SessionRevokeResponse(
             success=success,
             message="Session revoked successfully" if success else "Session not found"
         )
-        
+
     except SecurityError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -359,7 +343,7 @@ async def change_password(
 ):
     """
     Change user password.
-    
+
     This endpoint:
     - Validates access token
     - Verifies current password
@@ -367,19 +351,21 @@ async def change_password(
     - Optionally revokes other sessions
     """
     try:
-        access_token = credentials.credentials
-        user_data = get_current_user_from_token(access_token)
-        user_id = UUID(user_data["sub"])
-        
+        # Verify token and extract user data
+        user_data = verify_token(credentials.credentials)
+        if not user_data:
+            raise SecurityError("Invalid or expired token")
+
+        # Change password
         await auth_service.change_password(
-            user_id=user_id,
+            user_id=UUID(user_data["sub"]),
             current_password=password_data.current_password,
             new_password=password_data.new_password,
             revoke_other_sessions=True
         )
-        
+
         return {"message": "Password changed successfully"}
-        
+
     except SecurityError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

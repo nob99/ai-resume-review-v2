@@ -9,9 +9,9 @@ from uuid import uuid4, UUID
 from datetime import datetime
 
 from app.features.admin.service import AdminService
-from app.features.admin.schemas import AdminUserCreate, AdminUserUpdate, AdminPasswordReset, UserRole
+from app.features.admin.schemas import AdminUserCreate, AdminUserUpdate, AdminPasswordReset
 from app.core.security import SecurityError
-from database.models.auth import User, UserRole as DBUserRole
+from database.models.auth import User, UserRole
 
 
 class TestAdminService:
@@ -47,7 +47,7 @@ class TestAdminService:
             password="ExistingPass123!",
             first_name="Existing",
             last_name="User",
-            role=DBUserRole.JUNIOR_RECRUITER
+            role=UserRole.JUNIOR_RECRUITER
         )
 
     @pytest.mark.asyncio
@@ -105,7 +105,7 @@ class TestAdminService:
                 email="user1@example.com",
                 first_name="User",
                 last_name="One",
-                role=DBUserRole.JUNIOR_RECRUITER.value,
+                role=UserRole.JUNIOR_RECRUITER.value,
                 is_active=True,
                 email_verified=True,
                 last_login_at=None,
@@ -116,7 +116,7 @@ class TestAdminService:
                 email="user2@example.com",
                 first_name="User",
                 last_name="Two",
-                role=DBUserRole.SENIOR_RECRUITER.value,
+                role=UserRole.SENIOR_RECRUITER.value,
                 is_active=True,
                 email_verified=True,
                 last_login_at=None,
@@ -276,7 +276,7 @@ class TestAdminService:
                 email="user1@example.com",
                 first_name="User",
                 last_name="One",
-                role=DBUserRole.JUNIOR_RECRUITER.value,
+                role=UserRole.JUNIOR_RECRUITER.value,
                 is_active=True
             ),
             Mock(
@@ -284,7 +284,7 @@ class TestAdminService:
                 email="user2@example.com",
                 first_name="User",
                 last_name="Two",
-                role=DBUserRole.SENIOR_RECRUITER.value,
+                role=UserRole.SENIOR_RECRUITER.value,
                 is_active=True
             )
         ]
