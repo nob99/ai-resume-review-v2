@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { ProtectedRoute } from '@/contexts/AuthContext'
-import { Container, Section, Header } from '@/components/layout'
+import { Container, Header } from '@/components/layout'
 import CandidateRegistrationForm from '@/components/forms/CandidateRegistrationForm'
 
 const RegisterCandidatePage: React.FC = () => {
@@ -11,13 +11,21 @@ const RegisterCandidatePage: React.FC = () => {
       <div className="min-h-screen bg-neutral-50">
         <Header />
 
-        <Section spacing="lg">
-          <Container>
-            <div className="max-w-2xl mx-auto">
-              <CandidateRegistrationForm />
+        <main className="py-8">
+          <Container size="lg">
+            {/* Page Header */}
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-neutral-900 mb-4">
+                Register New Candidate
+              </h1>
+              <p className="text-lg text-neutral-600">
+                Add a new candidate to the system for resume analysis
+              </p>
             </div>
+
+            <CandidateRegistrationForm />
           </Container>
-        </Section>
+        </main>
       </div>
     </ProtectedRoute>
   )

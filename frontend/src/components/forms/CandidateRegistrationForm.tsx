@@ -106,12 +106,7 @@ const CandidateRegistrationForm: React.FC<CandidateRegistrationFormProps> = ({
   }
 
   return (
-    <Card className={cn('w-full max-w-2xl mx-auto', className)}>
-      <CardHeader
-        title="Register New Candidate"
-        subtitle="Add a new candidate to the system"
-      />
-
+    <Card className={className}>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
           {/* Required Fields */}

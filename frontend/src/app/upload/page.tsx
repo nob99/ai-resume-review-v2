@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Container, Section, Header } from '@/components/layout'
+import { Container, Header } from '@/components/layout'
 import { Card, CardHeader, CardContent, Button, CandidateSelector } from '@/components/ui'
 import FileUpload from '@/features/upload/components/FileUpload'
 import FileList from '@/features/upload/components/FileList'
@@ -34,19 +34,18 @@ const UploadPage: React.FC = () => {
 
       <main className="py-8">
         <Container size="lg">
-          <div className="max-w-4xl mx-auto">
-            {/* Page Header */}
-            <Section className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-neutral-900 mb-4">
-                Upload Resume Files
-              </h1>
-              <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
-                Upload your resume files to get started with AI-powered analysis.
-                Support for PDF and Word documents up to 10MB each.
-              </p>
-            </Section>
+          {/* Page Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-neutral-900 mb-4">
+              Upload Resume Files
+            </h1>
+            <p className="text-lg text-neutral-600">
+              Upload your resume files to get started with AI-powered analysis.
+              Support for PDF and Word documents up to 10MB each.
+            </p>
+          </div>
 
-            <div className="space-y-8">
+          <div className="space-y-8">
               {/* Candidate Selection */}
               <Card>
                 <CardHeader>
@@ -171,14 +170,13 @@ const UploadPage: React.FC = () => {
                 />
               )}
 
-              {/* Summary Stats */}
-              <UploadStats
-                files={state.files}
-                uploadingFiles={uploadingFiles}
-                successFiles={successFiles}
-                errorFiles={errorFiles}
-              />
-            </div>
+            {/* Summary Stats */}
+            <UploadStats
+              files={state.files}
+              uploadingFiles={uploadingFiles}
+              successFiles={successFiles}
+              errorFiles={errorFiles}
+            />
           </div>
         </Container>
       </main>

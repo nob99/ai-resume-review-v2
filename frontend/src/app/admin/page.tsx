@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { ProtectedRoute } from '@/contexts/AuthContext'
-import { Container, Section, Header } from '@/components/layout'
+import { Container, Header } from '@/components/layout'
 import { Card, CardHeader, CardContent } from '@/components/ui'
 import Modal, { ModalContent } from '@/components/ui/Modal'
 import UserSearchBar from '@/features/admin/components/UserSearchBar'
@@ -81,57 +81,55 @@ const AdminPage: React.FC = () => {
       <div className="min-h-screen bg-neutral-50">
         <Header />
 
-        <Section spacing="lg">
-          <Container>
-            <div className="space-y-6">
-              {/* Page Header */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-3xl font-bold text-neutral-900">
-                    Admin Page for User Management
-                  </h1>
-                  <p className="text-neutral-600 mt-1">
-                    Manage system users and their permissions
-                  </p>
-                </div>
-                <button
-                  onClick={handleCreateUser}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
-                >
-                  + Add User
-                </button>
+        <main className="py-8">
+          <Container size="lg">
+            {/* Page Header */}
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h1 className="text-3xl font-bold text-neutral-900 mb-4">
+                  User Management
+                </h1>
+                <p className="text-lg text-neutral-600">
+                  Manage system users and their permissions
+                </p>
               </div>
-
-              {/* Search Bar */}
-              <UserSearchBar
-                searchTerm={searchTerm}
-                onSearch={handleSearch}
-              />
-
-              {/* Users Table */}
-              <Card>
-                <CardHeader title={`Users (${totalUsers})`} />
-                <CardContent className="p-0">
-                  <UsersTable
-                    users={users}
-                    loading={loading}
-                    searchTerm={searchTerm}
-                    onEditUser={handleEditUser}
-                    onToggleUserStatus={handleToggleUserStatus}
-                    onResetPassword={handleResetPassword}
-                  />
-
-                  {/* Pagination */}
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                  />
-                </CardContent>
-              </Card>
+              <button
+                onClick={handleCreateUser}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
+              >
+                + Add User
+              </button>
             </div>
+
+            {/* Search Bar */}
+            <UserSearchBar
+              searchTerm={searchTerm}
+              onSearch={handleSearch}
+            />
+
+            {/* Users Table */}
+            <Card>
+              <CardHeader title={`Users (${totalUsers})`} />
+              <CardContent className="p-0">
+                <UsersTable
+                  users={users}
+                  loading={loading}
+                  searchTerm={searchTerm}
+                  onEditUser={handleEditUser}
+                  onToggleUserStatus={handleToggleUserStatus}
+                  onResetPassword={handleResetPassword}
+                />
+
+                {/* Pagination */}
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </CardContent>
+            </Card>
           </Container>
-        </Section>
+        </main>
 
         {/* Create/Edit User Modal */}
         <Modal
