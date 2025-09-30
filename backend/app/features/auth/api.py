@@ -70,11 +70,11 @@ async def login(
     - Returns JWT tokens
     """
     try:
-        # Rate limiting (HTTP layer concern)
-        await check_rate_limit_middleware(request, RateLimitType.LOGIN, login_request.email)
+        # Rate limiting by IP (prevents brute force attacks)
+        client_ip = get_client_ip(request)
+        await check_rate_limit_middleware(request, RateLimitType.LOGIN, client_ip)
 
         # Extract request metadata
-        client_ip = get_client_ip(request)
         user_agent = request.headers.get("User-Agent")
 
         # Call service layer (business logic)
@@ -82,6 +82,9 @@ async def login(
 
         return response
 
+    except HTTPException:
+        # Re-raise HTTPException (from rate limiter, etc.) without modification
+        raise
     except SecurityError as e:
         logger.warning(f"Login failed from {get_client_ip(request)}: {e}")
         raise HTTPException(
@@ -113,9 +116,9 @@ async def register(
     - Returns user information
     """
     try:
-        # Rate limiting (HTTP layer concern)
+        # Rate limiting by IP (prevents abuse)
         client_ip = get_client_ip(request)
-        await check_rate_limit_middleware(client_ip, RateLimitType.REGISTRATION)
+        await check_rate_limit_middleware(request, RateLimitType.REGISTRATION, client_ip)
 
         # Call service layer (business logic)
         response = await auth_service.register_user(user_data)
@@ -123,6 +126,9 @@ async def register(
         logger.info(f"User registered successfully: {user_data.email}")
         return response
 
+    except HTTPException:
+        # Re-raise HTTPException (from rate limiter, etc.) without modification
+        raise
     except SecurityError as e:
         logger.warning(f"Registration failed from {get_client_ip(request)}: {e}")
         raise HTTPException(

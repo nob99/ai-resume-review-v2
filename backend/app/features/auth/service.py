@@ -95,13 +95,27 @@ class AuthService:
             logger.warning(f"Login attempt for inactive user: {user.email}")
             raise SecurityError("Account is deactivated")
         
+        # Check if account is locked
+        if user.is_locked():
+            logger.warning(f"Login attempt for locked account: {user.email}")
+            raise SecurityError("Account is temporarily locked due to multiple failed login attempts")
+
         # Verify password
         if not user.check_password(login_request.password):
-            logger.warning(f"Invalid password for user: {user.email}")
+            # Increment failed login attempts
+            user.increment_failed_login()
+            await self.user_repo.session.flush()
+            await self.user_repo.commit()
+            logger.warning(f"Invalid password for user: {user.email} (failed attempts: {user.failed_login_attempts})")
             raise SecurityError("Invalid email or password")
-        
-        # Update last login
-        await self.user_repo.update(user.id, last_login_at=utc_now())
+
+        # Successful login - reset failed attempts and update last login
+        await self.user_repo.update(
+            user.id,
+            last_login_at=utc_now(),
+            failed_login_attempts=0,
+            locked_until=None
+        )
         
         # Create session
         session_id = str(uuid4())
