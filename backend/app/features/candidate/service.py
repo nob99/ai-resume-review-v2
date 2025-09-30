@@ -1,25 +1,41 @@
-"""Candidate management service."""
+"""
+Candidate management service.
+
+Handles COMPLEX candidate operations requiring business logic.
+Simple read operations are handled by CandidateRepository directly.
+
+This service contains:
+- create_candidate: Multi-table transaction (Candidate + Assignment)
+- assign_candidate: Permission checks + duplicate prevention
+"""
 
 import uuid
 import logging
-from typing import List, Optional
-from sqlalchemy.orm import Session
+from typing import Optional
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 
-from app.core.datetime_utils import utc_now
 from database.models.candidate import Candidate
 from database.models.assignment import UserCandidateAssignment
 from database.models.auth import User
+from .repository import CandidateRepository
 
 logger = logging.getLogger(__name__)
 
 
 class CandidateService:
-    """Service for candidate management operations."""
-    
-    def __init__(self, db: Session):
-        """Initialize service with database session."""
-        self.db = db
+    """
+    Service for COMPLEX candidate management operations.
+
+    Simple operations (list, get by ID) are handled by CandidateRepository.
+    This service handles operations requiring business logic coordination.
+    """
+
+    def __init__(self, session: AsyncSession):
+        """Initialize service with async database session."""
+        self.session = session
+        self.repository = CandidateRepository(session)
     
     async def create_candidate(
         self,
@@ -32,8 +48,30 @@ class CandidateService:
         current_position: Optional[str] = None,
         years_experience: Optional[int] = None
     ) -> Candidate:
-        """Create a new candidate and auto-assign to creator."""
-        
+        """
+        Create a new candidate and auto-assign to creator.
+
+        This is a complex operation requiring:
+        - Multi-table transaction (Candidate + UserCandidateAssignment)
+        - Business rule: Auto-assignment to creator
+        - Transaction management with rollback
+
+        Args:
+            first_name: Candidate's first name
+            last_name: Candidate's last name
+            created_by_user_id: User creating the candidate
+            email: Optional email address
+            phone: Optional phone number
+            current_company: Optional current company
+            current_position: Optional current position
+            years_experience: Optional years of experience
+
+        Returns:
+            Created candidate
+
+        Raises:
+            HTTPException: If creation fails
+        """
         try:
             # Create candidate
             candidate = Candidate(
@@ -47,10 +85,10 @@ class CandidateService:
                 created_by_user_id=created_by_user_id,
                 status='active'
             )
-            
-            self.db.add(candidate)
-            self.db.flush()  # Get the ID
-            
+
+            self.session.add(candidate)
+            await self.session.flush()  # Get the ID
+
             # Auto-assign candidate to creator
             assignment = UserCandidateAssignment(
                 user_id=created_by_user_id,
@@ -59,70 +97,19 @@ class CandidateService:
                 assigned_by_user_id=created_by_user_id,
                 is_active=True
             )
-            
-            self.db.add(assignment)
-            self.db.commit()
-            
+
+            self.session.add(assignment)
+            await self.session.commit()
+            await self.session.refresh(candidate)
+
             logger.info(f"Created candidate {candidate.id} and assigned to user {created_by_user_id}")
             return candidate
-            
+
         except Exception as e:
-            self.db.rollback()
+            await self.session.rollback()
             logger.error(f"Failed to create candidate: {str(e)}")
             raise HTTPException(status_code=500, detail="Failed to create candidate")
-    
-    async def get_candidates_for_user(
-        self,
-        user_id: uuid.UUID,
-        limit: int = 10,
-        offset: int = 0
-    ) -> List[Candidate]:
-        """Get candidates based on user role and assignments."""
-        
-        # Get user to check role
-        user = self.db.query(User).filter(User.id == user_id).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        if user.role in ['admin', 'senior_recruiter']:
-            # Admin and senior recruiters see all candidates
-            query = (
-                self.db.query(Candidate)
-                .filter(Candidate.status == 'active')
-                .order_by(Candidate.created_at.desc())
-                .limit(limit)
-                .offset(offset)
-            )
-        else:
-            # Junior recruiters see only assigned candidates
-            query = (
-                self.db.query(Candidate)
-                .join(UserCandidateAssignment)
-                .filter(
-                    UserCandidateAssignment.user_id == user_id,
-                    UserCandidateAssignment.is_active == True,
-                    Candidate.status == 'active'
-                )
-                .order_by(Candidate.created_at.desc())
-                .limit(limit)
-                .offset(offset)
-            )
-        
-        return query.all()
-    
-    async def get_candidate_by_id(
-        self,
-        candidate_id: uuid.UUID,
-        user_id: uuid.UUID
-    ) -> Optional[Candidate]:
-        """Get a candidate by ID (with access control)."""
-        
-        # Check if user has access
-        if not await self._user_has_candidate_access(user_id, candidate_id):
-            raise HTTPException(status_code=403, detail="Access denied to this candidate")
-        
-        return self.db.query(Candidate).filter(Candidate.id == candidate_id).first()
-    
+
     async def assign_candidate(
         self,
         candidate_id: uuid.UUID,
@@ -130,27 +117,46 @@ class CandidateService:
         assigned_by_user_id: uuid.UUID,
         assignment_type: str = 'secondary'
     ) -> bool:
-        """Assign a candidate to a user."""
-        
+        """
+        Assign a candidate to a user.
+
+        This is a complex operation requiring:
+        - Permission check (only admin/senior can assign)
+        - Duplicate prevention
+        - Transaction management with rollback
+
+        Args:
+            candidate_id: Candidate to assign
+            user_id: User to assign candidate to
+            assigned_by_user_id: User performing the assignment
+            assignment_type: Type of assignment ('primary' or 'secondary')
+
+        Returns:
+            True if assignment successful or already exists
+
+        Raises:
+            HTTPException: If permission denied or operation fails
+        """
         # Check if assigner has permission (admin or senior recruiter)
-        assigner = self.db.query(User).filter(User.id == assigned_by_user_id).first()
+        query = select(User).where(User.id == assigned_by_user_id)
+        result = await self.session.execute(query)
+        assigner = result.scalar_one_or_none()
+
         if not assigner or assigner.role not in ['admin', 'senior_recruiter']:
             raise HTTPException(status_code=403, detail="Insufficient permissions to assign candidates")
-        
-        # Check if assignment already exists
-        existing = (
-            self.db.query(UserCandidateAssignment)
-            .filter(
-                UserCandidateAssignment.user_id == user_id,
-                UserCandidateAssignment.candidate_id == candidate_id,
-                UserCandidateAssignment.is_active == True
-            )
-            .first()
+
+        # Check if assignment already exists (duplicate prevention)
+        query = select(UserCandidateAssignment).where(
+            UserCandidateAssignment.user_id == user_id,
+            UserCandidateAssignment.candidate_id == candidate_id,
+            UserCandidateAssignment.is_active == True
         )
-        
+        result = await self.session.execute(query)
+        existing = result.scalar_one_or_none()
+
         if existing:
             return True  # Already assigned
-        
+
         try:
             assignment = UserCandidateAssignment(
                 user_id=user_id,
@@ -159,43 +165,14 @@ class CandidateService:
                 assigned_by_user_id=assigned_by_user_id,
                 is_active=True
             )
-            
-            self.db.add(assignment)
-            self.db.commit()
-            
+
+            self.session.add(assignment)
+            await self.session.commit()
+
             logger.info(f"Assigned candidate {candidate_id} to user {user_id}")
             return True
-            
+
         except Exception as e:
-            self.db.rollback()
+            await self.session.rollback()
             logger.error(f"Failed to assign candidate: {str(e)}")
             raise HTTPException(status_code=500, detail="Failed to assign candidate")
-    
-    async def _user_has_candidate_access(
-        self,
-        user_id: uuid.UUID,
-        candidate_id: uuid.UUID
-    ) -> bool:
-        """Check if user has access to a candidate."""
-        
-        # Get user role
-        user = self.db.query(User).filter(User.id == user_id).first()
-        if not user:
-            return False
-        
-        # Admin and senior recruiters have access to all candidates
-        if user.role in ['admin', 'senior_recruiter']:
-            return True
-        
-        # Junior recruiters need active assignment
-        assignment = (
-            self.db.query(UserCandidateAssignment)
-            .filter(
-                UserCandidateAssignment.user_id == user_id,
-                UserCandidateAssignment.candidate_id == candidate_id,
-                UserCandidateAssignment.is_active == True
-            )
-            .first()
-        )
-        
-        return assignment is not None
