@@ -997,6 +997,77 @@ export const historyApi = {
   }
 }
 
+// Profile API functions
+export const profileApi = {
+  async updateProfile(profileData: {
+    first_name: string
+    last_name: string
+  }): Promise<ApiResult<User>> {
+    try {
+      const response = await api.patch<User>('/profile/me', profileData)
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+
+      return {
+        success: false,
+        error: new Error('Failed to update profile')
+      }
+    }
+  },
+
+  async changePassword(passwordData: {
+    current_password: string
+    new_password: string
+  }): Promise<ApiResult<{ message: string }>> {
+    try {
+      const response = await api.post<{ message: string }>('/profile/change-password', passwordData)
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+
+      return {
+        success: false,
+        error: new Error('Failed to change password')
+      }
+    }
+  }
+}
+
 // Export the configured axios instance for custom requests
 export default api
 

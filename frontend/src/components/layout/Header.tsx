@@ -82,25 +82,13 @@ const UserMenu: React.FC<{ isOpen: boolean; onToggle: () => void }> = ({ isOpen,
             </div>
 
             {/* Menu items */}
-            <button
-              onClick={() => {
-                // TODO: Implement profile settings in future sprint
-                onToggle()
-              }}
+            <a
+              href="/profile"
               className="block w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 focus:bg-neutral-50"
+              onClick={onToggle}
             >
               Profile Settings
-            </button>
-            
-            <button
-              onClick={() => {
-                // TODO: Implement account settings in future sprint
-                onToggle()
-              }}
-              className="block w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 focus:bg-neutral-50"
-            >
-              Account Settings
-            </button>
+            </a>
 
             <hr className="my-1 border-neutral-100" />
 
