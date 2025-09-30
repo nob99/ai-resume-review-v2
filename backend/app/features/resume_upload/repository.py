@@ -82,25 +82,6 @@ class ResumeUploadRepository(BaseRepository[Resume]):
         
         return file_upload
     
-    async def update_extracted_text(
-        self,
-        file_id: uuid.UUID,
-        extracted_text: str,
-        extraction_metadata: Optional[dict] = None
-    ) -> Optional[Resume]:
-        """Update extracted text and metadata."""
-        file_upload = await self.get_by_id(file_id)
-        if not file_upload:
-            return None
-        
-        file_upload.extracted_text = extracted_text
-        # Note: extraction_metadata and updated_at fields not implemented in Resume model
-        
-        await self.session.commit()
-        await self.session.refresh(file_upload)
-        
-        return file_upload
-    
     async def get_by_user(
         self,
         user_id: uuid.UUID,
@@ -117,56 +98,6 @@ class ResumeUploadRepository(BaseRepository[Resume]):
         query = query.order_by(desc(Resume.created_at)).limit(limit).offset(offset)
         result = await self.session.execute(query)
         return list(result.scalars().all())
-    
-    async def get_recent_uploads(
-        self,
-        user_id: uuid.UUID,
-        hours: int = 24,
-        limit: int = 10
-    ) -> List[Resume]:
-        """Get recent uploads within specified hours."""
-        from datetime import timedelta
-        
-        cutoff_time = utc_now() - timedelta(hours=hours)
-        
-        query = select(Resume).where(
-            and_(
-                Resume.uploaded_by_user_id == user_id,
-                Resume.created_at >= cutoff_time
-            )
-        ).order_by(desc(Resume.created_at)).limit(limit)
-        result = await self.session.execute(query)
-        return list(result.scalars().all())
-    
-    async def delete_old_uploads(
-        self,
-        days: int = 30,
-        status: Optional[ResumeStatus] = None
-    ) -> int:
-        """Delete old uploads older than specified days."""
-        from datetime import timedelta
-        
-        cutoff_time = utc_now() - timedelta(days=days)
-        
-        from sqlalchemy import delete, func
-
-        # First get count
-        count_query = select(func.count()).select_from(Resume).where(Resume.created_at < cutoff_time)
-        if status:
-            count_query = count_query.where(Resume.status == status)
-
-        count_result = await self.session.execute(count_query)
-        count = count_result.scalar()
-
-        # Then delete
-        delete_query = delete(Resume).where(Resume.created_at < cutoff_time)
-        if status:
-            delete_query = delete_query.where(Resume.status == status)
-
-        await self.session.execute(delete_query)
-        await self.session.commit()
-        
-        return count
     
     async def get_upload_stats(self, user_id: uuid.UUID) -> dict:
         """Get upload statistics for a user using SQL aggregation."""
@@ -200,18 +131,3 @@ class ResumeUploadRepository(BaseRepository[Resume]):
         """Mark an upload as cancelled."""
         return await self.update_status(file_id, ResumeStatus.CANCELLED)
     
-    async def get_pending_uploads(self, user_id: uuid.UUID) -> List[Resume]:
-        """Get all pending uploads for a user."""
-        query = select(Resume).where(
-            and_(
-                Resume.uploaded_by_user_id == user_id,
-                Resume.status.in_([
-                    ResumeStatus.PENDING,
-                    ResumeStatus.UPLOADING,
-                    ResumeStatus.VALIDATING,
-                    ResumeStatus.EXTRACTING
-                ])
-            )
-        )
-        result = await self.session.execute(query)
-        return list(result.scalars().all())
