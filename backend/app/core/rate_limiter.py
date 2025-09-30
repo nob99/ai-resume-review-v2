@@ -13,7 +13,6 @@ from enum import Enum
 
 import redis.asyncio as aioredis
 from fastapi import HTTPException, Request
-from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
@@ -339,9 +338,6 @@ class RedisRateLimiter:
 # Global rate limiter instance
 rate_limiter = RedisRateLimiter()
 
-# SlowAPI limiter for simple rate limiting
-slowapi_limiter = Limiter(key_func=get_remote_address)
-
 
 def get_client_identifier(request: Request) -> str:
     """
@@ -409,32 +405,3 @@ async def check_rate_limit_middleware(
     if not hasattr(request.state, "rate_limit_info"):
         request.state.rate_limit_info = {}
     request.state.rate_limit_info[limit_type.value] = info
-
-
-# Utility functions for specific endpoints
-async def check_login_rate_limit(request: Request, email: str = None) -> None:
-    """Check rate limit for login attempts."""
-    identifier = email if email else get_client_identifier(request)
-    await check_rate_limit_middleware(request, RateLimitType.LOGIN, identifier)
-
-
-async def check_registration_rate_limit(request: Request) -> None:
-    """Check rate limit for registration attempts."""
-    await check_rate_limit_middleware(request, RateLimitType.REGISTRATION)
-
-
-async def check_password_reset_rate_limit(request: Request, email: str = None) -> None:
-    """Check rate limit for password reset attempts."""
-    identifier = email if email else get_client_identifier(request)
-    await check_rate_limit_middleware(request, RateLimitType.PASSWORD_RESET, identifier)
-
-
-async def check_api_rate_limit(request: Request) -> None:
-    """Check general API rate limit."""
-    await check_rate_limit_middleware(request, RateLimitType.API_GENERAL)
-
-
-async def check_file_upload_rate_limit(request: Request, user_id: str = None) -> None:
-    """Check rate limit for file uploads."""
-    identifier = user_id if user_id else get_client_identifier(request)
-    await check_rate_limit_middleware(request, RateLimitType.FILE_UPLOAD, identifier)

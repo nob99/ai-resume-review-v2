@@ -26,9 +26,8 @@ from app.core.security import (
     is_token_blacklisted
 )
 from app.core.rate_limiter import (
-    check_login_rate_limit,
-    check_registration_rate_limit,
-    check_password_reset_rate_limit,
+    check_rate_limit_middleware,
+    get_client_identifier,
     RateLimitType
 )
 from app.core.datetime_utils import utc_now
@@ -94,7 +93,7 @@ class AuthService:
         """
         # Check rate limiting
         if request:
-            await check_login_rate_limit(request, login_request.email)
+            await check_rate_limit_middleware(request, RateLimitType.LOGIN, login_request.email)
         # If no request (for testing), skip rate limiting check
         
         # Get user by email
@@ -267,7 +266,7 @@ class AuthService:
             HTTPException: If rate limited
         """
         # Check rate limiting
-        await check_registration_rate_limit(client_ip)
+        await check_rate_limit_middleware(client_ip, RateLimitType.REGISTRATION)
         
         # Check if email already exists
         if await self.user_repo.email_exists(user_data.email):

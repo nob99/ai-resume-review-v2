@@ -175,7 +175,7 @@ class TestAuthAPILogin:
         # Assert
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     
-    @patch('app.features.auth.api.check_login_rate_limit')
+    @patch('app.features.auth.api.check_rate_limit_middleware')
     @patch('app.features.auth.api.AuthService')
     def test_login_rate_limiting(self, MockAuthService, mock_rate_limit, client):
         """Test that rate limiting is applied to login attempts."""
