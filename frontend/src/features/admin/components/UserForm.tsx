@@ -106,6 +106,21 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSave, onCancel }) => {
             onChange={(e) => setFormData(prev => ({ ...prev, temporary_password: e.target.value }))}
             required={!user}
           />
+          <div className="mt-2 p-2.5 bg-neutral-50 border border-neutral-200 rounded text-xs">
+            <p className="text-neutral-700 font-medium mb-1.5">
+              Create a secure temporary password that includes:
+            </p>
+            <ul className="text-neutral-600 space-y-0.5 ml-4">
+              <li>✓ 8 or more characters</li>
+              <li>✓ At least one UPPERCASE letter</li>
+              <li>✓ At least one lowercase letter</li>
+              <li>✓ At least one number</li>
+              <li>✓ At least one special character (!@#$%^&*(),.?&quot;:&#123;&#125;|&lt;&gt;)</li>
+            </ul>
+            <p className="text-neutral-600 mt-1.5">
+              Try: <span className="font-mono font-medium">Welcome202x!</span> or <span className="font-mono font-medium">TempPass123!</span>
+            </p>
+          </div>
           <p className="mt-1.5 text-xs text-neutral-600 flex items-start gap-1.5">
             <span className="text-base leading-none">💡</span>
             <span>Share this password with the user. They will be required to change it on first login.</span>
