@@ -60,21 +60,14 @@ class ResumeUploadService:
         file_id = str(uuid.uuid4())
 
         try:
-            # Read file content first (needed for validation)
             content = await file.read()
-
-            # Validate file metadata and content
             await self._validate_file(file, content)
 
-            # Generate unique filename and hash
             file_extension = Path(file.filename).suffix.lower()
             unique_filename = f"{file_id}{file_extension}"
             file_hash = hashlib.sha256(content).hexdigest()
-
-            # Extract text from file
             extracted_text = await self._extract_text(content, file_extension)
 
-            # Create database record
             db_upload = await self.repository.create_resume(
                 candidate_id=candidate_id,
                 uploaded_by_user_id=user_id,
@@ -86,7 +79,6 @@ class ResumeUploadService:
                 extracted_text=extracted_text
             )
 
-            # Mark as completed
             await self.repository.update_status(db_upload.id, ResumeStatus.COMPLETED)
 
             return self._to_uploaded_file_v2(db_upload, extracted_text)
@@ -141,79 +133,37 @@ class ResumeUploadService:
                 # In production, might want to reject the file
     
     async def _extract_text(self, content: bytes, file_extension: str) -> str:
-        """Extract text from file content."""
-        
+        """Extract text from file content based on file type."""
         try:
             if file_extension == '.pdf':
-                return self._extract_pdf_text(content)
+                # Extract from PDF
+                pdf_reader = PyPDF2.PdfReader(io.BytesIO(content))
+                return '\n'.join(page.extract_text() for page in pdf_reader.pages)
+
             elif file_extension in ['.doc', '.docx']:
-                return self._extract_docx_text(content)
+                # Extract from Word document
+                doc = docx.Document(io.BytesIO(content))
+                text_parts = [p.text for p in doc.paragraphs if p.text.strip()]
+
+                # Include text from tables
+                for table in doc.tables:
+                    text_parts.extend(
+                        cell.text for row in table.rows
+                        for cell in row.cells if cell.text.strip()
+                    )
+
+                return '\n'.join(text_parts)
+
             elif file_extension == '.txt':
                 return content.decode('utf-8', errors='ignore')
+
             else:
                 raise ValueError(f"Text extraction not supported for {file_extension}")
+
         except Exception as e:
-            logger.error(f"Text extraction failed: {str(e)}")
+            logger.error(f"Text extraction failed for {file_extension}: {str(e)}")
             raise ValueError(f"Failed to extract text from file: {str(e)}")
-    
-    def _extract_pdf_text(self, content: bytes) -> str:
-        """Extract text from PDF content."""
-        text_parts = []
-        
-        try:
-            pdf_file = io.BytesIO(content)
-            pdf_reader = PyPDF2.PdfReader(pdf_file)
-            
-            for page_num in range(len(pdf_reader.pages)):
-                page = pdf_reader.pages[page_num]
-                text_parts.append(page.extract_text())
-            
-            return '\n'.join(text_parts)
-        except Exception as e:
-            logger.error(f"PDF extraction error: {str(e)}")
-            raise ValueError(f"Failed to extract text from PDF: {str(e)}")
-    
-    def _extract_docx_text(self, content: bytes) -> str:
-        """Extract text from DOCX content."""
-        text_parts = []
-        
-        try:
-            doc_file = io.BytesIO(content)
-            doc = docx.Document(doc_file)
-            
-            for paragraph in doc.paragraphs:
-                if paragraph.text.strip():
-                    text_parts.append(paragraph.text)
-            
-            # Also extract text from tables
-            for table in doc.tables:
-                for row in table.rows:
-                    for cell in row.cells:
-                        if cell.text.strip():
-                            text_parts.append(cell.text)
-            
-            return '\n'.join(text_parts)
-        except Exception as e:
-            logger.error(f"DOCX extraction error: {str(e)}")
-            raise ValueError(f"Failed to extract text from document: {str(e)}")
-    
-    def _calculate_metadata(self, text: str, content: bytes) -> Dict[str, Any]:
-        """Calculate metadata for the uploaded file."""
-        
-        # Basic text statistics
-        lines = text.split('\n')
-        words = text.split()
-        
-        return {
-            "file_hash": hashlib.sha256(content).hexdigest(),
-            "line_count": len(lines),
-            "word_count": len(words),
-            "character_count": len(text),
-            "has_email": '@' in text,
-            "has_phone": any(c.isdigit() for c in text) and len([c for c in text if c.isdigit()]) >= 10,
-            "extraction_timestamp": utc_now().isoformat()
-        }
-    
+
     def _get_file_type(self, extension: str) -> str:
         """Get file type from extension."""
         mapping = {
