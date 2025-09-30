@@ -1,6 +1,10 @@
 """
 Auth service layer implementing business logic.
-Extracted from the original auth API to separate concerns.
+
+Transaction Management:
+- Services use repositories for data access
+- Repositories handle session commits/rollbacks
+- Each public service method represents one business transaction
 """
 
 from datetime import timedelta

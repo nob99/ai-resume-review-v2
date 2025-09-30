@@ -196,13 +196,8 @@ def get_settings():
         APPEAL_AGENT_CONFIDENCE_THRESHOLD = ai_config.APPEAL_AGENT_CONFIDENCE_THRESHOLD
         ENABLE_AI_WORKFLOW_LOGGING = ai_config.ENABLE_AI_WORKFLOW_LOGGING
         AI_METRICS_COLLECTION_ENABLED = ai_config.AI_METRICS_COLLECTION_ENABLED
-        
-        # Feature flags for architecture migration (Phase 1)
-        USE_NEW_AUTH = os.getenv("USE_NEW_AUTH", "true").lower() == "true"  # Changed default to true for testing
-        USE_NEW_UPLOAD = os.getenv("USE_NEW_UPLOAD", "false").lower() == "true"
-        USE_NEW_AI = os.getenv("USE_NEW_AI", "false").lower() == "true"
-        
-        # Infrastructure settings for new architecture
+
+        # Infrastructure settings
         DATABASE_POOL_SIZE = int(os.getenv("DATABASE_POOL_SIZE", "10"))
         DATABASE_MAX_OVERFLOW = int(os.getenv("DATABASE_MAX_OVERFLOW", "20"))
         REDIS_POOL_SIZE = int(os.getenv("REDIS_POOL_SIZE", "10"))

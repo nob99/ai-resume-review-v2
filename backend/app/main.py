@@ -20,7 +20,6 @@ from app.core.rate_limiter import rate_limiter
 from app.core.security import SecurityError
 from app.core.config import get_settings
 
-# Get settings to check feature flags
 settings = get_settings()
 
 # Configure logging
@@ -46,11 +45,10 @@ async def lifespan(app: FastAPI):
         await rate_limiter.connect()
         logger.info("Rate limiter initialized")
         
-        # Initialize new infrastructure if using new auth
-        if settings.USE_NEW_AUTH:
-            from infrastructure.persistence.postgres.connection import init_postgres
-            await init_postgres()
-            logger.info("🔧 New infrastructure initialized (PostgreSQL connection)")
+        # Initialize async infrastructure
+        from infrastructure.persistence.postgres.connection import init_postgres
+        await init_postgres()
+        logger.info("PostgreSQL async connection initialized")
         
         logger.info("Application startup completed successfully")
         
@@ -142,103 +140,56 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers with API versioning and feature flags
-if settings.USE_NEW_AUTH:
-    from app.features.auth.api import router as new_auth_router
-    app.include_router(new_auth_router, prefix="/api/v1/auth", tags=["auth"])
-    logger.info("Using NEW auth implementation")
-else:
-    # OLD auth implementation has been removed - fallback to new implementation
-    logger.warning("OLD auth implementation no longer available, using NEW auth implementation")
-    from app.features.auth.api import router as new_auth_router
-    app.include_router(new_auth_router, prefix="/api/v1/auth", tags=["auth"])
-
-# Candidate management feature (REQUIRED for resume uploads)
+# Include API routers
+from app.features.auth.api import router as auth_router
 from app.features.candidate.api import router as candidate_router
-app.include_router(candidate_router, prefix="/api/v1/candidates", tags=["candidates"])
-logger.info("Candidate management feature enabled")
-
-# Resume upload feature (NEW - renamed from file_upload)
-if getattr(settings, 'USE_NEW_RESUME_UPLOAD', True):
-    from app.features.resume_upload.api import router as resume_upload_router
-    app.include_router(resume_upload_router, prefix="/api/v1/resume_upload", tags=["resumes"])
-    logger.info("Resume upload feature enabled")
-
-# Resume analysis feature (NEW)
-if getattr(settings, 'USE_NEW_ANALYSIS', True):
-    from app.features.resume_analysis.api import router as analysis_router
-    app.include_router(analysis_router, prefix="/api/v1/analysis", tags=["analysis"])
-    logger.info("Resume analysis feature enabled")
-
-# Admin user management feature (NEW)
+from app.features.resume_upload.api import router as resume_upload_router
+from app.features.resume_analysis.api import router as analysis_router
 from app.features.admin.api import router as admin_router
+
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(candidate_router, prefix="/api/v1/candidates", tags=["candidates"])
+app.include_router(resume_upload_router, prefix="/api/v1/resume_upload", tags=["resumes"])
+app.include_router(analysis_router, prefix="/api/v1/analysis", tags=["analysis"])
 app.include_router(admin_router, prefix="/api/v1/admin", tags=["admin"])
-logger.info("Admin user management feature enabled")
+
+logger.info("All API routes registered successfully")
 
 # Global exception handlers
-@app.exception_handler(SecurityError)
-async def security_error_handler(request: Request, exc: SecurityError):
-    """Handle security errors."""
-    client_ip = request.client.host if request.client else "unknown"
-    logger.warning(f"Security error: {str(exc)} - IP: {client_ip}")
-    return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        content={
-            "error": "Security Error",
-            "message": str(exc),
-            "type": "security_error"
-        }
-    )
-
-
-@app.exception_handler(RequestValidationError)
-async def validation_error_handler(request: Request, exc: RequestValidationError):
-    """Handle request validation errors."""
-    client_ip = request.client.host if request.client else "unknown"
-    logger.warning(f"Validation error: {exc.errors()} - IP: {client_ip}")
-    
-    # Ensure error details are JSON serializable
-    errors = []
-    for error in exc.errors():
-        serializable_error = {}
-        for key, value in error.items():
-            if isinstance(value, bytes):
-                serializable_error[key] = value.decode('utf-8', errors='replace')
-            else:
-                serializable_error[key] = value
-        errors.append(serializable_error)
-    
-    return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={
-            "detail": errors
-        }
-    )
-
-
-@app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(request: Request, exc: StarletteHTTPException):
-    """Handle HTTP exceptions."""
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={
-            "detail": exc.detail
-        }
-    )
-
-
 @app.exception_handler(Exception)
-async def general_exception_handler(request: Request, exc: Exception):
-    """Handle unexpected exceptions."""
+async def handle_exceptions(request: Request, exc: Exception):
+    """
+    Unified exception handler for all errors.
+    Handles both expected client errors (4xx) and unexpected server errors (5xx).
+    """
     client_ip = request.client.host if request.client else "unknown"
+
+    # Handle expected client errors (400-level)
+    if isinstance(exc, (SecurityError, ValueError)):
+        logger.warning(f"Client error: {str(exc)} - IP: {client_ip}")
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": "Bad Request", "message": str(exc)}
+        )
+
+    if isinstance(exc, RequestValidationError):
+        logger.warning(f"Validation error: {exc.errors()} - IP: {client_ip}")
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content={"error": "Validation Error", "detail": exc.errors()}
+        )
+
+    if isinstance(exc, StarletteHTTPException):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"error": exc.detail}
+        )
+
+    # Handle unexpected server errors (500-level)
     logger.error(f"Unexpected error: {str(exc)} - IP: {client_ip}", exc_info=True)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={
-            "error": "Internal Server Error",
-            "message": "An unexpected error occurred",
-            "type": "server_error"
-        }
+        content={"error": "Internal Server Error", "message": "An unexpected error occurred"}
     )
 
 
