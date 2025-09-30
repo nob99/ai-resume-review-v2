@@ -64,14 +64,14 @@ const UploadPage: React.FC = () => {
                 </CardContent>
               </Card>
 
-              {/* File Upload */}
+              {/* Step 2: File Upload */}
               <Card>
                 <CardHeader>
                   <h2 className="text-xl font-semibold text-neutral-900">
                     Step 2: Select Resume Files
                   </h2>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                   <FileUpload
                     onFilesSelected={fileHandlers.onFilesSelected}
                     onError={fileHandlers.onUploadError}
@@ -80,52 +80,48 @@ const UploadPage: React.FC = () => {
                     maxFiles={5}
                   />
                   {!state.selectedCandidate && (
-                    <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                       <p className="text-sm text-yellow-800">
                         Please select a candidate first before uploading files.
                       </p>
                     </div>
                   )}
+
+                  {/* File List */}
+                  {state.files.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="font-semibold text-neutral-900">
+                        Selected Files ({state.files.length})
+                      </h3>
+                      <FileList
+                        files={state.files}
+                        onCancelFile={fileHandlers.onCancelFile}
+                        onRetryFile={fileHandlers.onRetryFile}
+                        onRemoveFile={fileHandlers.onRemoveFile}
+                      />
+                    </div>
+                  )}
+
+                  {/* Upload Button */}
+                  {pendingFiles.length > 0 && (
+                    <Button
+                      size="lg"
+                      onClick={fileHandlers.onStartUpload}
+                      disabled={state.isUploading || !state.selectedCandidate}
+                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                    >
+                      {state.isUploading ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></div>
+                          Uploading...
+                        </>
+                      ) : (
+                        `Upload ${pendingFiles.length} File${pendingFiles.length !== 1 ? 's' : ''}`
+                      )}
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
-
-              {/* File List */}
-              {state.files.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <h2 className="text-xl font-semibold text-neutral-900">
-                      Selected Files ({state.files.length})
-                    </h2>
-                  </CardHeader>
-                  <CardContent>
-                    <FileList
-                      files={state.files}
-                      onCancelFile={fileHandlers.onCancelFile}
-                      onRetryFile={fileHandlers.onRetryFile}
-                      onRemoveFile={fileHandlers.onRemoveFile}
-                    />
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Upload Button */}
-              {pendingFiles.length > 0 && (
-                <Button
-                  size="lg"
-                  onClick={fileHandlers.onStartUpload}
-                  disabled={state.isUploading || !state.selectedCandidate}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
-                >
-                  {state.isUploading ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></div>
-                      Uploading...
-                    </>
-                  ) : (
-                    `Upload ${pendingFiles.length} File${pendingFiles.length !== 1 ? 's' : ''}`
-                  )}
-                </Button>
-              )}
 
               {/* Step 3: Industry Selection & Analysis */}
               <Card className={successFiles.length === 0 ? 'opacity-60' : ''}>
