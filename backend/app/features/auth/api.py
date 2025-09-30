@@ -182,32 +182,29 @@ async def refresh_token(
 
 @router.post("/logout", status_code=status.HTTP_200_OK)
 async def logout(
-    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security),
     auth_service: AuthService = Depends(get_auth_service)
 ):
     """
     Logout user by revoking tokens.
-    
+
     This endpoint:
     - Blacklists access token
-    - Revokes refresh token
-    - Optionally revokes all user sessions
+    - Clears user session
+
+    Note: Refresh token is managed client-side and cleared there.
+    Server only blacklists the access token to prevent further use.
     """
     try:
-        access_token = credentials.credentials
-        
-        # Get refresh token from request body (if provided)
-        refresh_token = getattr(request, "refresh_token", None)
-        
+        # Blacklist access token (refresh token is cleared client-side)
         await auth_service.logout(
-            refresh_token_str=refresh_token,
-            access_token=access_token,
+            refresh_token_str=None,
+            access_token=credentials.credentials,
             revoke_all_sessions=False
         )
-        
+
         return {"message": "Successfully logged out"}
-        
+
     except Exception as e:
         logger.error(f"Unexpected error during logout: {e}")
         raise HTTPException(
