@@ -45,15 +45,13 @@ async def test_appeal_agent_analyze_success(mock_appeal_agent, initial_state):
 @pytest.mark.asyncio
 async def test_appeal_agent_different_industries():
     """Test appeal agent with different industries."""
-    from app.ai_agents.agents.appeal import AppealAgent
-    
-    agent = AppealAgent()
-    
+    from app.core.industries import INDUSTRY_CONFIGS
+
     # Test industry configurations
     industries = ["tech_consulting", "finance_banking", "strategy_consulting"]
-    
+
     for industry in industries:
-        config = agent.INDUSTRY_CONFIGS[industry]
+        config = INDUSTRY_CONFIGS[industry]
         assert "display_name" in config
         assert "key_skills" in config
         assert len(config["key_skills"]) > 0
@@ -62,7 +60,7 @@ async def test_appeal_agent_different_industries():
 @pytest.mark.asyncio
 async def test_appeal_agent_build_structure_context():
     """Test structure context building."""
-    from app.ai_agents.agents.appeal import AppealAgent
+    from ai_agents.agents.appeal import AppealAgent
     
     agent = AppealAgent()
     
@@ -92,7 +90,7 @@ async def test_appeal_agent_build_structure_context():
 @pytest.mark.asyncio
 async def test_appeal_agent_calculate_overall_score():
     """Test overall score calculation."""
-    from app.ai_agents.agents.appeal import AppealAgent
+    from ai_agents.agents.appeal import AppealAgent
     
     agent = AppealAgent()
     
@@ -120,7 +118,7 @@ async def test_appeal_agent_calculate_overall_score():
 @pytest.mark.asyncio
 async def test_appeal_agent_generate_summary():
     """Test summary generation."""
-    from app.ai_agents.agents.appeal import AppealAgent
+    from ai_agents.agents.appeal import AppealAgent
     
     agent = AppealAgent()
     
@@ -149,7 +147,7 @@ async def test_appeal_agent_generate_summary():
 @pytest.mark.asyncio
 async def test_appeal_agent_error_handling(initial_state):
     """Test appeal analysis with API error."""
-    from app.ai_agents.agents.appeal import AppealAgent
+    from ai_agents.agents.appeal import AppealAgent
     
     agent = AppealAgent()
     agent.client = AsyncMock()

@@ -32,7 +32,7 @@ async def test_structure_agent_analyze_success(mock_structure_agent, initial_sta
 @pytest.mark.asyncio
 async def test_structure_agent_analyze_with_error(initial_state):
     """Test structure analysis with API error."""
-    from app.ai_agents.agents.structure import StructureAgent
+    from ai_agents.agents.structure import StructureAgent
     
     agent = StructureAgent()
     agent.client = AsyncMock()
@@ -55,7 +55,7 @@ async def test_structure_agent_analyze_with_error(initial_state):
 @pytest.mark.asyncio
 async def test_structure_agent_retry_logic():
     """Test retry logic on API failures."""
-    from app.ai_agents.agents.structure import StructureAgent
+    from ai_agents.agents.structure import StructureAgent
     
     agent = StructureAgent()
     agent.client = AsyncMock()
@@ -85,7 +85,7 @@ async def test_structure_agent_retry_logic():
 
 def test_structure_agent_parse_response():
     """Test response parsing logic."""
-    from app.ai_agents.agents.structure import StructureAgent
+    from ai_agents.agents.structure import StructureAgent
     
     agent = StructureAgent()
     
@@ -116,7 +116,7 @@ def test_structure_agent_parse_response():
 
 def test_structure_agent_extract_list():
     """Test list extraction from text."""
-    from app.ai_agents.agents.structure import StructureAgent
+    from ai_agents.agents.structure import StructureAgent
     
     agent = StructureAgent()
     

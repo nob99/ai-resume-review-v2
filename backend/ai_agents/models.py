@@ -2,6 +2,7 @@
 
 from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
+from app.core.industries import IndustryConfig, get_supported_industries
 
 
 class StructureScores(BaseModel):
@@ -76,46 +77,6 @@ class ResumeAnalysisResponse(BaseModel):
     error: Optional[str] = Field(None, description="Error message if analysis failed")
 
 
-class IndustryConfig(BaseModel):
-    """Industry configuration model."""
-    code: str = Field(..., description="Industry code")
-    display_name: str = Field(..., description="Display name")
-    key_skills: List[str] = Field(..., description="Key skills for this industry")
-
-
 class SupportedIndustries(BaseModel):
     """List of supported industries."""
-    industries: List[IndustryConfig] = Field(
-        default_factory=lambda: [
-            IndustryConfig(
-                code="tech_consulting",
-                display_name="Technology Consulting",
-                key_skills=["Python", "JavaScript", "Cloud Architecture", "System Design", "Agile", "DevOps"]
-            ),
-            IndustryConfig(
-                code="finance_banking",
-                display_name="Finance & Banking",
-                key_skills=["Financial Modeling", "Risk Management", "Regulatory Compliance", "Bloomberg", "Excel", "VBA"]
-            ),
-            IndustryConfig(
-                code="general_business",
-                display_name="General Business",
-                key_skills=["Project Management", "Strategic Planning", "Data Analysis", "Leadership", "Communication"]
-            ),
-            IndustryConfig(
-                code="system_integrator",
-                display_name="Systems Integration",
-                key_skills=["Systems Integration", "Enterprise Architecture", "API Development", "Database Management"]
-            ),
-            IndustryConfig(
-                code="strategy_consulting",
-                display_name="Strategy Consulting",
-                key_skills=["Strategic Analysis", "Market Research", "Business Modeling", "PowerPoint", "Excel"]
-            ),
-            IndustryConfig(
-                code="full_service_consulting",
-                display_name="Full Service Consulting",
-                key_skills=["Business Analysis", "Change Management", "Process Improvement", "Stakeholder Management"]
-            )
-        ]
-    )
+    industries: List[IndustryConfig] = Field(default_factory=get_supported_industries)

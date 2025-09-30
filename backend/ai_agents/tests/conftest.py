@@ -143,7 +143,7 @@ def mock_openai_client():
 @pytest.fixture
 def mock_structure_agent(mock_openai_client, mock_openai_structure_response):
     """Mock structure agent."""
-    from app.ai_agents.agents.structure import StructureAgent
+    from ai_agents.agents.structure import StructureAgent
     
     agent = StructureAgent()
     agent.client = mock_openai_client
@@ -161,7 +161,7 @@ def mock_structure_agent(mock_openai_client, mock_openai_structure_response):
 @pytest.fixture
 def mock_appeal_agent(mock_openai_client, mock_openai_appeal_response):
     """Mock appeal agent."""
-    from app.ai_agents.agents.appeal import AppealAgent
+    from ai_agents.agents.appeal import AppealAgent
     
     agent = AppealAgent()
     agent.client = mock_openai_client

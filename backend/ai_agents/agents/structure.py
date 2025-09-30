@@ -1,38 +1,22 @@
 """Structure Agent for analyzing resume formatting and organization."""
 
 import re
-import yaml
-import asyncio
-from pathlib import Path
 from typing import Dict, Any, List, Optional
-from openai import AsyncOpenAI
 
-from app.core.config import get_settings
-
-settings = get_settings()
+from .base import BaseAgent
 
 
-class StructureAgent:
+class StructureAgent(BaseAgent):
     """Agent that analyzes resume structure, formatting, and professional presentation."""
-    
+
     def __init__(self, api_key: Optional[str] = None):
         """Initialize the Structure Agent.
-        
+
         Args:
             api_key: OpenAI API key (defaults to environment variable)
         """
-        self.client = AsyncOpenAI(api_key=api_key or settings.OPENAI_API_KEY)
-        self.prompt_template = self._load_prompt_template()
-        self.max_retries = 3
-        
-    def _load_prompt_template(self) -> Dict[str, Any]:
-        """Load the structure analysis prompt template from YAML."""
-        template_path = Path(__file__).parent.parent / "prompts" / "templates" / "resume" / "structure_v1.yaml"
-        
-        with open(template_path, "r") as f:
-            template = yaml.safe_load(f)
-        
-        return template
+        super().__init__(api_key)
+        self.prompt_template = self._load_prompt_template("structure_v1.yaml")
     
     async def analyze(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze resume structure and formatting.
@@ -69,37 +53,7 @@ class StructureAgent:
             state["structure_metadata"] = {}
         
         return state
-    
-    async def _call_openai_with_retry(self, system_prompt: str, user_prompt: str) -> str:
-        """Call OpenAI API with exponential backoff retry logic.
-        
-        Args:
-            system_prompt: System message for GPT
-            user_prompt: User message with resume text
-            
-        Returns:
-            GPT response text
-        """
-        for attempt in range(self.max_retries):
-            try:
-                response = await self.client.chat.completions.create(
-                    model="gpt-4",
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    temperature=0.3,
-                    max_tokens=2000
-                )
-                
-                return response.choices[0].message.content
-                
-            except Exception as e:
-                if attempt == self.max_retries - 1:
-                    raise e
-                # Exponential backoff
-                await asyncio.sleep(2 ** attempt)
-    
+
     def _parse_response(self, response: str) -> Dict[str, Any]:
         """Parse the GPT response to extract scores and feedback.
         
@@ -122,13 +76,9 @@ class StructureAgent:
             "tone": r"Professional\s*Tone\s*Score[:\s]*(\d+)",
             "completeness": r"Completeness\s*Score[:\s]*(\d+)"
         }
-        
+
         for key, pattern in score_patterns.items():
-            match = re.search(pattern, response, re.IGNORECASE)
-            if match:
-                results["scores"][key] = float(match.group(1))
-            else:
-                results["scores"][key] = 0.0
+            results["scores"][key] = self._extract_score(response, pattern)
         
         # Extract feedback lists
         results["feedback"]["issues"] = self._extract_list(response, "Formatting Issues")
@@ -148,27 +98,5 @@ class StructureAgent:
             match = re.search(pattern, response, re.IGNORECASE)
             if match:
                 results["metadata"][key] = int(match.group(1))
-        
+
         return results
-    
-    def _extract_list(self, text: str, section_name: str) -> List[str]:
-        """Extract a bulleted list from the response text.
-        
-        Args:
-            text: Full response text
-            section_name: Name of the section to extract
-            
-        Returns:
-            List of items from that section
-        """
-        # Try to find the section and extract items
-        pattern = rf"{section_name}:?\s*\n((?:\s*[-•]\s*.+\n?)+)"
-        match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
-        
-        if match:
-            items_text = match.group(1)
-            # Extract individual items (handle various indentation)
-            items = re.findall(r"^\s*[-•]\s*(.+)$", items_text, re.MULTILINE)
-            return [item.strip() for item in items if item.strip()]
-        
-        return []

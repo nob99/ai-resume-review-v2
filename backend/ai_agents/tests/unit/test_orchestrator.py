@@ -12,8 +12,8 @@ async def test_orchestrator_analyze_success(
     sample_resume_text
 ):
     """Test successful orchestration of analysis workflow."""
-    from app.ai_agents.orchestrator import ResumeAnalysisOrchestrator
-    from app.ai_agents.core.workflow import create_workflow
+    from ai_agents.orchestrator import ResumeAnalysisOrchestrator
+    from ai_agents.core.workflow import create_workflow
     
     # Create orchestrator with mocked agents
     orchestrator = ResumeAnalysisOrchestrator()
@@ -52,8 +52,8 @@ async def test_orchestrator_with_custom_analysis_id(
     sample_resume_text
 ):
     """Test orchestrator with custom analysis ID."""
-    from app.ai_agents.orchestrator import ResumeAnalysisOrchestrator
-    from app.ai_agents.core.workflow import create_workflow
+    from ai_agents.orchestrator import ResumeAnalysisOrchestrator
+    from ai_agents.core.workflow import create_workflow
     
     orchestrator = ResumeAnalysisOrchestrator()
     orchestrator.structure_agent = mock_structure_agent
@@ -74,7 +74,7 @@ async def test_orchestrator_with_custom_analysis_id(
 @pytest.mark.asyncio
 async def test_orchestrator_error_handling():
     """Test orchestrator error handling."""
-    from app.ai_agents.orchestrator import ResumeAnalysisOrchestrator
+    from ai_agents.orchestrator import ResumeAnalysisOrchestrator
     
     orchestrator = ResumeAnalysisOrchestrator()
     
@@ -99,7 +99,7 @@ async def test_orchestrator_error_handling():
 @pytest.mark.asyncio
 async def test_orchestrator_format_success_response():
     """Test formatting of successful response."""
-    from app.ai_agents.orchestrator import ResumeAnalysisOrchestrator
+    from ai_agents.orchestrator import ResumeAnalysisOrchestrator
     
     orchestrator = ResumeAnalysisOrchestrator()
     
@@ -128,7 +128,7 @@ async def test_orchestrator_format_success_response():
 @pytest.mark.asyncio
 async def test_orchestrator_format_error_response():
     """Test formatting of error response."""
-    from app.ai_agents.orchestrator import ResumeAnalysisOrchestrator
+    from ai_agents.orchestrator import ResumeAnalysisOrchestrator
     
     orchestrator = ResumeAnalysisOrchestrator()
     
