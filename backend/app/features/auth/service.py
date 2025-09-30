@@ -267,10 +267,10 @@ class AuthService:
             raise SecurityError(f"Password validation failed: {password_result.message}")
         
         try:
-            # Create user
+            # Create user (User model's __init__ expects 'password', not 'password_hash')
             user = await self.user_repo.create(
                 email=user_data.email.lower(),
-                password_hash=hash_password(user_data.password),
+                password=user_data.password,  # Pass plain password, User model will hash it
                 first_name=user_data.first_name,
                 last_name=user_data.last_name,
                 role=user_data.role.value if user_data.role else UserRole.JUNIOR_RECRUITER.value
