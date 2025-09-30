@@ -13,6 +13,7 @@ from fastapi import UploadFile, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
+from app.core.datetime_utils import utc_now
 from .repository import ResumeUploadRepository
 from database.models.resume import Resume, ResumeStatus
 from .schemas import (
@@ -43,7 +44,22 @@ class ResumeUploadService:
         self.session = session
         self.repository = ResumeUploadRepository(session)
         self.settings = get_settings()
-    
+
+    async def _get_next_version_number(self, candidate_id: uuid.UUID) -> int:
+        """
+        Calculate the next version number for a candidate's resume.
+
+        Business Rule: Version numbers start at 1 and increment sequentially.
+
+        Args:
+            candidate_id: The candidate's ID
+
+        Returns:
+            Next version number (1 if no previous resumes exist)
+        """
+        latest_resume = await self.repository.get_latest_resume_for_candidate(candidate_id)
+        return (latest_resume.version_number + 1) if latest_resume else 1
+
     async def upload_resume(
         self,
         candidate_id: uuid.UUID,
@@ -59,6 +75,9 @@ class ResumeUploadService:
             content = await file.read()
             await self._validate_file(file, content)
 
+            # Business logic: Calculate next version number for this candidate
+            version_number = await self._get_next_version_number(candidate_id)
+
             file_extension = Path(file.filename).suffix.lower()
             unique_filename = f"{file_id}{file_extension}"
             file_hash = hashlib.sha256(content).hexdigest()
@@ -72,10 +91,16 @@ class ResumeUploadService:
                 file_hash=file_hash,
                 file_size=len(content),
                 mime_type=file.content_type or 'application/octet-stream',
+                version_number=version_number,
                 extracted_text=extracted_text
             )
 
-            await self.repository.update_status(db_upload.id, ResumeStatus.COMPLETED)
+            # Business logic: Mark as completed and set processed timestamp
+            await self.repository.update_status(
+                db_upload.id,
+                ResumeStatus.COMPLETED,
+                processed_at=utc_now()
+            )
 
             return self._to_uploaded_file_v2(db_upload, extracted_text)
 
@@ -85,9 +110,9 @@ class ResumeUploadService:
             # Mark as error if we have a DB record
             if 'db_upload' in locals():
                 await self.repository.update_status(
-                    db_upload.id,
-                    ResumeStatus.ERROR,
-                    str(e)
+                    file_id=db_upload.id,
+                    status=ResumeStatus.ERROR
+                    # Note: error_message not implemented in model yet
                 )
 
             raise HTTPException(status_code=400, detail=str(e))

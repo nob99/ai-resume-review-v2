@@ -18,7 +18,16 @@ class ResumeUploadRepository(BaseRepository[Resume]):
     def __init__(self, session: AsyncSession):
         """Initialize repository with database session."""
         super().__init__(session, Resume)
-    
+
+    async def get_latest_resume_for_candidate(self, candidate_id: uuid.UUID) -> Optional[Resume]:
+        """Get the most recent resume for a candidate (by version number)."""
+        query = select(Resume).where(
+            Resume.candidate_id == candidate_id
+        ).order_by(desc(Resume.version_number)).limit(1)
+
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
+
     async def create_resume(
         self,
         candidate_id: uuid.UUID,
@@ -28,18 +37,11 @@ class ResumeUploadRepository(BaseRepository[Resume]):
         file_hash: str,
         file_size: int,
         mime_type: str,
+        version_number: int,
+        status: str = ResumeStatus.PENDING.value,
         extracted_text: Optional[str] = None
     ) -> Resume:
-        """Create a new resume record with proper fields."""
-        # Get the latest version number for this candidate
-        query = select(Resume).where(Resume.candidate_id == candidate_id).order_by(desc(Resume.version_number)).limit(1)
-        result = await self.session.execute(query)
-        existing_resumes = result.scalar_one_or_none()
-
-        version_number = 1
-        if existing_resumes:
-            version_number = existing_resumes.version_number + 1
-
+        """Create a new resume record. Just stores data as provided."""
         resume = Resume(
             candidate_id=candidate_id,
             uploaded_by_user_id=uploaded_by_user_id,
@@ -49,7 +51,7 @@ class ResumeUploadRepository(BaseRepository[Resume]):
             file_size=file_size,
             mime_type=mime_type,
             version_number=version_number,
-            status=ResumeStatus.PENDING.value,
+            status=status,
             extracted_text=extracted_text
         )
 
@@ -63,23 +65,25 @@ class ResumeUploadRepository(BaseRepository[Resume]):
         self,
         file_id: uuid.UUID,
         status: ResumeStatus,
+        processed_at: Optional[datetime] = None,
         error_message: Optional[str] = None
     ) -> Optional[Resume]:
-        """Update file upload status."""
+        """Update file upload status and optionally set processed_at timestamp."""
         file_upload = await self.get_by_id(file_id)
         if not file_upload:
             return None
-        
+
         file_upload.status = status
-        
+
+        # Set processed_at if provided (service decides when to set it)
+        if processed_at is not None:
+            file_upload.processed_at = processed_at
+
         # Note: error_message field not implemented in Resume model
-        
-        if status == ResumeStatus.COMPLETED:
-            file_upload.processed_at = utc_now()
 
         await self.session.commit()
         await self.session.refresh(file_upload)
-        
+
         return file_upload
     
     async def get_by_user(
