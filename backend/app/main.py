@@ -146,8 +146,10 @@ from app.features.candidate.api import router as candidate_router
 from app.features.resume_upload.api import router as resume_upload_router
 from app.features.resume_analysis.api import router as analysis_router
 from app.features.admin.api import router as admin_router
+from app.features.profile.api import router as profile_router
 
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(profile_router, prefix="/api/v1/profile", tags=["profile"])
 app.include_router(candidate_router, prefix="/api/v1/candidates", tags=["candidates"])
 app.include_router(resume_upload_router, prefix="/api/v1/resume_upload", tags=["resumes"])
 app.include_router(analysis_router, prefix="/api/v1/analysis", tags=["analysis"])
