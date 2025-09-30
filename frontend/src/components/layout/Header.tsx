@@ -124,18 +124,6 @@ const NavigationItems: React.FC = () => {
   return (
     <nav className="hidden md:flex items-center space-x-8">
       <a
-        href="/dashboard"
-        className="text-neutral-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
-      >
-        Dashboard
-      </a>
-      <a
-        href="/register-candidate"
-        className="text-neutral-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
-      >
-        Register Candidate
-      </a>
-      <a
         href="/upload"
         className="text-neutral-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
       >
@@ -146,6 +134,18 @@ const NavigationItems: React.FC = () => {
         className="text-neutral-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
       >
         Review History
+      </a>
+      <a
+        href="/register-candidate"
+        className="text-neutral-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+      >
+        Register Candidate
+      </a>
+      <a
+        href="/dashboard"
+        className="text-neutral-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+      >
+        Dashboard
       </a>
       {user?.role === 'admin' && (
         <a
@@ -203,20 +203,6 @@ const MobileMenu: React.FC<{ isOpen: boolean; onToggle: () => void }> = ({ isOpe
         <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-neutral-200 shadow-lg" id="mobile-menu">
           <div className="px-2 pt-2 pb-3 space-y-1">
             <a
-              href="/dashboard"
-              className="block px-3 py-2 text-base font-medium text-neutral-700 hover:text-primary-600 hover:bg-neutral-50 rounded-md"
-              onClick={onToggle}
-            >
-              Dashboard
-            </a>
-            <a
-              href="/register-candidate"
-              className="block px-3 py-2 text-base font-medium text-neutral-700 hover:text-primary-600 hover:bg-neutral-50 rounded-md"
-              onClick={onToggle}
-            >
-              Register Candidate
-            </a>
-            <a
               href="/upload"
               className="block px-3 py-2 text-base font-medium text-neutral-700 hover:text-primary-600 hover:bg-neutral-50 rounded-md"
               onClick={onToggle}
@@ -229,6 +215,20 @@ const MobileMenu: React.FC<{ isOpen: boolean; onToggle: () => void }> = ({ isOpe
               onClick={onToggle}
             >
               Review History
+            </a>
+            <a
+              href="/register-candidate"
+              className="block px-3 py-2 text-base font-medium text-neutral-700 hover:text-primary-600 hover:bg-neutral-50 rounded-md"
+              onClick={onToggle}
+            >
+              Register Candidate
+            </a>
+            <a
+              href="/dashboard"
+              className="block px-3 py-2 text-base font-medium text-neutral-700 hover:text-primary-600 hover:bg-neutral-50 rounded-md"
+              onClick={onToggle}
+            >
+              Dashboard
             </a>
             {user?.role === 'admin' && (
               <a
