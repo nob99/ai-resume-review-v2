@@ -1,32 +1,28 @@
 """
 Admin service layer for user management.
-Implements business logic for admin operations.
+Implements business logic for COMPLEX admin operations only.
+
+Simple read operations are handled directly by API → Repository.
+This service contains ONLY operations with complex business logic:
+- create_user: Password hashing, validation, force password change
+- update_user: Audit logging for all changes
+- reset_user_password: Password hashing, account unlock, force password change
 """
 
-from typing import Optional, List, Dict, Any
+from typing import Optional
 from uuid import UUID
 import logging
 
-from sqlalchemy import select, func, or_, and_
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import IntegrityError
 
-from app.core.security import hash_password, SecurityError
+from app.core.security import SecurityError
 from app.core.datetime_utils import utc_now
 from app.features.auth.repository import UserRepository
-from database.models.auth import User, UserRole
-from database.models.assignment import UserCandidateAssignment
-from database.models.resume import Resume
-from database.models.review import ReviewRequest
+from database.models.auth import User
 from .schemas import (
     AdminUserCreate,
     AdminUserUpdate,
-    AdminPasswordReset,
-    UserListItem,
-    UserDetailResponse,
-    UserListResponse,
-    UserDirectoryItem,
-    UserDirectoryResponse
+    AdminPasswordReset
 )
 
 logger = logging.getLogger(__name__)
@@ -34,7 +30,10 @@ logger = logging.getLogger(__name__)
 
 class AdminService:
     """
-    Admin service for user management operations.
+    Admin service for COMPLEX user management operations.
+
+    Simple operations (list, get, directory) are handled by repository directly.
+    This service handles operations requiring business logic.
     """
 
     def __init__(self, session: AsyncSession):
@@ -90,164 +89,6 @@ class AdminService:
         logger.info(f"Admin {created_by_user_id} created new user: {new_user.email}")
 
         return new_user
-
-    async def list_users(
-        self,
-        page: int = 1,
-        page_size: int = 20,
-        search: Optional[str] = None,
-        role: Optional[str] = None,
-        is_active: Optional[bool] = None
-    ) -> UserListResponse:
-        """
-        List users with pagination and filtering.
-
-        Args:
-            page: Page number (1-based)
-            page_size: Items per page
-            search: Search term for email/name
-            role: Filter by role
-            is_active: Filter by active status
-
-        Returns:
-            Paginated user list response
-        """
-        # Build query with LEFT JOIN to get assignment counts in single query
-        # This eliminates N+1 problem (was: 1 query for users + N queries for counts)
-        query = (
-            select(
-                User,
-                func.count(UserCandidateAssignment.id).label('assigned_count')
-            )
-            .outerjoin(
-                UserCandidateAssignment,
-                and_(
-                    UserCandidateAssignment.user_id == User.id,
-                    UserCandidateAssignment.is_active == True
-                )
-            )
-            .group_by(User.id)
-        )
-
-        # Apply filters
-        if search:
-            search_pattern = f"%{search.lower()}%"
-            query = query.where(
-                or_(
-                    User.email.ilike(search_pattern),
-                    User.first_name.ilike(search_pattern),
-                    User.last_name.ilike(search_pattern)
-                )
-            )
-
-        if role:
-            query = query.where(User.role == role)
-
-        if is_active is not None:
-            query = query.where(User.is_active == is_active)
-
-        # Get total count before pagination
-        count_query = select(func.count()).select_from(query.subquery())
-        total_result = await self.session.execute(count_query)
-        total = total_result.scalar() or 0
-
-        # Apply pagination and ordering
-        query = query.order_by(User.created_at.desc())
-        query = query.offset((page - 1) * page_size).limit(page_size)
-
-        # Execute single query that gets users + assignment counts
-        result = await self.session.execute(query)
-        rows = result.all()
-
-        # Build response items from query results
-        user_items = [
-            UserListItem(
-                id=row.User.id,
-                email=row.User.email,
-                first_name=row.User.first_name,
-                last_name=row.User.last_name,
-                role=row.User.role,
-                is_active=row.User.is_active,
-                email_verified=row.User.email_verified,
-                last_login_at=row.User.last_login_at,
-                created_at=row.User.created_at,
-                assigned_candidates_count=row.assigned_count
-            )
-            for row in rows
-        ]
-
-        total_pages = (total + page_size - 1) // page_size
-
-        return UserListResponse(
-            users=user_items,
-            total=total,
-            page=page,
-            page_size=page_size,
-            total_pages=total_pages
-        )
-
-    async def get_user_details(self, user_id: UUID) -> Optional[UserDetailResponse]:
-        """
-        Get detailed user information with statistics in a single query.
-
-        Args:
-            user_id: User ID
-
-        Returns:
-            Detailed user information or None if not found
-        """
-        # Single query with scalar subqueries for all statistics
-        # Eliminates 4 separate queries (1 for user + 3 for counts)
-        query = (
-            select(
-                User,
-                # Count assigned candidates (only active assignments)
-                select(func.count(UserCandidateAssignment.id))
-                .where(
-                    UserCandidateAssignment.user_id == user_id,
-                    UserCandidateAssignment.is_active == True
-                )
-                .scalar_subquery()
-                .label('assigned_count'),
-                # Count resumes uploaded
-                select(func.count(Resume.id))
-                .where(Resume.uploaded_by_user_id == user_id)
-                .scalar_subquery()
-                .label('resume_count'),
-                # Count reviews requested
-                select(func.count(ReviewRequest.id))
-                .where(ReviewRequest.requested_by_user_id == user_id)
-                .scalar_subquery()
-                .label('review_count')
-            )
-            .where(User.id == user_id)
-        )
-
-        result = await self.session.execute(query)
-        row = result.one_or_none()
-
-        if not row:
-            return None
-
-        user = row.User
-        return UserDetailResponse(
-            id=user.id,
-            email=user.email,
-            first_name=user.first_name,
-            last_name=user.last_name,
-            role=user.role,
-            is_active=user.is_active,
-            email_verified=user.email_verified,
-            created_at=user.created_at,
-            updated_at=user.updated_at,
-            last_login_at=user.last_login_at,
-            password_changed_at=user.password_changed_at,
-            failed_login_attempts=user.failed_login_attempts,
-            locked_until=user.locked_until,
-            assigned_candidates_count=row.assigned_count,
-            total_resumes_uploaded=row.resume_count,
-            total_reviews_requested=row.review_count
-        )
 
     async def update_user(
         self,
@@ -345,30 +186,3 @@ class AdminService:
         logger.info(f"Admin {reset_by_user_id} reset password for user {user_id}")
 
         return True
-
-    async def get_user_directory(self) -> UserDirectoryResponse:
-        """
-        Get basic user directory (for senior recruiters).
-
-        Returns:
-            User directory response
-        """
-        query = select(User).where(User.is_active == True).order_by(User.last_name, User.first_name)
-        result = await self.session.execute(query)
-        users = list(result.scalars().all())
-
-        directory_items = [
-            UserDirectoryItem(
-                id=user.id,
-                email=user.email,
-                full_name=f"{user.first_name} {user.last_name}",
-                role=user.role,
-                is_active=user.is_active
-            )
-            for user in users
-        ]
-
-        return UserDirectoryResponse(
-            users=directory_items,
-            total=len(directory_items)
-        )
