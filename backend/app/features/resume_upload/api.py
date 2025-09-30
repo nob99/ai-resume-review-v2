@@ -166,29 +166,27 @@ async def list_uploads(
 async def cancel_upload(
     file_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
-    repository = Depends(get_resume_upload_repository)
+    service: ResumeUploadService = Depends(get_resume_upload_service)
 ) -> JSONResponse:
     """Cancel an ongoing upload."""
 
-    upload = await repository.get_by_id(file_id)
-    if not upload or upload.uploaded_by_user_id != current_user.id:
-        raise HTTPException(
-            status_code=400,
-            detail="Unable to cancel upload. It may be already completed or not found."
+    try:
+        await service.cancel_upload(
+            file_id=file_id,
+            user_id=current_user.id
         )
 
-    if upload.status in [ResumeStatus.COMPLETED, ResumeStatus.ERROR, ResumeStatus.CANCELLED]:
-        raise HTTPException(
-            status_code=400,
-            detail="Unable to cancel upload. It may be already completed or not found."
+        return JSONResponse(
+            content={"message": "Upload cancelled successfully"},
+            status_code=200
         )
 
-    await repository.mark_cancelled(file_id)
-
-    return JSONResponse(
-        content={"message": "Upload cancelled successfully"},
-        status_code=200
-    )
+    except ValueError as e:
+        # Business rule violation (not found, not owned, or invalid state)
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
 
 
 @router.get(

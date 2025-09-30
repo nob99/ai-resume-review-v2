@@ -201,3 +201,41 @@ class ResumeUploadService:
             startTime=int(db_upload.uploaded_at.timestamp() * 1000),
             endTime=int(db_upload.processed_at.timestamp() * 1000) if db_upload.processed_at else None
         )
+
+    async def cancel_upload(self, file_id: uuid.UUID, user_id: uuid.UUID) -> None:
+        """
+        Cancel an upload if business rules allow it.
+
+        Business Rules:
+        - Upload must exist
+        - User must own the upload (authorization)
+        - Upload must be in cancellable state (not COMPLETED, ERROR, or CANCELLED)
+
+        Args:
+            file_id: Upload ID to cancel
+            user_id: User requesting cancellation (for ownership check)
+
+        Raises:
+            ValueError: If upload not found, not owned by user, or in non-cancellable state
+        """
+        upload = await self.repository.get_by_id(file_id)
+
+        # Business rule: Upload must exist and user must own it
+        if not upload or upload.uploaded_by_user_id != user_id:
+            raise ValueError("Upload not found")  # Security: don't reveal existence
+
+        # Business rule: Check if cancellation is allowed by state
+        non_cancellable_states = [
+            ResumeStatus.COMPLETED.value,
+            ResumeStatus.ERROR.value,
+            ResumeStatus.CANCELLED.value
+        ]
+
+        if upload.status in non_cancellable_states:
+            raise ValueError(
+                f"Cannot cancel upload in '{upload.status}' state. "
+                f"Only pending or uploading uploads can be cancelled."
+            )
+
+        # Perform cancellation
+        await self.repository.mark_cancelled(file_id)
