@@ -4,7 +4,7 @@ import io
 import uuid
 import logging
 import hashlib
-from typing import Optional, List, Dict, Any
+from typing import Optional
 from pathlib import Path
 
 import PyPDF2
@@ -13,16 +13,12 @@ from fastapi import UploadFile, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
-from app.core.datetime_utils import utc_now
 from .repository import ResumeUploadRepository
 from database.models.resume import Resume, ResumeStatus
 from .schemas import (
-    FileUploadResponse,
     UploadedFileV2,
     FileInfo,
-    ProgressInfo,
-    FileValidationError,
-    FileType
+    ProgressInfo
 )
 
 logger = logging.getLogger(__name__)
@@ -164,16 +160,6 @@ class ResumeUploadService:
             logger.error(f"Text extraction failed for {file_extension}: {str(e)}")
             raise ValueError(f"Failed to extract text from file: {str(e)}")
 
-    def _get_file_type(self, extension: str) -> str:
-        """Get file type from extension."""
-        mapping = {
-            '.pdf': FileType.PDF,
-            '.doc': FileType.DOC,
-            '.docx': FileType.DOCX,
-            '.txt': FileType.TXT
-        }
-        return mapping.get(extension.lower(), FileType.TXT)
-    
     def _to_uploaded_file_v2(self, db_upload: Resume, extracted_text: str) -> UploadedFileV2:
         """Convert database model to frontend-compatible schema."""
 
@@ -215,15 +201,3 @@ class ResumeUploadService:
             startTime=int(db_upload.uploaded_at.timestamp() * 1000),
             endTime=int(db_upload.processed_at.timestamp() * 1000) if db_upload.processed_at else None
         )
-
-    async def get_user_uploads(
-        self,
-        user_id: uuid.UUID,
-        status: Optional[ResumeStatus] = None,
-        limit: int = 10,
-        offset: int = 0
-    ) -> List[FileUploadResponse]:
-        """Get uploads for a user."""
-
-        uploads = await self.repository.get_by_user(user_id, status, limit, offset)
-        return [FileUploadResponse.model_validate(u) for u in uploads]

@@ -2,9 +2,9 @@
 
 import uuid
 import logging
-from typing import List, Optional
+from typing import Optional
 
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -47,7 +47,6 @@ async def get_resume_upload_repository(session: AsyncSession = Depends(get_async
 )
 async def upload_resume(
     candidate_id: uuid.UUID,
-    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
     service: ResumeUploadService = Depends(get_resume_upload_service)
@@ -97,67 +96,10 @@ async def upload_resume(
 
 
 
-@router.post(
-    "/batch",
-    response_model=List[UploadedFileV2],
-    summary="Upload multiple files",
-    description="Upload multiple resume files at once"
-)
-async def upload_files_batch(
-    files: List[UploadFile] = File(...),
-    current_user: User = Depends(get_current_user),
-    service: ResumeUploadService = Depends(get_resume_upload_service)
-) -> List[UploadedFileV2]:
-    """
-    Upload multiple resume files.
-    
-    - Processes files concurrently
-    - Returns status for each file
-    - Maximum 5 files per request
-    """
-    
-    if len(files) > 5:
-        raise HTTPException(
-            status_code=400,
-            detail="Maximum 5 files can be uploaded at once"
-        )
-    
-    try:
-        # Apply rate limiting
-        is_allowed, rate_info = await rate_limiter.check_rate_limit(
-            limit_type=RateLimitType.FILE_UPLOAD,
-            identifier=str(current_user.id)
-        )
-        if not is_allowed:
-            raise RateLimitExceeded("Upload rate limit exceeded")
-        
-        results = []
-        errors = []
-        
-        for file in files:
-            try:
-                result = await service.process_upload(
-                    file=file,
-                    user_id=current_user.id
-                )
-                results.append(result)
-            except Exception as e:
-                logger.error(f"Failed to upload {file.filename}: {str(e)}")
-                errors.append({"file": file.filename, "error": str(e)})
-        
-        if errors and not results:
-            raise HTTPException(
-                status_code=400,
-                detail={"message": "All files failed to upload", "errors": errors}
-            )
-        
-        return results
-        
-    except RateLimitExceeded:
-        raise HTTPException(
-            status_code=429,
-            detail="Too many batch upload requests. Please wait."
-        )
+# NOTE: Batch upload endpoint removed during refactoring
+# Reason: Requires candidate_id for proper domain modeling (version management)
+# Use POST /candidates/{candidate_id}/resumes for individual uploads
+# TODO: Implement proper batch upload with candidate associations if needed
 
 
 @router.get(
@@ -191,24 +133,25 @@ async def list_uploads(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(10, ge=1, le=50, description="Items per page"),
     current_user: User = Depends(get_current_user),
-    service: ResumeUploadService = Depends(get_resume_upload_service)
+    repository = Depends(get_resume_upload_repository)
 ) -> FileUploadListResponse:
     """List user's file uploads with optional filtering."""
-    
+
     offset = (page - 1) * page_size
-    
-    uploads = await service.get_user_uploads(
+
+    # Get uploads from repository
+    uploads = await repository.get_by_user(
         user_id=current_user.id,
         status=status,
         limit=page_size,
         offset=offset
     )
-    
+
     # Get total count for pagination
-    stats = await service.get_upload_stats(current_user.id)
-    
+    stats = await repository.get_upload_stats(current_user.id)
+
     return FileUploadListResponse(
-        uploads=uploads,
+        uploads=[FileUploadResponse.model_validate(u) for u in uploads],
         total_count=stats["total_uploads"],
         page=page,
         page_size=page_size
