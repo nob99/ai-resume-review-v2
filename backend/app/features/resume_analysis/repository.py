@@ -10,9 +10,6 @@ from sqlalchemy import desc, and_, func, select
 
 from infrastructure.persistence.postgres.base import BaseRepository
 from app.core.datetime_utils import utc_now
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 from database.models import ReviewRequest, ReviewResult, ReviewFeedbackItem
 
 

@@ -7,9 +7,6 @@ from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field, ConfigDict
 
 # Import enums from database models to avoid duplication
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 from database.models.analysis import Industry, AnalysisStatus, MarketTier
 
 

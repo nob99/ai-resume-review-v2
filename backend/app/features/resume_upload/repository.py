@@ -9,9 +9,6 @@ from sqlalchemy import desc, and_, select
 
 from infrastructure.persistence.postgres.base import BaseRepository
 from app.core.datetime_utils import utc_now
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 from database.models.resume import Resume, ResumeStatus
 
 
@@ -74,12 +71,6 @@ class ResumeUploadRepository(BaseRepository[Resume]):
         """Legacy method - kept for compatibility but should not be used."""
         # This method has wrong field mappings, use create_resume instead
         raise NotImplementedError("Use create_resume method instead")
-        
-        self.session.add(file_upload)
-        await self.session.commit()
-        await self.session.refresh(file_upload)
-        
-        return file_upload
     
     async def update_status(
         self,

@@ -15,9 +15,6 @@ from app.core.datetime_utils import utc_now
 from ai_agents.orchestrator import ResumeAnalysisOrchestrator
 
 from .repository import AnalysisRepository
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 from database.models import ReviewRequest, ReviewResult, ReviewFeedbackItem
 
 # Import resume upload service for integration

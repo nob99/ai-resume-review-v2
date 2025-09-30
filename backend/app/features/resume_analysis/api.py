@@ -8,9 +8,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 from infrastructure.persistence.postgres.connection import get_async_session
 from app.features.auth.api import get_current_user
 from database.models.auth import User

@@ -18,10 +18,6 @@ from fastapi.testclient import TestClient
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent.parent.parent.parent))
-
 from app.features.resume_upload.service import ResumeUploadService
 from app.features.resume_upload.api import router
 from app.features.resume_upload.schemas import UploadedFileV2

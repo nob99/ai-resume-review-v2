@@ -28,9 +28,6 @@ from app.core.rate_limiter import (
     RateLimitType
 )
 from app.core.datetime_utils import utc_now
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 from database.models.auth import User, RefreshToken, SessionStatus, UserRole
 from .repository import UserRepository, RefreshTokenRepository
 from .schemas import (

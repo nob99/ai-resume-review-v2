@@ -14,9 +14,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import verify_token, SecurityError
 from infrastructure.persistence.postgres.connection import get_async_session
 from app.features.auth.repository import UserRepository
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 from database.models.auth import User, UserRole
 
 security = HTTPBearer()

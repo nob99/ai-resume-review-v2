@@ -15,9 +15,6 @@ from app.main import app
 from app.features.auth.service import AuthService
 from app.features.auth.repository import UserRepository, RefreshTokenRepository
 from app.features.auth.schemas import LoginRequest, UserCreate
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent.parent.parent.parent.parent))
 from database.models.auth import User, RefreshToken
 from infrastructure.persistence.postgres import get_async_session
 from app.features.auth.tests.fixtures.mock_data import MockAuthData

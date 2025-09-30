@@ -1,1 +1,0 @@
-"""Resume management feature module."""

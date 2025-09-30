@@ -15,9 +15,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import get_settings
 from app.core.datetime_utils import utc_now
 from .repository import ResumeUploadRepository
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 from database.models.resume import Resume, ResumeStatus
 from .schemas import (
     FileUploadResponse,
