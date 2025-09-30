@@ -59,19 +59,6 @@ class ResumeUploadRepository(BaseRepository[Resume]):
 
         return resume
 
-    async def create_upload(
-        self,
-        filename: str,
-        original_filename: str,
-        file_type: str,
-        file_size: int,
-        user_id: uuid.UUID,
-        mime_type: Optional[str] = None
-    ) -> Resume:
-        """Legacy method - kept for compatibility but should not be used."""
-        # This method has wrong field mappings, use create_resume instead
-        raise NotImplementedError("Use create_resume method instead")
-    
     async def update_status(
         self,
         file_id: uuid.UUID,
@@ -182,22 +169,31 @@ class ResumeUploadRepository(BaseRepository[Resume]):
         return count
     
     async def get_upload_stats(self, user_id: uuid.UUID) -> dict:
-        """Get upload statistics for a user."""
-        query = select(Resume).where(Resume.uploaded_by_user_id == user_id)
+        """Get upload statistics for a user using SQL aggregation."""
+        from sqlalchemy import func, case
+
+        query = select(
+            func.count(Resume.id).label('total'),
+            func.sum(
+                case((Resume.status == ResumeStatus.COMPLETED.value, 1), else_=0)
+            ).label('completed'),
+            func.sum(
+                case((Resume.status == ResumeStatus.ERROR.value, 1), else_=0)
+            ).label('failed'),
+            func.coalesce(func.sum(Resume.file_size), 0).label('total_size')
+        ).where(Resume.uploaded_by_user_id == user_id)
+
         result = await self.session.execute(query)
-        uploads = list(result.scalars().all())
-        
-        total_count = len(uploads)
-        completed_count = sum(1 for u in uploads if u.status == ResumeStatus.COMPLETED)
-        error_count = sum(1 for u in uploads if u.status == ResumeStatus.ERROR)
-        total_size = sum(u.file_size for u in uploads)
-        
+        stats = result.one()
+
+        total_size_bytes = stats.total_size or 0
+
         return {
-            "total_uploads": total_count,
-            "completed_uploads": completed_count,
-            "failed_uploads": error_count,
-            "total_size_bytes": total_size,
-            "total_size_mb": round(total_size / (1024 * 1024), 2)
+            "total_uploads": stats.total or 0,
+            "completed_uploads": stats.completed or 0,
+            "failed_uploads": stats.failed or 0,
+            "total_size_bytes": total_size_bytes,
+            "total_size_mb": round(total_size_bytes / (1024 * 1024), 2)
         }
     
     async def mark_cancelled(self, file_id: uuid.UUID) -> Optional[Resume]:

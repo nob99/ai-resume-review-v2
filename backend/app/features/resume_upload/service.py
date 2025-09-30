@@ -215,16 +215,7 @@ class ResumeUploadService:
             startTime=int(db_upload.uploaded_at.timestamp() * 1000),
             endTime=int(db_upload.processed_at.timestamp() * 1000) if db_upload.processed_at else None
         )
-    
-    async def get_upload(self, file_id: uuid.UUID, user_id: uuid.UUID) -> Optional[FileUploadResponse]:
-        """Get a specific upload by ID."""
-        
-        upload = await self.repository.get_by_id(file_id)
-        if not upload or upload.uploaded_by_user_id != user_id:
-            return None
-        
-        return FileUploadResponse.model_validate(upload)
-    
+
     async def get_user_uploads(
         self,
         user_id: uuid.UUID,
@@ -236,35 +227,3 @@ class ResumeUploadService:
 
         uploads = await self.repository.get_by_user(user_id, status, limit, offset)
         return [FileUploadResponse.model_validate(u) for u in uploads]
-
-    async def get_candidate_resumes(
-        self,
-        candidate_id: uuid.UUID,
-        user_id: uuid.UUID,
-        limit: int = 20,
-        offset: int = 0
-    ) -> List[UploadedFileV2]:
-        """Get all resume versions for a specific candidate."""
-
-        # TODO: Add candidate access validation
-        # TODO: Query resumes by candidate_id when database model is updated
-        # For now, return empty list as we can't modify database models
-        logger.info(f"Getting resumes for candidate {candidate_id} by user {user_id}")
-        return []
-    
-    async def cancel_upload(self, file_id: uuid.UUID, user_id: uuid.UUID) -> bool:
-        """Cancel an ongoing upload."""
-        
-        upload = await self.repository.get_by_id(file_id)
-        if not upload or upload.uploaded_by_user_id != user_id:
-            return False
-        
-        if upload.status in [ResumeStatus.COMPLETED, ResumeStatus.ERROR, ResumeStatus.CANCELLED]:
-            return False
-        
-        await self.repository.mark_cancelled(file_id)
-        return True
-    
-    async def get_upload_stats(self, user_id: uuid.UUID) -> Dict[str, Any]:
-        """Get upload statistics for a user."""
-        return await self.repository.get_upload_stats(user_id)

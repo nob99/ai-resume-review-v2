@@ -33,6 +33,12 @@ async def get_resume_upload_service(session: AsyncSession = Depends(get_async_se
     return ResumeUploadService(session)
 
 
+async def get_resume_upload_repository(session: AsyncSession = Depends(get_async_session)):
+    """Get resume upload repository instance."""
+    from .repository import ResumeUploadRepository
+    return ResumeUploadRepository(session)
+
+
 @router.post(
     "/candidates/{candidate_id}/resumes",
     response_model=UploadedFileV2,
@@ -89,40 +95,6 @@ async def upload_resume(
         logger.error(f"Upload error: {str(e)}")
         raise HTTPException(status_code=500, detail="File upload failed")
 
-
-@router.get(
-    "/candidates/{candidate_id}/resumes",
-    response_model=List[UploadedFileV2],
-    summary="List candidate resumes",
-    description="Get all resume versions for a specific candidate"
-)
-async def list_candidate_resumes(
-    candidate_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
-    service: ResumeUploadService = Depends(get_resume_upload_service)
-) -> List[UploadedFileV2]:
-    """
-    List all resumes for a candidate.
-
-    - Returns all versions
-    - Ordered by upload date (newest first)
-    - Includes extracted text preview
-    """
-    try:
-        logger.info(f"User {current_user.id} listing resumes for candidate {candidate_id}")
-
-        # TODO: Add candidate access validation here
-        # For now, return empty list as placeholder
-        resumes = await service.get_candidate_resumes(
-            candidate_id=candidate_id,
-            user_id=current_user.id
-        )
-
-        return resumes
-
-    except Exception as e:
-        logger.error(f"Error listing resumes: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to list resumes")
 
 
 @router.post(
@@ -197,15 +169,15 @@ async def upload_files_batch(
 async def get_upload(
     file_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
-    service: ResumeUploadService = Depends(get_resume_upload_service)
+    repository = Depends(get_resume_upload_repository)
 ) -> FileUploadResponse:
     """Get details of a specific upload."""
-    
-    upload = await service.get_upload(file_id, current_user.id)
-    if not upload:
+
+    upload = await repository.get_by_id(file_id)
+    if not upload or upload.uploaded_by_user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Upload not found")
-    
-    return upload
+
+    return FileUploadResponse.model_validate(upload)
 
 
 @router.get(
@@ -251,18 +223,25 @@ async def list_uploads(
 async def cancel_upload(
     file_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
-    service: ResumeUploadService = Depends(get_resume_upload_service)
+    repository = Depends(get_resume_upload_repository)
 ) -> JSONResponse:
     """Cancel an ongoing upload."""
-    
-    success = await service.cancel_upload(file_id, current_user.id)
-    
-    if not success:
+
+    upload = await repository.get_by_id(file_id)
+    if not upload or upload.uploaded_by_user_id != current_user.id:
         raise HTTPException(
             status_code=400,
             detail="Unable to cancel upload. It may be already completed or not found."
         )
-    
+
+    if upload.status in [ResumeStatus.COMPLETED, ResumeStatus.ERROR, ResumeStatus.CANCELLED]:
+        raise HTTPException(
+            status_code=400,
+            detail="Unable to cancel upload. It may be already completed or not found."
+        )
+
+    await repository.mark_cancelled(file_id)
+
     return JSONResponse(
         content={"message": "Upload cancelled successfully"},
         status_code=200
@@ -276,8 +255,8 @@ async def cancel_upload(
 )
 async def get_upload_stats(
     current_user: User = Depends(get_current_user),
-    service: ResumeUploadService = Depends(get_resume_upload_service)
+    repository = Depends(get_resume_upload_repository)
 ) -> dict:
     """Get upload statistics for the current user."""
-    
-    return await service.get_upload_stats(current_user.id)
+
+    return await repository.get_upload_stats(current_user.id)

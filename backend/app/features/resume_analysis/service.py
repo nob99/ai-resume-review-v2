@@ -17,8 +17,8 @@ from ai_agents.orchestrator import ResumeAnalysisOrchestrator
 from .repository import AnalysisRepository
 from database.models import ReviewRequest, ReviewResult, ReviewFeedbackItem
 
-# Import resume upload service for integration
-from app.features.resume_upload.service import ResumeUploadService
+# Import resume upload repository for integration (simplified)
+from app.features.resume_upload.repository import ResumeUploadRepository
 from database.models.analysis import Industry, AnalysisStatus
 from .schemas import (
     AnalysisRequest,
@@ -54,8 +54,8 @@ class AnalysisService:
         self.repository = AnalysisRepository(db)
         self.settings = get_settings()
 
-        # Initialize resume upload service for integration
-        self.resume_service = ResumeUploadService(db)
+        # Initialize resume upload repository for integration (simplified)
+        self.resume_repository = ResumeUploadRepository(db)
 
         # Initialize AI orchestrator from isolated module
         self.ai_orchestrator = ResumeAnalysisOrchestrator()
@@ -79,9 +79,17 @@ class AnalysisService:
             if not self.validate_industry_support(industry):
                 raise AnalysisValidationException(f"Industry '{industry.value}' is not supported by AI agents")
 
-            # Step 2: Get resume text
-            resume = await self.resume_service.get_upload(resume_id, user_id)
-            if not resume or not resume.extracted_text:
+            # Step 2: Get resume and validate access
+            resume = await self.resume_repository.get_by_id(resume_id)
+            if not resume:
+                raise ValueError("Resume not found")
+
+            # Validate user has access to this resume
+            if resume.uploaded_by_user_id != user_id:
+                raise ValueError("Access denied: You don't have permission to analyze this resume")
+
+            # Validate resume has extracted text
+            if not resume.extracted_text:
                 raise ValueError("Resume text not available")
 
             # Step 3: Create review request
@@ -454,8 +462,13 @@ class AnalysisService:
             # Convert to summary format with candidate info
             analyses = []
             for request in requests:
-                # Get resume to access candidate info
-                resume = await self.resume_service.get_upload(request.resume_id, user_id)
+                # Get resume to access candidate info (use repository directly)
+                resume = await self.resume_repository.get_by_id(request.resume_id)
+
+                # Skip if resume not found or user doesn't have access
+                if not resume or resume.uploaded_by_user_id != user_id:
+                    logger.warning(f"Resume {request.resume_id} not found or access denied for user {user_id}")
+                    continue
 
                 # Get result if completed
                 result = None
@@ -465,7 +478,7 @@ class AnalysisService:
                 analyses.append(AnalysisSummary(
                     id=str(request.id),
                     file_name=resume.original_filename if resume else None,
-                    candidate_name=f"{resume.candidate.first_name} {resume.candidate.last_name}" if resume and resume.candidate else "Unknown",
+                    candidate_name=f"{resume.candidate.first_name} {resume.candidate.last_name}" if resume and hasattr(resume, 'candidate') and resume.candidate else "Unknown",
                     candidate_id=str(resume.candidate_id) if resume else None,
                     industry=Industry(request.target_industry),
                     overall_score=result.overall_score if result else None,
