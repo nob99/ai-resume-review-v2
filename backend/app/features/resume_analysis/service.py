@@ -419,19 +419,67 @@ class AnalysisService:
             logger.error(f"Error getting analysis result: {str(e)}")
             raise AnalysisException(f"Failed to get analysis result: {str(e)}")
 
-    async def list_user_analyses(self, user_id: uuid.UUID, limit: int = 10, offset: int = 0,
-                               status: Optional[AnalysisStatus] = None, industry: Optional[Industry] = None) -> dict:
+    async def list_user_analyses(
+        self,
+        user_id: uuid.UUID,
+        limit: int = 10,
+        offset: int = 0,
+        status: Optional[AnalysisStatus] = None,
+        industry: Optional[Industry] = None,
+        candidate_id: Optional[uuid.UUID] = None
+    ) -> dict:
         """List user's analyses with optional filtering and pagination."""
         logger.info(f"Listing analyses for user {user_id}, limit {limit}, offset {offset}")
 
         try:
-            # For now, return basic structure - TODO: implement actual repository method
-            # This should call a repository method that does proper filtering and pagination
-            analyses = []  # TODO: await self.repository.list_user_analyses(user_id, limit, offset, status, industry)
+            # Convert enums to strings for repository
+            status_str = status.value if status else None
+            industry_str = industry.value if industry else None
+
+            # Get analysis requests with filters
+            requests = await self.repository.get_user_analyses(
+                user_id=user_id,
+                status=status_str,
+                industry=industry_str,
+                candidate_id=candidate_id,
+                limit=limit,
+                offset=offset
+            )
+
+            # Get total count for pagination
+            total_count = await self.repository.count_user_analyses(
+                user_id=user_id,
+                status=status_str,
+                industry=industry_str,
+                candidate_id=candidate_id
+            )
+
+            # Convert to summary format with candidate info
+            analyses = []
+            for request in requests:
+                # Get resume to access candidate info
+                resume = await self.resume_service.get_upload(request.resume_id, user_id)
+
+                # Get result if completed
+                result = None
+                if request.status == "completed":
+                    _, result = await self.repository.get_analysis_with_results(request.id)
+
+                analyses.append(AnalysisSummary(
+                    id=str(request.id),
+                    file_name=resume.original_filename if resume else None,
+                    candidate_name=f"{resume.candidate.first_name} {resume.candidate.last_name}" if resume and resume.candidate else "Unknown",
+                    candidate_id=str(resume.candidate_id) if resume else None,
+                    industry=Industry(request.target_industry),
+                    overall_score=result.overall_score if result else None,
+                    market_tier=None,  # Will be extracted from detailed_scores if needed
+                    status=AnalysisStatus(request.status),
+                    created_at=request.requested_at
+                ))
 
             return {
                 "analyses": analyses,
-                "total_count": 0  # TODO: Get actual count
+                "total_count": total_count
             }
 
         except Exception as e:

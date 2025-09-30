@@ -175,23 +175,25 @@ async def get_resume_analysis_history(
 async def list_analyses(
     status: Optional[AnalysisStatus] = Query(None, description="Filter by status"),
     industry: Optional[Industry] = Query(None, description="Filter by industry"),
+    candidate_id: Optional[uuid.UUID] = Query(None, description="Filter by candidate"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(10, ge=1, le=50, description="Items per page"),
     current_user: User = Depends(get_current_user),
     service: AnalysisService = Depends(get_analysis_service)
 ) -> AnalysisListResponse:
     """List user's analyses with optional filtering and pagination."""
-    
+
     offset = (page - 1) * page_size
-    
+
     result = await service.list_user_analyses(
         user_id=current_user.id,
         limit=page_size,
         offset=offset,
         status=status,
-        industry=industry
+        industry=industry,
+        candidate_id=candidate_id
     )
-    
+
     return AnalysisListResponse(
         analyses=result["analyses"],
         total_count=result["total_count"],

@@ -86,6 +86,7 @@ class ReviewRequestRepository(BaseRepository[ReviewRequest]):
         user_id: uuid.UUID,
         status: Optional[str] = None,
         industry: Optional[str] = None,
+        candidate_id: Optional[uuid.UUID] = None,
         limit: int = 10,
         offset: int = 0
     ) -> List[ReviewRequest]:
@@ -97,6 +98,12 @@ class ReviewRequestRepository(BaseRepository[ReviewRequest]):
 
         if industry:
             query = query.where(ReviewRequest.target_industry == industry)
+
+        if candidate_id:
+            # Join with resumes table to filter by candidate_id
+            from database.models import Resume
+            query = query.join(Resume, ReviewRequest.resume_id == Resume.id)
+            query = query.where(Resume.candidate_id == candidate_id)
 
         query = query.order_by(desc(ReviewRequest.requested_at)).limit(limit).offset(offset)
 
@@ -114,6 +121,31 @@ class ReviewRequestRepository(BaseRepository[ReviewRequest]):
 
         result = await self.session.execute(query)
         return result.scalars().all()
+
+    async def count_by_user(
+        self,
+        user_id: uuid.UUID,
+        status: Optional[str] = None,
+        industry: Optional[str] = None,
+        candidate_id: Optional[uuid.UUID] = None
+    ) -> int:
+        """Count total requests by user with optional filtering"""
+        query = select(func.count(ReviewRequest.id)).where(ReviewRequest.requested_by_user_id == user_id)
+
+        if status:
+            query = query.where(ReviewRequest.status == status)
+
+        if industry:
+            query = query.where(ReviewRequest.target_industry == industry)
+
+        if candidate_id:
+            # Join with resumes table to filter by candidate_id
+            from database.models import Resume
+            query = query.join(Resume, ReviewRequest.resume_id == Resume.id)
+            query = query.where(Resume.candidate_id == candidate_id)
+
+        result = await self.session.execute(query)
+        return result.scalar() or 0
 
 
 class ReviewResultRepository(BaseRepository[ReviewResult]):
@@ -258,6 +290,7 @@ class AnalysisRepository:
         user_id: uuid.UUID,
         status: Optional[str] = None,
         industry: Optional[str] = None,
+        candidate_id: Optional[uuid.UUID] = None,
         limit: int = 10,
         offset: int = 0
     ) -> List[ReviewRequest]:
@@ -266,8 +299,24 @@ class AnalysisRepository:
             user_id=user_id,
             status=status,
             industry=industry,
+            candidate_id=candidate_id,
             limit=limit,
             offset=offset
+        )
+
+    async def count_user_analyses(
+        self,
+        user_id: uuid.UUID,
+        status: Optional[str] = None,
+        industry: Optional[str] = None,
+        candidate_id: Optional[uuid.UUID] = None
+    ) -> int:
+        """Count user's analysis requests"""
+        return await self.request_repo.count_by_user(
+            user_id=user_id,
+            status=status,
+            industry=industry,
+            candidate_id=candidate_id
         )
 
     async def get_recent_analyses(

@@ -106,12 +106,14 @@ class AnalysisSummary(BaseModel):
     """Summary view of an analysis for listings."""
     id: str
     file_name: Optional[str] = None
+    candidate_name: Optional[str] = None
+    candidate_id: Optional[str] = None
     industry: Industry
     overall_score: Optional[float] = None
     market_tier: Optional[MarketTier] = None
     status: AnalysisStatus
     created_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 

@@ -957,6 +957,46 @@ export const adminApi = {
   }
 }
 
+// History API functions
+export const historyApi = {
+  async getHistory(params?: {
+    candidate_id?: string
+    status?: string
+    industry?: string
+    page?: number
+    page_size?: number
+  }): Promise<ApiResult<any>> {
+    try {
+      const response = await api.get('/analysis/', { params })
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+
+      return {
+        success: false,
+        error: new Error('Failed to load history')
+      }
+    }
+  }
+}
+
 // Export the configured axios instance for custom requests
 export default api
 
