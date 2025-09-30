@@ -111,7 +111,11 @@ export function useUserManagement() {
         const result = await adminApi.createUser(createPayload)
 
         if (result.success) {
-          showSuccess('User created successfully')
+          // Show detailed success message with credentials
+          showSuccess(
+            `User created! Email: ${userData.email} | Temp Password: ${userData.temporary_password}`,
+            { duration: 10000 } // Show for 10 seconds
+          )
           loadUsers() // Reload users
           return true
         } else {
@@ -155,7 +159,10 @@ export function useUserManagement() {
       })
 
       if (result.success) {
-        showSuccess(`Password reset for ${user.email}. New password: ${newPassword}`)
+        showSuccess(
+          `Password reset for ${user.email}. New password: ${newPassword}`,
+          { duration: 10000 } // Show for 10 seconds to allow copying
+        )
       } else {
         showError('Failed to reset password')
       }

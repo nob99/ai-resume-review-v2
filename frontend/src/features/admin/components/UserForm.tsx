@@ -70,6 +70,12 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSave, onCancel }) => {
           required
           disabled={!!user} // Disable email editing for existing users
         />
+        {user && (
+          <p className="mt-1.5 text-xs text-neutral-500 flex items-start gap-1.5">
+            <span className="text-base leading-none">ℹ️</span>
+            <span>Email cannot be changed after account creation</span>
+          </p>
+        )}
       </div>
 
       <div>
@@ -100,6 +106,10 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSave, onCancel }) => {
             onChange={(e) => setFormData(prev => ({ ...prev, temporary_password: e.target.value }))}
             required={!user}
           />
+          <p className="mt-1.5 text-xs text-neutral-600 flex items-start gap-1.5">
+            <span className="text-base leading-none">💡</span>
+            <span>Share this password with the user. They will be required to change it on first login.</span>
+          </p>
         </div>
       )}
 
