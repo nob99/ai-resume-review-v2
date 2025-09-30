@@ -11,6 +11,21 @@ features/feature_name/
 └── schemas.py      # Request/response models
 ```
 
+**Note:** Dependencies are centralized in `app/core/dependencies.py`. Feature-specific dependencies should only be created if they contain feature-specific business logic (not common auth/authz).
+
+## 🔐 Shared Dependencies
+
+All authentication and authorization dependencies are centralized in `app/core/dependencies.py`:
+- `get_current_user`: Extract and validate current user from JWT token (authentication)
+- `require_admin`: Require admin role for endpoint access (authorization)
+- `require_senior_or_admin`: Require senior recruiter or admin role (authorization)
+
+**Why centralized?**
+- Cross-cutting concerns belong in `core/`
+- Easy to discover and reuse across features
+- Consistent authorization logic
+- No feature-to-feature dependencies
+
 ## 🎯 Layer Responsibilities
 
 ### **api.py** - HTTP Interface Layer

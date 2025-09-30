@@ -1,11 +1,18 @@
 """
-Admin authentication dependencies.
-Provides decorators and dependencies for admin-only access control.
+Shared authentication and authorization dependencies.
+
+This module contains dependencies used across multiple features for:
+- Authentication: Extracting and validating current user from JWT tokens
+- Authorization: Role-based access control (admin, senior recruiter, etc.)
+- Database sessions: Providing async database connections
+
+Architecture Pattern:
+- Cross-cutting concerns (auth, authz, db) → core/dependencies.py
+- Feature-specific business logic → features/*/api.py or service.py
 """
 
 from typing import Any
 from uuid import UUID
-from functools import wraps
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -24,17 +31,28 @@ async def get_current_user(
     session: AsyncSession = Depends(get_async_session)
 ) -> User:
     """
-    Get the current authenticated user from the token.
+    Get the current authenticated user from the JWT token.
+
+    This is a shared dependency used across all features that require authentication.
+    It validates the bearer token, extracts user information, and returns the user object.
 
     Args:
-        credentials: Bearer token from request
-        session: Database session
+        credentials: Bearer token from Authorization header
+        session: Async database session
 
     Returns:
-        Current user object
+        Current authenticated user object
 
     Raises:
-        HTTPException: If token is invalid or user not found
+        HTTPException: 401 if token is invalid/expired or user not found
+        HTTPException: 403 if user account is deactivated
+
+    Usage:
+        @router.get("/protected-endpoint")
+        async def protected_route(
+            current_user: User = Depends(get_current_user)
+        ):
+            return {"user": current_user.email}
     """
     try:
         token = credentials.credentials
@@ -79,14 +97,24 @@ async def require_admin(
     """
     Require the current user to have admin role.
 
+    This dependency combines authentication (via get_current_user) with
+    authorization (role checking) to enforce admin-only access.
+
     Args:
-        current_user: Current authenticated user
+        current_user: Current authenticated user (injected by get_current_user)
 
     Returns:
-        Current user if admin
+        Current user if they have admin role
 
     Raises:
-        HTTPException: If user is not admin
+        HTTPException: 403 if user is not admin
+
+    Usage:
+        @router.post("/admin/users")
+        async def create_user(
+            admin: User = Depends(require_admin)
+        ):
+            return {"message": "Admin access granted"}
     """
     if current_user.role != UserRole.ADMIN.value:
         raise HTTPException(
@@ -103,14 +131,24 @@ async def require_senior_or_admin(
     """
     Require the current user to be senior recruiter or admin.
 
+    This dependency allows access to users with elevated privileges
+    (senior recruiters and admins).
+
     Args:
-        current_user: Current authenticated user
+        current_user: Current authenticated user (injected by get_current_user)
 
     Returns:
-        Current user if authorized
+        Current user if they have senior or admin role
 
     Raises:
-        HTTPException: If user is not senior or admin
+        HTTPException: 403 if user is not senior recruiter or admin
+
+    Usage:
+        @router.get("/admin/directory")
+        async def get_directory(
+            user: User = Depends(require_senior_or_admin)
+        ):
+            return {"message": "Senior or admin access granted"}
     """
     allowed_roles = [UserRole.SENIOR_RECRUITER.value, UserRole.ADMIN.value]
 

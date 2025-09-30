@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_async_session
 from app.core.security import password_hasher
 from app.core.datetime_utils import utc_now
-from app.features.admin.dependencies import get_current_user
+from app.core.dependencies import get_current_user
 from app.features.auth.repository import UserRepository
 from app.features.auth.schemas import UserResponse
 from database.models.auth import User
