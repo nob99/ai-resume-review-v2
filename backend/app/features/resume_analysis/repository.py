@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy import desc, and_, func, select
 
-from infrastructure.persistence.postgres.base import BaseRepository
+from app.core.database import BaseRepository
 from app.core.datetime_utils import utc_now
 from database.models import ReviewRequest, ReviewResult, ReviewFeedbackItem
 

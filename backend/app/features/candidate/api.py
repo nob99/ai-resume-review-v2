@@ -13,7 +13,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from infrastructure.persistence.postgres.connection import get_async_session
+from app.core.database import get_async_session
 from app.features.auth.api import get_current_user
 from .service import CandidateService
 from .repository import CandidateRepository

@@ -14,7 +14,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from infrastructure.persistence.postgres.connection import get_async_session
+from app.core.database import get_async_session
 from app.core.security import SecurityError
 from .dependencies import require_admin, require_senior_or_admin
 from .service import AdminService

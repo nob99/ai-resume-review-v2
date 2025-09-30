@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from infrastructure.persistence.postgres.connection import get_async_session
+from app.core.database import get_async_session
 from app.features.auth.api import get_current_user
 from database.models.auth import User
 from app.core.rate_limiter import rate_limiter, RateLimitExceeded, RateLimitType

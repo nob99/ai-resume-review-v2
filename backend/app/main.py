@@ -46,7 +46,7 @@ async def lifespan(app: FastAPI):
         logger.info("Rate limiter initialized")
         
         # Initialize async infrastructure
-        from infrastructure.persistence.postgres.connection import init_postgres
+        from app.core.database import init_postgres
         await init_postgres()
         logger.info("PostgreSQL async connection initialized")
         

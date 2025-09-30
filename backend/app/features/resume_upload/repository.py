@@ -7,7 +7,7 @@ from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import desc, and_, select
 
-from infrastructure.persistence.postgres.base import BaseRepository
+from app.core.database import BaseRepository
 from app.core.datetime_utils import utc_now
 from database.models.resume import Resume, ResumeStatus
 

@@ -9,7 +9,7 @@ from uuid import UUID
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from infrastructure.persistence.postgres.base import BaseRepository
+from app.core.database import BaseRepository
 from database.models.auth import User, RefreshToken, SessionStatus
 
 

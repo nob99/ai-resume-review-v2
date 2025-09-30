@@ -10,7 +10,7 @@ from datetime import timedelta
 
 import redis.asyncio as redis
 
-from app.infrastructure.persistence.redis.connection import get_redis_client
+from app.core.cache.connection import get_redis_client
 
 logger = logging.getLogger(__name__)
 

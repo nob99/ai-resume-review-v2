@@ -1,6 +1,4 @@
-"""
-PostgreSQL infrastructure module exports.
-"""
+"""Database connection and repository management."""
 
 from .connection import (
     PostgresConnection,
@@ -9,13 +7,13 @@ from .connection import (
     close_postgres,
     get_async_session
 )
-from .base import BaseRepository
+from .repository import BaseRepository
 
 __all__ = [
     "PostgresConnection",
-    "get_postgres_connection", 
+    "get_postgres_connection",
     "init_postgres",
     "close_postgres",
     "get_async_session",
-    "BaseRepository"
+    "BaseRepository",
 ]

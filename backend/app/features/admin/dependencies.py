@@ -12,7 +12,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import verify_token, SecurityError
-from infrastructure.persistence.postgres.connection import get_async_session
+from app.core.database import get_async_session
 from app.features.auth.repository import UserRepository
 from database.models.auth import User, UserRole
 
