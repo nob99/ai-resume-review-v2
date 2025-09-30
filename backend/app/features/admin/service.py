@@ -112,8 +112,22 @@ class AdminService:
         Returns:
             Paginated user list response
         """
-        # Build base query
-        query = select(User)
+        # Build query with LEFT JOIN to get assignment counts in single query
+        # This eliminates N+1 problem (was: 1 query for users + N queries for counts)
+        query = (
+            select(
+                User,
+                func.count(UserCandidateAssignment.id).label('assigned_count')
+            )
+            .outerjoin(
+                UserCandidateAssignment,
+                and_(
+                    UserCandidateAssignment.user_id == User.id,
+                    UserCandidateAssignment.is_active == True
+                )
+            )
+            .group_by(User.id)
+        )
 
         # Apply filters
         if search:
@@ -132,47 +146,35 @@ class AdminService:
         if is_active is not None:
             query = query.where(User.is_active == is_active)
 
-        # Get total count
+        # Get total count before pagination
         count_query = select(func.count()).select_from(query.subquery())
         total_result = await self.session.execute(count_query)
         total = total_result.scalar() or 0
 
-        # Apply pagination
+        # Apply pagination and ordering
         query = query.order_by(User.created_at.desc())
         query = query.offset((page - 1) * page_size).limit(page_size)
 
-        # Execute query
+        # Execute single query that gets users + assignment counts
         result = await self.session.execute(query)
-        users = list(result.scalars().all())
+        rows = result.all()
 
-        # Get assigned candidates count for each user
-        user_items = []
-        for user in users:
-            # Count assigned candidates (only for junior recruiters)
-            assigned_count = 0
-            if user.role == UserRole.JUNIOR_RECRUITER.value:
-                count_query = select(func.count()).select_from(
-                    UserCandidateAssignment
-                ).where(
-                    UserCandidateAssignment.user_id == user.id,
-                    UserCandidateAssignment.is_active == True
-                )
-                count_result = await self.session.execute(count_query)
-                assigned_count = count_result.scalar() or 0
-
-            user_item = UserListItem(
-                id=user.id,
-                email=user.email,
-                first_name=user.first_name,
-                last_name=user.last_name,
-                role=user.role,
-                is_active=user.is_active,
-                email_verified=user.email_verified,
-                last_login_at=user.last_login_at,
-                created_at=user.created_at,
-                assigned_candidates_count=assigned_count
+        # Build response items from query results
+        user_items = [
+            UserListItem(
+                id=row.User.id,
+                email=row.User.email,
+                first_name=row.User.first_name,
+                last_name=row.User.last_name,
+                role=row.User.role,
+                is_active=row.User.is_active,
+                email_verified=row.User.email_verified,
+                last_login_at=row.User.last_login_at,
+                created_at=row.User.created_at,
+                assigned_candidates_count=row.assigned_count
             )
-            user_items.append(user_item)
+            for row in rows
+        ]
 
         total_pages = (total + page_size - 1) // page_size
 
@@ -186,7 +188,7 @@ class AdminService:
 
     async def get_user_details(self, user_id: UUID) -> Optional[UserDetailResponse]:
         """
-        Get detailed user information.
+        Get detailed user information with statistics in a single query.
 
         Args:
             user_id: User ID
@@ -194,36 +196,40 @@ class AdminService:
         Returns:
             Detailed user information or None if not found
         """
-        user = await self.user_repo.get_by_id(user_id)
-        if not user:
+        # Single query with scalar subqueries for all statistics
+        # Eliminates 4 separate queries (1 for user + 3 for counts)
+        query = (
+            select(
+                User,
+                # Count assigned candidates (only active assignments)
+                select(func.count(UserCandidateAssignment.id))
+                .where(
+                    UserCandidateAssignment.user_id == user_id,
+                    UserCandidateAssignment.is_active == True
+                )
+                .scalar_subquery()
+                .label('assigned_count'),
+                # Count resumes uploaded
+                select(func.count(Resume.id))
+                .where(Resume.uploaded_by_user_id == user_id)
+                .scalar_subquery()
+                .label('resume_count'),
+                # Count reviews requested
+                select(func.count(ReviewRequest.id))
+                .where(ReviewRequest.requested_by_user_id == user_id)
+                .scalar_subquery()
+                .label('review_count')
+            )
+            .where(User.id == user_id)
+        )
+
+        result = await self.session.execute(query)
+        row = result.one_or_none()
+
+        if not row:
             return None
 
-        # Get statistics
-        assigned_count = 0
-        if user.role == UserRole.JUNIOR_RECRUITER.value:
-            count_query = select(func.count()).select_from(
-                UserCandidateAssignment
-            ).where(
-                UserCandidateAssignment.user_id == user.id,
-                UserCandidateAssignment.is_active == True
-            )
-            count_result = await self.session.execute(count_query)
-            assigned_count = count_result.scalar() or 0
-
-        # Count resumes uploaded
-        resume_count_query = select(func.count()).select_from(Resume).where(
-            Resume.uploaded_by_user_id == user.id
-        )
-        resume_count_result = await self.session.execute(resume_count_query)
-        resume_count = resume_count_result.scalar() or 0
-
-        # Count reviews requested
-        review_count_query = select(func.count()).select_from(ReviewRequest).where(
-            ReviewRequest.requested_by_user_id == user.id
-        )
-        review_count_result = await self.session.execute(review_count_query)
-        review_count = review_count_result.scalar() or 0
-
+        user = row.User
         return UserDetailResponse(
             id=user.id,
             email=user.email,
@@ -238,9 +244,9 @@ class AdminService:
             password_changed_at=user.password_changed_at,
             failed_login_attempts=user.failed_login_attempts,
             locked_until=user.locked_until,
-            assigned_candidates_count=assigned_count,
-            total_resumes_uploaded=resume_count,
-            total_reviews_requested=review_count
+            assigned_candidates_count=row.assigned_count,
+            total_resumes_uploaded=row.resume_count,
+            total_reviews_requested=row.review_count
         )
 
     async def update_user(
