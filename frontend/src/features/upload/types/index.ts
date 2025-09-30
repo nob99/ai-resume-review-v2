@@ -2,10 +2,9 @@
  * Upload Feature Types
  */
 
-export interface IndustryOption {
-  value: string
-  label: string
-}
+// Re-export constants and types from constants file
+export { INDUSTRY_OPTIONS } from '../constants'
+export type { IndustryOption } from '../constants'
 
 export interface UploadPageState {
   selectedCandidate: string
@@ -40,11 +39,3 @@ export type {
   AnalysisStatusResponse,
   AnalysisResult
 } from '@/types'
-
-export const INDUSTRY_OPTIONS: IndustryOption[] = [
-  { value: 'strategy_tech', label: 'Strategy/Tech' },
-  { value: 'ma_financial', label: 'M&A/Financial Advisory' },
-  { value: 'consulting', label: 'Full Service Consulting' },
-  { value: 'system_integrator', label: 'System Integrator' },
-  { value: 'general', label: 'General' }
-]

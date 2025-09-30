@@ -1,4 +1,5 @@
 // Common types for the application
+import { FileUploadStatus, FileUploadStatusType } from '@/features/upload/constants'
 
 export interface User {
   id: string
@@ -130,11 +131,18 @@ export interface FileUploadError extends Error {
 export interface UploadFile {
   id: string
   file: File
-  status: 'pending' | 'uploading' | 'success' | 'error' | 'cancelled'
+  status: FileUploadStatus | FileUploadStatusType
   progress: number
   error?: string
   result?: {
+    id?: string
+    filename?: string
+    size?: number
+    content_type?: string
+    uploaded_at?: string
     extractedText?: string
+    candidate_id?: string
+    upload_id?: string
     [key: string]: any
   }
   abortController?: AbortController
@@ -154,6 +162,19 @@ export interface FileUploadProps extends BaseComponentProps {
   maxFiles?: number
   multiple?: boolean
   disabled?: boolean
+}
+
+// Upload status response from API
+export interface UploadStatusResponse {
+  upload_id: string
+  status: 'pending' | 'processing' | 'completed' | 'failed'
+  file_id?: string
+  filename: string
+  size: number
+  content_type: string
+  uploaded_at: string
+  extracted_text?: string
+  error?: string
 }
 
 // AI Analysis Types

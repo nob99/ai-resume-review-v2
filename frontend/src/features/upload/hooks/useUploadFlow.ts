@@ -1,9 +1,10 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useToast } from '@/components/ui'
 import { UploadFile, FileUploadError, AnalysisStatusResponse } from '@/types'
 import uploadService from '../services/uploadService'
 import analysisService from '../services/analysisService'
 import { UploadPageState, FileUploadHandlers, AnalysisHandlers } from '../types'
+import { ANALYSIS_POLL_INTERVAL_MS, FileUploadStatus, AnalysisStatus } from '../constants'
 
 /**
  * Custom hook for managing complete upload and analysis flow
@@ -23,15 +24,22 @@ export function useUploadFlow() {
     analysisStatus: ''
   })
 
-  // Generate unique file ID
-  const generateFileId = () => `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  // Generate unique file ID using Web Crypto API
+  // Falls back to Date.now if crypto.randomUUID is not available (older browsers)
+  const generateFileId = () => {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID()
+    }
+    // Fallback for older browsers
+    return `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  }
 
   // Handle file selection
   const handleFilesSelected = useCallback((selectedFiles: File[]) => {
     const newFiles: UploadFile[] = selectedFiles.map(file => ({
       id: generateFileId(),
       file,
-      status: 'pending',
+      status: FileUploadStatus.PENDING,
       progress: 0
     }))
 
@@ -63,7 +71,7 @@ export function useUploadFlow() {
       ...prev,
       files: prev.files.map(f =>
         f.id === uploadFile.id
-          ? { ...f, status: 'uploading' as const, progress: 0 }
+          ? { ...f, status: FileUploadStatus.UPLOADING, progress: 0 }
           : f
       )
     }))
@@ -108,7 +116,7 @@ export function useUploadFlow() {
             f.id === uploadFile.id
               ? {
                   ...f,
-                  status: 'success' as const,
+                  status: FileUploadStatus.SUCCESS,
                   progress: 100,
                   result: result.data,
                   abortController: undefined
@@ -125,16 +133,19 @@ export function useUploadFlow() {
       } else {
         throw result.error || new Error('Upload failed')
       }
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Upload failed'
+      const errorName = error instanceof Error ? error.name : ''
+
       // Check if upload was cancelled
-      if (error.name === 'AbortError' || error.message.includes('cancelled')) {
+      if (errorName === 'AbortError' || errorMessage.includes('cancelled')) {
         setState(prev => ({
           ...prev,
           files: prev.files.map(f =>
             f.id === uploadFile.id
               ? {
                   ...f,
-                  status: 'cancelled' as const,
+                  status: FileUploadStatus.CANCELLED,
                   abortController: undefined
                 }
               : f
@@ -148,8 +159,8 @@ export function useUploadFlow() {
             f.id === uploadFile.id
               ? {
                   ...f,
-                  status: 'error' as const,
-                  error: error.message || 'Upload failed',
+                  status: FileUploadStatus.ERROR,
+                  error: errorMessage,
                   abortController: undefined
                 }
               : f
@@ -159,7 +170,7 @@ export function useUploadFlow() {
         addToast({
           type: 'error',
           title: 'Upload Failed',
-          message: `Failed to upload ${uploadFile.file.name}: ${error.message}`
+          message: `Failed to upload ${uploadFile.file.name}: ${errorMessage}`
         })
       }
     }
@@ -176,7 +187,7 @@ export function useUploadFlow() {
       return
     }
 
-    const pendingFiles = state.files.filter(f => f.status === 'pending')
+    const pendingFiles = state.files.filter(f => f.status === FileUploadStatus.PENDING)
     if (pendingFiles.length === 0) return
 
     setState(prev => ({ ...prev, isUploading: true }))
@@ -186,17 +197,41 @@ export function useUploadFlow() {
 
     try {
       await Promise.all(uploadPromises)
-
-      const successCount = state.files.filter(f => f.status === 'success').length
-      addToast({
-        type: 'success',
-        title: 'Uploads Complete',
-        message: `${successCount} file${successCount !== 1 ? 's' : ''} uploaded successfully!`
-      })
     } catch (error) {
       console.error('Batch upload error:', error)
     } finally {
-      setState(prev => ({ ...prev, isUploading: false }))
+      // Use ref object to capture counts from functional setState
+      const countsRef = { successCount: 0, errorCount: 0 }
+
+      // Update state and capture counts (fixes race condition)
+      setState(prev => {
+        countsRef.successCount = prev.files.filter(f => f.status === FileUploadStatus.SUCCESS).length
+        countsRef.errorCount = prev.files.filter(f => f.status === FileUploadStatus.ERROR).length
+        return { ...prev, isUploading: false }
+      })
+
+      // Show toasts AFTER setState completes (fixes React error)
+      const { successCount, errorCount } = countsRef
+
+      if (successCount > 0 && errorCount === 0) {
+        addToast({
+          type: 'success',
+          title: 'All Uploads Complete',
+          message: `${successCount} file${successCount !== 1 ? 's' : ''} uploaded successfully!`
+        })
+      } else if (successCount > 0 && errorCount > 0) {
+        addToast({
+          type: 'warning',
+          title: 'Partial Success',
+          message: `${successCount} succeeded, ${errorCount} failed. Check files below.`
+        })
+      } else if (errorCount > 0) {
+        addToast({
+          type: 'error',
+          title: 'Upload Failed',
+          message: `${errorCount} file${errorCount !== 1 ? 's' : ''} failed to upload. Please retry.`
+        })
+      }
     }
   }
 
@@ -219,8 +254,8 @@ export function useUploadFlow() {
     setState(prev => ({
       ...prev,
       files: prev.files.map(f =>
-        f.id === fileId && f.status === 'error'
-          ? { ...f, status: 'pending' as const, error: undefined }
+        f.id === fileId && f.status === FileUploadStatus.ERROR
+          ? { ...f, status: FileUploadStatus.PENDING, error: undefined }
           : f
       )
     }))
@@ -230,13 +265,20 @@ export function useUploadFlow() {
   useEffect(() => {
     if (!state.analysisId || state.analysisResult) return
 
+    // Track if component is still mounted to prevent state updates after unmount
+    let isActive = true
+
     const pollInterval = setInterval(async () => {
       try {
         const result = await analysisService.getAnalysisStatus(state.analysisId!)
+
+        // Only update state if component is still mounted
+        if (!isActive) return
+
         if (result.success) {
           setState(prev => ({ ...prev, analysisStatus: result.data.status }))
 
-          if (result.data.status === 'completed') {
+          if (result.data.status === AnalysisStatus.COMPLETED) {
             setState(prev => ({
               ...prev,
               analysisResult: result.data,
@@ -248,7 +290,7 @@ export function useUploadFlow() {
               title: 'Analysis Complete',
               message: 'Your resume analysis is ready!'
             })
-          } else if (result.data.status === 'error') {
+          } else if (result.data.status === AnalysisStatus.ERROR) {
             setState(prev => ({ ...prev, isAnalyzing: false }))
             clearInterval(pollInterval)
             addToast({
@@ -259,16 +301,21 @@ export function useUploadFlow() {
           }
         }
       } catch (error) {
+        // Only log if component is still mounted
+        if (!isActive) return
         console.error('Failed to poll analysis status:', error)
       }
-    }, 3000)
+    }, ANALYSIS_POLL_INTERVAL_MS)
 
-    return () => clearInterval(pollInterval)
+    return () => {
+      isActive = false
+      clearInterval(pollInterval)
+    }
   }, [state.analysisId, state.analysisResult, addToast])
 
   // Start analysis
   const handleStartAnalysis = async () => {
-    const successFiles = state.files.filter(f => f.status === 'success')
+    const successFiles = state.files.filter(f => f.status === FileUploadStatus.SUCCESS)
     const resumeId = successFiles[0]?.result?.id
 
     if (!resumeId) {
@@ -293,7 +340,7 @@ export function useUploadFlow() {
       ...prev,
       isAnalyzing: true,
       analysisResult: null,
-      analysisStatus: 'requesting'
+      analysisStatus: AnalysisStatus.REQUESTING
     }))
 
     try {
@@ -313,12 +360,13 @@ export function useUploadFlow() {
       } else {
         throw result.error || new Error('Failed to start analysis')
       }
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start analysis'
       setState(prev => ({ ...prev, isAnalyzing: false }))
       addToast({
         type: 'error',
         title: 'Analysis Failed',
-        message: error.message || 'Failed to start analysis'
+        message: errorMessage
       })
     }
   }
@@ -368,11 +416,26 @@ export function useUploadFlow() {
     onUploadNew: handleUploadNew
   }
 
-  // Computed values
-  const pendingFiles = state.files.filter(f => f.status === 'pending')
-  const uploadingFiles = state.files.filter(f => f.status === 'uploading')
-  const successFiles = state.files.filter(f => f.status === 'success')
-  const errorFiles = state.files.filter(f => f.status === 'error')
+  // Computed values (memoized to prevent unnecessary recalculations)
+  const pendingFiles = useMemo(
+    () => state.files.filter(f => f.status === FileUploadStatus.PENDING),
+    [state.files]
+  )
+
+  const uploadingFiles = useMemo(
+    () => state.files.filter(f => f.status === FileUploadStatus.UPLOADING),
+    [state.files]
+  )
+
+  const successFiles = useMemo(
+    () => state.files.filter(f => f.status === FileUploadStatus.SUCCESS),
+    [state.files]
+  )
+
+  const errorFiles = useMemo(
+    () => state.files.filter(f => f.status === FileUploadStatus.ERROR),
+    [state.files]
+  )
 
   return {
     // State

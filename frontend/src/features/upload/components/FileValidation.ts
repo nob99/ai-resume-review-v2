@@ -1,4 +1,10 @@
 // File validation utilities for upload components
+import {
+  ACCEPTED_FILE_TYPES,
+  ACCEPTED_EXTENSIONS,
+  MAX_FILE_SIZE,
+  MIN_FILE_SIZE
+} from '../constants'
 
 export interface FileValidationRule {
   validate: (file: File) => boolean
@@ -14,7 +20,7 @@ export interface FileValidationConfig {
 
 export class FileValidationError extends Error {
   constructor(
-    message: string, 
+    message: string,
     public code: 'INVALID_TYPE' | 'FILE_TOO_LARGE' | 'FILE_TOO_SMALL' | 'INVALID_EXTENSION' | 'CORRUPTED_FILE'
   ) {
     super(message)
@@ -26,14 +32,10 @@ export class FileValidationError extends Error {
  * Default validation configuration for resume files
  */
 export const RESUME_VALIDATION_CONFIG: FileValidationConfig = {
-  allowedTypes: [
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-  ],
-  allowedExtensions: ['.pdf', '.doc', '.docx'],
-  maxFileSize: 10 * 1024 * 1024, // 10MB
-  minFileSize: 1024 // 1KB minimum
+  allowedTypes: Object.keys(ACCEPTED_FILE_TYPES),
+  allowedExtensions: [...ACCEPTED_EXTENSIONS],
+  maxFileSize: MAX_FILE_SIZE,
+  minFileSize: MIN_FILE_SIZE
 }
 
 /**

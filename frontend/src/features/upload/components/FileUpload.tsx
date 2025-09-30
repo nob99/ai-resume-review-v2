@@ -5,14 +5,8 @@ import { useDropzone } from 'react-dropzone'
 import { Card, CardContent } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { FileUploadProps, FileValidationResult, FileUploadError } from '@/types'
-
-const ACCEPTED_FILE_TYPES = {
-  'application/pdf': ['.pdf'],
-  'application/msword': ['.doc'],
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
-}
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB in bytes
+import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE } from '../constants'
+import { formatFileSize } from './FileValidation'
 
 const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
   ({
@@ -56,12 +50,15 @@ const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
     const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
       setIsDragActive(false)
 
-      // Handle rejected files
+      // Handle rejected files - show ALL errors, not just first
       if (rejectedFiles.length > 0) {
-        const firstRejected = rejectedFiles[0]
+        const errorMessages = rejectedFiles.map(rejection =>
+          `${rejection.file.name}: ${rejection.errors?.[0]?.message || 'Invalid file'}`
+        )
+
         const error: FileUploadError = {
           name: 'FileUploadError',
-          message: firstRejected.errors?.[0]?.message || 'File upload failed',
+          message: `${rejectedFiles.length} file${rejectedFiles.length !== 1 ? 's' : ''} rejected:\n${errorMessages.join('\n')}`,
           code: 'VALIDATION_FAILED'
         }
         onError?.(error)
@@ -129,9 +126,6 @@ const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
       className
     )
 
-    const formatFileSize = (bytes: number): string => {
-      return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
-    }
 
     return (
       <Card ref={ref} className="w-full" {...props}>

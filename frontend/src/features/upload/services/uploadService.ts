@@ -1,5 +1,5 @@
 import { uploadApi } from '@/lib/api'
-import { ApiResult } from '@/types'
+import { ApiResult, UploadStatusResponse } from '@/types'
 
 export interface FileUploadResult {
   id: string
@@ -32,7 +32,7 @@ export const uploadService = {
   /**
    * Get upload status
    */
-  async getUploadStatus(uploadId: string): Promise<ApiResult<any>> {
+  async getUploadStatus(uploadId: string): Promise<ApiResult<UploadStatusResponse>> {
     return uploadApi.getUploadStatus(uploadId)
   },
 

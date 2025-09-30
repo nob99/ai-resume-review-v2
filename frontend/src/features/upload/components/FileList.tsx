@@ -4,6 +4,7 @@ import React from 'react'
 import { Button } from '@/components/ui'
 import { UploadFile } from '@/types'
 import FileStatusBadge from './FileStatusBadge'
+import { FileUploadStatus } from '../constants'
 
 export interface FileListProps {
   files: UploadFile[]
@@ -22,6 +23,28 @@ const FileList: React.FC<FileListProps> = ({
   onRetryFile,
   onRemoveFile
 }) => {
+  // Handle keyboard navigation for buttons
+  const handleKeyDown = (
+    e: React.KeyboardEvent,
+    fileId: string,
+    action: 'cancel' | 'retry' | 'remove'
+  ) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      switch (action) {
+        case 'cancel':
+          onCancelFile(fileId)
+          break
+        case 'retry':
+          onRetryFile(fileId)
+          break
+        case 'remove':
+          onRemoveFile(fileId)
+          break
+      }
+    }
+  }
+
   if (files.length === 0) return null
 
   return (
@@ -40,7 +63,7 @@ const FileList: React.FC<FileListProps> = ({
                 <FileStatusBadge status={file.status} />
               </div>
 
-              {file.status === 'uploading' && (
+              {file.status === FileUploadStatus.UPLOADING && (
                 <div className="mt-2">
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
@@ -60,30 +83,39 @@ const FileList: React.FC<FileListProps> = ({
             </div>
 
             <div className="flex items-center space-x-2">
-              {file.status === 'uploading' && (
+              {file.status === FileUploadStatus.UPLOADING && (
                 <Button
                   size="sm"
                   variant="secondary"
                   onClick={() => onCancelFile(file.id)}
+                  onKeyDown={(e) => handleKeyDown(e, file.id, 'cancel')}
+                  aria-label={`Cancel upload of ${file.file.name}`}
+                  title={`Cancel upload of ${file.file.name}`}
                 >
                   Cancel
                 </Button>
               )}
 
-              {file.status === 'error' && (
+              {file.status === FileUploadStatus.ERROR && (
                 <Button
                   size="sm"
                   onClick={() => onRetryFile(file.id)}
+                  onKeyDown={(e) => handleKeyDown(e, file.id, 'retry')}
+                  aria-label={`Retry upload of ${file.file.name}`}
+                  title={`Retry failed upload of ${file.file.name}`}
                 >
                   Retry
                 </Button>
               )}
 
-              {['pending', 'error', 'cancelled'].includes(file.status) && (
+              {[FileUploadStatus.PENDING, FileUploadStatus.ERROR, FileUploadStatus.CANCELLED].includes(file.status) && (
                 <Button
                   size="sm"
                   variant="secondary"
                   onClick={() => onRemoveFile(file.id)}
+                  onKeyDown={(e) => handleKeyDown(e, file.id, 'remove')}
+                  aria-label={`Remove ${file.file.name} from list`}
+                  title={`Remove ${file.file.name} from upload list`}
                 >
                   Remove
                 </Button>
