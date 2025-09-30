@@ -108,28 +108,51 @@ const UploadPage: React.FC = () => {
                 </Card>
               )}
 
-              {/* Upload Actions */}
-              {state.files.length > 0 && (
-                <div className="w-full space-y-4">
-                  {pendingFiles.length > 0 && (
-                    <Button
-                      size="lg"
-                      onClick={fileHandlers.onStartUpload}
-                      disabled={state.isUploading || !state.selectedCandidate}
-                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
-                    >
-                      {state.isUploading ? (
-                        <>
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></div>
-                          Uploading...
-                        </>
-                      ) : (
-                        `Upload ${pendingFiles.length} File${pendingFiles.length !== 1 ? 's' : ''}`
-                      )}
-                    </Button>
+              {/* Upload Button */}
+              {pendingFiles.length > 0 && (
+                <Button
+                  size="lg"
+                  onClick={fileHandlers.onStartUpload}
+                  disabled={state.isUploading || !state.selectedCandidate}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                >
+                  {state.isUploading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></div>
+                      Uploading...
+                    </>
+                  ) : (
+                    `Upload ${pendingFiles.length} File${pendingFiles.length !== 1 ? 's' : ''}`
                   )}
+                </Button>
+              )}
 
-                  {successFiles.length > 0 && uploadingFiles.length === 0 && !state.analysisResult && (
+              {/* Step 3: Industry Selection & Analysis */}
+              <Card className={successFiles.length === 0 ? 'opacity-60' : ''}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-semibold text-neutral-900">
+                      Step 3: Select Industry & Analyze
+                    </h2>
+                    {successFiles.length === 0 && (
+                      <span className="text-sm text-neutral-500 bg-neutral-100 px-3 py-1 rounded-full">
+                        Complete Step 2 first
+                      </span>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {successFiles.length === 0 ? (
+                    <div className="p-8 text-center bg-neutral-50 rounded-lg border-2 border-dashed border-neutral-200">
+                      <div className="text-4xl mb-3">📊</div>
+                      <p className="text-neutral-600 font-medium mb-1">
+                        Industry Selection
+                      </p>
+                      <p className="text-sm text-neutral-500">
+                        Upload and complete Step 2 to select industry and analyze your resume
+                      </p>
+                    </div>
+                  ) : (
                     <IndustrySelector
                       selectedIndustry={state.selectedIndustry}
                       onIndustryChange={setSelectedIndustry}
@@ -139,8 +162,8 @@ const UploadPage: React.FC = () => {
                       industryOptions={INDUSTRY_OPTIONS}
                     />
                   )}
-                </div>
-              )}
+                </CardContent>
+              </Card>
 
               {/* Analysis Results */}
               {state.analysisResult && (
