@@ -110,13 +110,13 @@ const UploadPage: React.FC = () => {
 
               {/* Upload Actions */}
               {state.files.length > 0 && (
-                <div className="flex justify-center space-x-4">
+                <div className="w-full space-y-4">
                   {pendingFiles.length > 0 && (
                     <Button
                       size="lg"
                       onClick={fileHandlers.onStartUpload}
                       disabled={state.isUploading || !state.selectedCandidate}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
                     >
                       {state.isUploading ? (
                         <>
