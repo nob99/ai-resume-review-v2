@@ -462,8 +462,8 @@ class AnalysisService:
             # Convert to summary format with candidate info
             analyses = []
             for request in requests:
-                # Get resume to access candidate info (use repository directly)
-                resume = await self.resume_repository.get_by_id(request.resume_id)
+                # Get resume with candidate relationship loaded
+                resume = await self.resume_repository.get_by_id_with_candidate(request.resume_id)
 
                 # Skip if resume not found or user doesn't have access
                 if not resume or resume.uploaded_by_user_id != user_id:
@@ -478,7 +478,7 @@ class AnalysisService:
                 analyses.append(AnalysisSummary(
                     id=str(request.id),
                     file_name=resume.original_filename if resume else None,
-                    candidate_name=f"{resume.candidate.first_name} {resume.candidate.last_name}" if resume and hasattr(resume, 'candidate') and resume.candidate else "Unknown",
+                    candidate_name=f"{resume.candidate.first_name} {resume.candidate.last_name}" if resume and resume.candidate else "Unknown",
                     candidate_id=str(resume.candidate_id) if resume else None,
                     industry=Industry(request.target_industry),
                     overall_score=result.overall_score if result else None,

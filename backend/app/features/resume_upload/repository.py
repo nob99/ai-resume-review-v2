@@ -6,6 +6,7 @@ from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import desc, and_, select
+from sqlalchemy.orm import selectinload
 
 from app.core.database import BaseRepository
 from app.core.datetime_utils import utc_now
@@ -18,6 +19,14 @@ class ResumeUploadRepository(BaseRepository[Resume]):
     def __init__(self, session: AsyncSession):
         """Initialize repository with database session."""
         super().__init__(session, Resume)
+
+    async def get_by_id_with_candidate(self, resume_id: uuid.UUID) -> Optional[Resume]:
+        """Get resume by ID with candidate relationship loaded."""
+        stmt = select(Resume).where(Resume.id == resume_id).options(
+            selectinload(Resume.candidate)
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
 
     async def get_latest_resume_for_candidate(self, candidate_id: uuid.UUID) -> Optional[Resume]:
         """Get the most recent resume for a candidate (by version number)."""
