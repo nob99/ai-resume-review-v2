@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useRouter } from 'next/navigation'
 import { Container, Header } from '@/components/layout'
 import { Card, CardHeader, CardContent, Button, CandidateSelector } from '@/components/ui'
 import FileUpload from '@/features/upload/components/FileUpload'
@@ -16,6 +17,7 @@ import { INDUSTRY_OPTIONS } from '@/features/upload/types'
  * Main upload and analysis workflow
  */
 const UploadPage: React.FC = () => {
+  const router = useRouter()
   const {
     state,
     pendingFiles,
@@ -53,24 +55,45 @@ const UploadPage: React.FC = () => {
                     Step 1: Select Candidate
                   </h2>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6 space-y-4">
                   <CandidateSelector
                     value={state.selectedCandidate}
                     onSelect={setSelectedCandidate}
                     placeholder="Select a candidate..."
                     required={true}
                   />
+
+                  {/* Helper: Register new candidate */}
+                  <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-md">
+                    <p className="text-sm text-neutral-700 mb-2">
+                      Can't find your candidate?{' '}
+                      <button
+                        onClick={() => router.push('/register-candidate')}
+                        className="font-medium text-blue-600 hover:text-blue-700 underline"
+                      >
+                        Register them first
+                      </button>
+                      {' '}before uploading their resume.
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
 
               {/* Step 2: File Upload */}
-              <Card>
+              <Card className={!state.selectedCandidate ? 'opacity-60' : ''}>
                 <CardHeader>
-                  <h2 className="text-xl font-semibold text-neutral-900">
-                    Step 2: Select Resume Files
-                  </h2>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-semibold text-neutral-900">
+                      Step 2: Select Resume Files
+                    </h2>
+                    {!state.selectedCandidate && (
+                      <span className="text-sm text-neutral-500 bg-neutral-100 px-3 py-1 rounded-full">
+                        Complete Step 1 first
+                      </span>
+                    )}
+                  </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="pt-6 space-y-4">
                   <FileUpload
                     onFilesSelected={fileHandlers.onFilesSelected}
                     onError={fileHandlers.onUploadError}
@@ -136,7 +159,7 @@ const UploadPage: React.FC = () => {
                     )}
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   {successFiles.length === 0 ? (
                     <div className="p-8 text-center bg-neutral-50 rounded-lg border-2 border-dashed border-neutral-200">
                       <div className="text-4xl mb-3">📊</div>
