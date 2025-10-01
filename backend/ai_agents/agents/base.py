@@ -107,7 +107,18 @@ class BaseAgent:
                     timeout=self.settings.llm.timeout_seconds
                 )
 
-                return response.choices[0].message.content
+                # Validate response
+                if not response:
+                    raise ValueError("No response from OpenAI API")
+
+                if not response.choices or len(response.choices) == 0:
+                    raise ValueError("Empty choices in OpenAI response")
+
+                content = response.choices[0].message.content
+                if not content:
+                    raise ValueError("Empty content from OpenAI API")
+
+                return content
 
             except Exception as e:
                 if attempt == self.max_retries - 1:
