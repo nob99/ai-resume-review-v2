@@ -48,7 +48,7 @@ AI_AGENT_LLM__MODEL=gpt-4o
 ### Business Rules (`config/agents.yaml`)
 Edit scoring weights, thresholds, agent parameters
 
-### Prompts (`prompts/templates/resume/*.yaml`)
+### Prompts (`prompts/*.yaml`)
 Edit prompt templates and parsing rules
 
 ## Development Guidelines
@@ -60,7 +60,7 @@ Edit prompt templates and parsing rules
 
 **Adding a New Agent:**
 1. Create `agents/new_agent.py` extending `BaseAgent`
-2. Add prompt template in `prompts/templates/resume/`
+2. Add prompt template in `prompts/` (e.g., `new_agent_v1.yaml`)
 3. Update `workflows/workflow.py`
 4. Add tests in `tests/unit/`
 

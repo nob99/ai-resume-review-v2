@@ -49,7 +49,7 @@ class PathConfig(BaseSettings):
 
     # Base paths (relative to ai_agents module root)
     config_dir: str = "config"
-    prompts_dir: str = "prompts/templates/resume"
+    prompts_dir: str = "prompts"
 
 
 class AIAgentSettings(BaseSettings):
