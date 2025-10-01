@@ -7,9 +7,8 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 from openai import AsyncOpenAI
 
-from app.core.config import get_settings
-
-settings = get_settings()
+from ai_agents.settings import get_settings
+from ai_agents.config import get_agent_config
 
 
 class BaseAgent:
@@ -22,14 +21,19 @@ class BaseAgent:
     - Text parsing utilities
     """
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, agent_config=None):
         """Initialize the base agent.
 
         Args:
             api_key: OpenAI API key (defaults to environment variable)
+            agent_config: Optional AgentBehaviorConfig instance
         """
-        self.client = AsyncOpenAI(api_key=api_key or settings.OPENAI_API_KEY)
-        self.max_retries = 3
+        self.settings = get_settings()
+        self.agent_config = agent_config or get_agent_config()
+
+        self.client = AsyncOpenAI(api_key=api_key or self.settings.llm.openai_api_key)
+        self.max_retries = self.settings.resilience.max_retries
+        self.backoff_multiplier = self.settings.resilience.backoff_multiplier
 
     def _load_prompt_template(self, template_name: str) -> Dict[str, Any]:
         """Load a prompt template from YAML file.
@@ -42,9 +46,7 @@ class BaseAgent:
         """
         template_path = (
             Path(__file__).parent.parent
-            / "prompts"
-            / "templates"
-            / "resume"
+            / self.settings.paths.prompts_dir
             / template_name
         )
 
@@ -57,16 +59,16 @@ class BaseAgent:
         self,
         system_prompt: str,
         user_prompt: str,
-        temperature: float = 0.3,
-        max_tokens: int = 2000
+        agent_name: str,
+        **kwargs
     ) -> str:
         """Call OpenAI API with exponential backoff retry logic.
 
         Args:
             system_prompt: System message for GPT
             user_prompt: User message with content to analyze
-            temperature: Sampling temperature (0-1)
-            max_tokens: Maximum tokens in response
+            agent_name: Name of the agent (for config lookup)
+            **kwargs: Optional overrides for temperature, max_tokens
 
         Returns:
             GPT response text
@@ -74,16 +76,32 @@ class BaseAgent:
         Raises:
             Exception: If all retries fail
         """
+        # Get agent-specific overrides from config
+        agent_params = self.agent_config.get_agent_params(agent_name)
+
+        # Merge: kwargs > agent_config > defaults
+        temperature = (
+            kwargs.get("temperature")
+            or agent_params.get("temperature")
+            or self.settings.llm.default_temperature
+        )
+        max_tokens = (
+            kwargs.get("max_tokens")
+            or agent_params.get("max_tokens")
+            or self.settings.llm.default_max_tokens
+        )
+
         for attempt in range(self.max_retries):
             try:
                 response = await self.client.chat.completions.create(
-                    model="gpt-4",
+                    model=self.settings.llm.model,
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
                     ],
                     temperature=temperature,
-                    max_tokens=max_tokens
+                    max_tokens=max_tokens,
+                    timeout=self.settings.llm.timeout_seconds
                 )
 
                 return response.choices[0].message.content
@@ -92,7 +110,7 @@ class BaseAgent:
                 if attempt == self.max_retries - 1:
                     raise e
                 # Exponential backoff
-                await asyncio.sleep(2 ** attempt)
+                await asyncio.sleep(self.backoff_multiplier ** attempt)
 
     def _extract_list(self, text: str, section_name: str) -> List[str]:
         """Extract a bulleted list from the response text.

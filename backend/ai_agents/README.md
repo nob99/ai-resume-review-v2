@@ -1,12 +1,18 @@
 # AI Agents Module
 
-LangGraph-based AI orchestration system for resume analysis using two specialized agents.
+**Version 2.0.0** - LangGraph-based resume analysis with two specialized agents
 
-## Overview
+## Quick Start
 
-This module implements a simple two-agent workflow for analyzing resumes:
-1. **Structure Agent**: Analyzes formatting, organization, and professional presentation
-2. **Appeal Agent**: Evaluates industry-specific competitiveness and appeal
+```python
+from ai_agents import ResumeAnalysisOrchestrator
+
+orchestrator = ResumeAnalysisOrchestrator()
+result = await orchestrator.analyze(
+    resume_text="...",
+    industry="tech_consulting"
+)
+```
 
 ## Architecture
 
@@ -14,96 +20,70 @@ This module implements a simple two-agent workflow for analyzing resumes:
 Resume Text → Structure Agent → Appeal Agent → Final Results
 ```
 
-## Key Components
+**Structure Agent**: Formatting, organization, ATS compatibility
+**Appeal Agent**: Industry-specific competitiveness
 
-### Core
-- `core/state.py`: LangGraph state schema
-- `core/workflow.py`: Two-node workflow definition
+## Project Structure
 
-### Agents
-- `agents/structure.py`: Resume structure analysis
-- `agents/appeal.py`: Industry-specific appeal analysis
+```
+ai_agents/
+├── agents/           # Agent implementations (base, structure, appeal)
+├── workflows/        # LangGraph workflow & state definitions
+├── config/           # YAML configs (agents.yaml, industries.yaml)
+├── prompts/          # Prompt templates (YAML)
+├── tests/            # Unit tests
+├── settings.py       # Infrastructure config (Python)
+└── orchestrator.py   # Main workflow executor
+```
 
-### Orchestration
-- `orchestrator.py`: Main workflow executor
-- `models.py`: Pydantic models for type safety
-- `utils.py`: Error handling and utilities
+## Configuration
 
-## Usage
+### Infrastructure (`settings.py`)
+Set via environment variables:
+```bash
+AI_AGENT_LLM__OPENAI_API_KEY=sk-your-key
+AI_AGENT_LLM__MODEL=gpt-4o
+```
 
-```python
-from app.ai_agents import ResumeAnalysisOrchestrator
+### Business Rules (`config/agents.yaml`)
+Edit scoring weights, thresholds, agent parameters
 
-# Initialize orchestrator
-orchestrator = ResumeAnalysisOrchestrator()
+### Prompts (`prompts/templates/resume/*.yaml`)
+Edit prompt templates and parsing rules
 
-# Run analysis
-result = await orchestrator.analyze(
-    resume_text="...",
-    industry="tech_consulting"
-)
+## Development Guidelines
 
-# Access results
-print(f"Overall Score: {result['overall_score']}")
-print(f"Market Tier: {result['market_tier']}")
+**Design Principles:**
+1. Simple is best - clear code over clever code
+2. YAML for business logic - non-engineers can edit
+3. No dependencies on parent `app.core.*`
+
+**Adding a New Agent:**
+1. Create `agents/new_agent.py` extending `BaseAgent`
+2. Add prompt template in `prompts/templates/resume/`
+3. Update `workflows/workflow.py`
+4. Add tests in `tests/unit/`
+
+**Testing:**
+```bash
+pytest backend/ai_agents/tests/ -v
+```
+
+**Verify Imports:**
+```bash
+python3 -c "from ai_agents import ResumeAnalysisOrchestrator; print('✅ OK')"
 ```
 
 ## Supported Industries
 
-- `tech_consulting`: Technology Consulting
-- `finance_banking`: Finance & Banking
-- `strategy_consulting`: Strategy Consulting
-- `system_integrator`: Systems Integration
-- `full_service_consulting`: Full Service Consulting
-- `general_business`: General Business
+`tech_consulting`, `strategy_consulting`, `finance_banking`, `system_integrator`, `full_service_consulting`, `general_business`
 
-## Configuration
+## Migration from v1.0
 
-Set the following environment variables:
-- `OPENAI_API_KEY`: Your OpenAI API key (required)
-- `OPENAI_MODEL_NAME`: Model to use (default: gpt-4)
-- `OPENAI_MAX_TOKENS`: Max tokens per request (default: 4000)
+- `core/` → `workflows/`
+- `config.py` → `settings.py`
+- Industry config moved to `config/industries.yaml`
 
-## Testing
+---
 
-Run unit tests:
-```bash
-pytest app/ai_agents/tests/unit/ -v
-```
-
-Run example usage:
-```bash
-python app/ai_agents/example_usage.py
-```
-
-## Response Format
-
-```json
-{
-  "success": true,
-  "analysis_id": "uuid",
-  "overall_score": 85.5,
-  "market_tier": "senior",
-  "summary": "Executive summary...",
-  "structure": {
-    "scores": {...},
-    "feedback": {...}
-  },
-  "appeal": {
-    "scores": {...},
-    "feedback": {...}
-  }
-}
-```
-
-## Error Handling
-
-- Automatic retry with exponential backoff
-- Graceful degradation on partial failures
-- Clear error messages in responses
-
-## Performance
-
-- Target: < 60 seconds for typical resume
-- Supports concurrent analyses
-- Minimal dependencies for fast startup
+**Simple is Best** ✨

@@ -138,46 +138,29 @@ variables:
     default: ""
     description: Optional context from structure analysis
 
-output_parsing:
-  score_patterns:
-    achievement_relevance_score: "achievement[_\\s]*relevance[_\\s]*score[:\\s]*(\\d+\\.?\\d*)"
-    skills_alignment_score: "skills?[_\\s]*alignment[_\\s]*score[:\\s]*(\\d+\\.?\\d*)"
-    experience_fit_score: "experience[_\\s]*fit[_\\s]*score[:\\s]*(\\d+\\.?\\d*)"
-    competitive_positioning_score: "competitive[_\\s]*positioning[_\\s]*score[:\\s]*(\\d+\\.?\\d*)"
-  
-  list_patterns:
-    relevant_achievements: "Relevant Achievements:\\s*[-•]\\s*(.+?)(?=\\n\\n|\\n[A-Z]|$)"
-    missing_skills: "Missing Skills:\\s*[-•]\\s*(.+?)(?=\\n\\n|\\n[A-Z]|$)"
-    transferable_experience: "Transferable Experience:\\s*[-•]\\s*(.+?)(?=\\n\\n|\\n[A-Z]|$)"
-    industry_keywords: "Industry Keywords:\\s*[-•]\\s*(.+?)(?=\\n\\n|\\n[A-Z]|$)"
-    competitive_advantages: "Competitive Advantages:\\s*[-•]\\s*(.+?)(?=\\n\\n|\\n[A-Z]|$)"
-    improvement_areas: "Improvement Areas:\\s*[-•]\\s*(.+?)(?=\\n\\n|\\n[A-Z]|$)"
-  
-  market_tier_pattern: "Market Tier:\\s*(entry|mid|senior|executive)"
+# Parsing configuration (how to extract data from LLM response)
+parsing:
+  scores:
+    achievement_relevance:
+      pattern: "Achievement\\s*Relevance\\s*Score[:\\s]*(\\d+)"
+      default: 0
+    skills_alignment:
+      pattern: "Skills?\\s*Alignment\\s*Score[:\\s]*(\\d+)"
+      default: 0
+    experience_fit:
+      pattern: "Experience\\s*Fit\\s*Score[:\\s]*(\\d+)"
+      default: 0
+    competitive_positioning:
+      pattern: "Competitive\\s*Positioning\\s*Score[:\\s]*(\\d+)"
+      default: 0
 
-# Industry-specific configurations
-industry_configs:
-  tech_consulting:
-    key_skills: ["Python", "JavaScript", "Cloud Architecture", "System Design", "Agile", "DevOps"]
-    display_name: "Technology Consulting"
-    
-  finance_banking:
-    key_skills: ["Financial Modeling", "Risk Management", "Regulatory Compliance", "Bloomberg", "Excel", "VBA"]
-    display_name: "Finance & Banking"
-    
-  general_business:
-    key_skills: ["Project Management", "Strategic Planning", "Data Analysis", "Leadership", "Communication", "Problem Solving"]
-    display_name: "General Business"
-    
-  system_integrator:
-    key_skills: ["Systems Integration", "Enterprise Architecture", "API Development", "Database Management", "Testing", "Implementation"]
-    display_name: "Systems Integration"
+  market_tier:
+    pattern: "Market\\s*Tier[:\\s]*(entry|mid|senior|executive)"
+    default: "mid"
 
-validation:
-  required_scores: ["achievement_relevance_score", "skills_alignment_score", "experience_fit_score", "competitive_positioning_score"]
-  score_range: [0, 100]
-  required_market_tier: true
-  min_relevant_achievements: 2
-  min_improvement_areas: 2
-
-tags: ["appeal", "industry-specific", "competitiveness", "skills-alignment", "positioning"]
+  feedback:
+    relevant_achievements: "Relevant Achievements"
+    missing_skills: "Missing Skills"
+    transferable_experience: "Transferable Experience"
+    competitive_advantages: "Competitive Advantages"
+    improvement_areas: "Improvement Areas"

@@ -4,22 +4,34 @@ import uuid
 from typing import Dict, Any, Optional
 
 from .agents import StructureAgent, AppealAgent
-from .core import create_workflow, ResumeAnalysisState
+from .workflows import create_workflow, ResumeAnalysisState
+from .settings import get_settings
+from .config import get_agent_config
 
 
 class ResumeAnalysisOrchestrator:
     """Orchestrates the two-agent resume analysis workflow."""
-    
+
     def __init__(self, api_key: Optional[str] = None):
         """Initialize the orchestrator with agents and workflow.
-        
+
         Args:
             api_key: Optional OpenAI API key (defaults to environment variable)
         """
-        # Initialize agents
-        self.structure_agent = StructureAgent(api_key=api_key)
-        self.appeal_agent = AppealAgent(api_key=api_key)
-        
+        # Get settings and config
+        settings = get_settings()
+        agent_config = get_agent_config()
+
+        # Initialize agents with config
+        self.structure_agent = StructureAgent(
+            api_key=api_key or settings.llm.openai_api_key,
+            agent_config=agent_config
+        )
+        self.appeal_agent = AppealAgent(
+            api_key=api_key or settings.llm.openai_api_key,
+            agent_config=agent_config
+        )
+
         # Create the workflow
         self.workflow = create_workflow(
             structure_agent=self.structure_agent,

@@ -1,0 +1,36 @@
+# Agent-specific LLM parameter overrides
+# If not specified here, uses defaults from config.py LLMConfig
+
+agents:
+  structure:
+    # Use all defaults from config.py
+    temperature: null
+    max_tokens: null
+
+  appeal:
+    # Override for more creative/detailed output
+    temperature: 0.4
+    max_tokens: 2500
+
+# Score calculation business logic
+scoring:
+  # Weights for overall score calculation (structure vs appeal)
+  weights:
+    structure: 0.40
+    appeal: 0.60
+
+  # Market tier thresholds (based on overall_score)
+  market_tiers:
+    excellent: 80    # >= 80
+    strong: 70       # >= 70
+    good: 60         # >= 60
+    fair: 50         # >= 50
+    # Below 50 = "needs improvement"
+
+  # Score category descriptions
+  categories:
+    excellent: "excellent candidate"
+    strong: "strong candidate"
+    good: "good candidate"
+    fair: "fair candidate"
+    needs_improvement: "needs improvement"

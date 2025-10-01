@@ -1,4 +1,4 @@
-"""Core components for AI agents workflow."""
+"""Workflow components for AI agents resume analysis."""
 
 from .state import ResumeAnalysisState
 from .workflow import create_workflow

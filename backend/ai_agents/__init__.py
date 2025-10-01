@@ -13,6 +13,7 @@ from .utils import (
     AIAgentError,
     InvalidInputError
 )
+from .config import get_agent_config, get_industry_config
 
 __all__ = [
     "ResumeAnalysisOrchestrator",
@@ -23,7 +24,9 @@ __all__ = [
     "validate_industry",
     "validate_resume_text",
     "AIAgentError",
-    "InvalidInputError"
+    "InvalidInputError",
+    "get_agent_config",
+    "get_industry_config"
 ]
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"

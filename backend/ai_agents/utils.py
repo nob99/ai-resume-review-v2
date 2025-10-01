@@ -1,6 +1,6 @@
 """Utility functions for AI agents."""
 
-from app.core.industries import INDUSTRY_CONFIGS
+from ai_agents.config import get_industry_config
 
 
 class AIAgentError(Exception):
@@ -29,7 +29,7 @@ class InvalidInputError(FatalError):
 
 
 def validate_industry(industry: str) -> str:
-    """Validate and normalize industry code.
+    """Validate and normalize industry code using YAML config.
 
     Args:
         industry: Industry code to validate
@@ -40,12 +40,14 @@ def validate_industry(industry: str) -> str:
     Raises:
         InvalidInputError: If industry is not supported
     """
+    industry_config = get_industry_config()
     normalized = industry.lower().strip()
 
-    if normalized not in INDUSTRY_CONFIGS:
+    supported = industry_config.get_supported_codes()
+    if normalized not in supported:
         raise InvalidInputError(
             f"Invalid industry '{industry}'. "
-            f"Supported industries: {', '.join(sorted(INDUSTRY_CONFIGS.keys()))}"
+            f"Supported industries: {', '.join(sorted(supported))}"
         )
 
     return normalized

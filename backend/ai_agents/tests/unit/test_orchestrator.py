@@ -13,7 +13,7 @@ async def test_orchestrator_analyze_success(
 ):
     """Test successful orchestration of analysis workflow."""
     from ai_agents.orchestrator import ResumeAnalysisOrchestrator
-    from ai_agents.core.workflow import create_workflow
+    from ai_agents.workflows.workflow import create_workflow
     
     # Create orchestrator with mocked agents
     orchestrator = ResumeAnalysisOrchestrator()
@@ -53,7 +53,7 @@ async def test_orchestrator_with_custom_analysis_id(
 ):
     """Test orchestrator with custom analysis ID."""
     from ai_agents.orchestrator import ResumeAnalysisOrchestrator
-    from ai_agents.core.workflow import create_workflow
+    from ai_agents.workflows.workflow import create_workflow
     
     orchestrator = ResumeAnalysisOrchestrator()
     orchestrator.structure_agent = mock_structure_agent
