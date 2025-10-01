@@ -24,6 +24,8 @@ prompts:
     - Achievement significance in specific fields
 
     Provide detailed, actionable feedback with specific scores and recommendations for structural improvements.
+
+    IMPORTANT: Output must be in JAPANESE.
   
   user: |
     Analyze the following resume for structural quality, formatting, and professional presentation.
@@ -96,6 +98,8 @@ prompts:
     - Total Sections Found: [number]
     - Word Count: [approximate word count]
     - Estimated Reading Time: [minutes]
+
+    IMPORTANT: Output must be in JAPANESE.
 
 variables:
   - name: resume_text

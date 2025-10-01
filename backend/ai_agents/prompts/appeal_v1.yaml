@@ -27,6 +27,8 @@ prompts:
     - Industry-specific improvement opportunities
 
     Provide detailed, actionable insights that help candidates understand their appeal within the {industry_title} market and how to enhance their competitive positioning.
+
+    IMPORTANT: Output must be in JAPANESE.
   
   user: |
     Analyze the following resume for industry-specific appeal and competitiveness in the {industry_display} sector.
@@ -100,6 +102,8 @@ prompts:
     - [Priority areas for enhancement to improve industry appeal]
     - [Specific recommendations for {industry_display} positioning]
     - [Career development suggestions for industry advancement]
+
+    IMPORTANT: Output must be in JAPANESE.
 
 variables:
   - name: resume_text
