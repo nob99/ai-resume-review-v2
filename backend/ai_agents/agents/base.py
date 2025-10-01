@@ -1,5 +1,6 @@
 """Base Agent class with common functionality for all analysis agents."""
 
+import logging
 import re
 import yaml
 import asyncio
@@ -9,6 +10,8 @@ from openai import AsyncOpenAI
 
 from ai_agents.settings import get_settings
 from ai_agents.config import get_agent_config
+
+logger = logging.getLogger(__name__)
 
 
 class BaseAgent:
@@ -108,8 +111,10 @@ class BaseAgent:
 
             except Exception as e:
                 if attempt == self.max_retries - 1:
+                    logger.error(f"OpenAI API call failed after {self.max_retries} retries: {str(e)}")
                     raise e
-                # Exponential backoff
+                # Retry with exponential backoff
+                logger.warning(f"OpenAI API call failed (attempt {attempt + 1}/{self.max_retries}): {str(e)}")
                 await asyncio.sleep(self.backoff_multiplier ** attempt)
 
     def _extract_list(self, text: str, section_name: str) -> List[str]:

@@ -1,9 +1,12 @@
 """Structure Agent for analyzing resume formatting and organization."""
 
+import logging
 import re
 from typing import Dict, Any, List, Optional
 
 from .base import BaseAgent
+
+logger = logging.getLogger(__name__)
 
 
 class StructureAgent(BaseAgent):
@@ -29,6 +32,8 @@ class StructureAgent(BaseAgent):
         Returns:
             Updated state with structure analysis results
         """
+        logger.info("Structure analysis started")
+
         try:
             # Get the prompts from template
             system_prompt = self.prompt_template["prompts"]["system"]
@@ -51,7 +56,13 @@ class StructureAgent(BaseAgent):
             state["structure_feedback"] = parsed_results["feedback"]
             state["structure_metadata"] = parsed_results["metadata"]
 
+            # Calculate average score
+            scores = parsed_results["scores"]
+            avg_score = sum(scores.values()) / len(scores) if scores else 0
+            logger.info(f"Structure analysis completed score={avg_score:.1f}")
+
         except Exception as e:
+            logger.error(f"Structure analysis failed: {str(e)}", exc_info=True)
             state["error"] = f"Structure analysis failed: {str(e)}"
             # Set default values on error
             state["structure_scores"] = {"format": 0, "organization": 0, "tone": 0, "completeness": 0}

@@ -1,5 +1,7 @@
 """Main orchestrator for the AI resume analysis workflow."""
 
+import logging
+import time
 import uuid
 from typing import Dict, Any, Optional
 
@@ -7,6 +9,8 @@ from .agents import StructureAgent, AppealAgent
 from .workflows import create_workflow, ResumeAnalysisState
 from .settings import get_settings
 from .config import get_agent_config
+
+logger = logging.getLogger(__name__)
 
 
 class ResumeAnalysisOrchestrator:
@@ -57,7 +61,10 @@ class ResumeAnalysisOrchestrator:
         # Generate analysis ID if not provided
         if not analysis_id:
             analysis_id = str(uuid.uuid4())
-        
+
+        start_time = time.time()
+        logger.info(f"Starting analysis request_id={analysis_id} industry={industry}")
+
         # Initialize state
         initial_state: ResumeAnalysisState = {
             "resume_text": resume_text,
@@ -77,16 +84,23 @@ class ResumeAnalysisOrchestrator:
         try:
             # Run the workflow
             final_state = await self.workflow.ainvoke(initial_state)
-            
+
             # Check for errors in the final state
             if final_state.get("error"):
+                elapsed = time.time() - start_time
+                logger.error(f"Analysis failed request_id={analysis_id} error={final_state['error']} time={elapsed:.1f}s")
                 return self._format_error_response(final_state["error"], analysis_id)
-            
+
             # Format and return successful results
+            elapsed = time.time() - start_time
+            overall_score = final_state.get("overall_score", 0)
+            logger.info(f"Analysis completed request_id={analysis_id} overall_score={overall_score} time={elapsed:.1f}s")
             return self._format_success_response(final_state, analysis_id)
-            
+
         except Exception as e:
             # Handle unexpected errors
+            elapsed = time.time() - start_time
+            logger.error(f"Analysis failed request_id={analysis_id} error={str(e)} time={elapsed:.1f}s", exc_info=True)
             return self._format_error_response(str(e), analysis_id)
     
     def _format_success_response(self, state: Dict[str, Any], analysis_id: str) -> Dict[str, Any]:

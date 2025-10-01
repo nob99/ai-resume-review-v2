@@ -1,10 +1,13 @@
 """Appeal Agent for industry-specific resume analysis."""
 
+import logging
 import re
 from typing import Dict, Any, List, Optional
 
 from .base import BaseAgent
 from ai_agents.config import get_industry_config
+
+logger = logging.getLogger(__name__)
 
 
 class AppealAgent(BaseAgent):
@@ -31,9 +34,11 @@ class AppealAgent(BaseAgent):
         Returns:
             Updated state with appeal analysis results and final score
         """
+        industry = state.get("industry", "general_business")
+        logger.info(f"Appeal analysis started industry={industry}")
+
         try:
             # Get industry configuration from YAML
-            industry = state.get("industry", "general_business")
             industry_data = self.industry_config_loader.get_industry(industry)
             
             # Build structure context from previous analysis
@@ -72,8 +77,14 @@ class AppealAgent(BaseAgent):
             # Calculate overall score using config weights
             state["overall_score"] = self._calculate_overall_score(state)
             state["summary"] = self._generate_summary(state, industry_data["display_name"])
-            
+
+            # Log completion
+            scores = parsed_results["scores"]
+            avg_score = sum(scores.values()) / len(scores) if scores else 0
+            logger.info(f"Appeal analysis completed score={avg_score:.1f} tier={state['market_tier']}")
+
         except Exception as e:
+            logger.error(f"Appeal analysis failed: {str(e)}", exc_info=True)
             state["error"] = f"Appeal analysis failed: {str(e)}"
             # Set default values on error
             state["appeal_scores"] = {"achievement_relevance": 0, "skills_alignment": 0, "experience_fit": 0, "competitive_positioning": 0}
