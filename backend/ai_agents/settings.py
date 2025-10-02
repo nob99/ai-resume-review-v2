@@ -17,7 +17,7 @@ class LLMConfig(BaseSettings):
     openai_api_key: str = ""  # Empty default, should be set via env var
 
     # Model settings
-    model: str = "chatgpt-4o-latest"
+    model: str = "gpt-5-2025-08-07"
     fallback_model: Optional[str] = "gpt-4o"
 
     # Default parameters (can be overridden per agent in agents.yaml)

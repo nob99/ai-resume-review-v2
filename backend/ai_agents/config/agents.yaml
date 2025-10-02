@@ -4,13 +4,15 @@
 agents:
   structure:
     # Use all defaults from config.py
+    # Increased for GPT-5 reasoning model (needs tokens for internal reasoning + output)
     temperature: null
-    max_tokens: null
+    max_tokens: 10000
 
   appeal:
     # Override for more creative/detailed output
+    # Increased for GPT-5 reasoning model (needs tokens for internal reasoning + output)
     temperature: 0.4
-    max_tokens: 2500
+    max_tokens: 12000
 
 # Score calculation business logic
 scoring:
