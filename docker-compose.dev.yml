@@ -66,6 +66,8 @@ services:
     volumes:
       # Mount source code for hot reload in development
       - ./backend/app:/app/app:ro
+      # Mount AI agents module for prompt hot reload
+      - ./backend/ai_agents:/app/ai_agents:ro
       # Mount database module for schema v1.1 integration
       - ./database:/app/database:ro
       # Mount infrastructure module for new architecture

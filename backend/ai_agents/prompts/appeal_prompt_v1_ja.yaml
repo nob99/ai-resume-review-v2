@@ -114,7 +114,7 @@ variables:
   - name: industry
     type: string
     required: true
-    description: ターゲット業界コード (例: tech_consulting, finance_banking)
+    description: "ターゲット業界コード (例: tech_consulting, finance_banking)"
 
   - name: industry_title
     type: string

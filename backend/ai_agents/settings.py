@@ -17,13 +17,13 @@ class LLMConfig(BaseSettings):
     openai_api_key: str = ""  # Empty default, should be set via env var
 
     # Model settings
-    model: str = "gpt-4"
-    fallback_model: Optional[str] = "gpt-3.5-turbo"
+    model: str = "chatgpt-4o-latest"
+    fallback_model: Optional[str] = "gpt-4o"
 
     # Default parameters (can be overridden per agent in agents.yaml)
     default_temperature: float = 0.3
     default_max_tokens: int = 2000
-    timeout_seconds: int = 30
+    timeout_seconds: int = 120
 
 
 class ResilienceConfig(BaseSettings):
@@ -66,7 +66,7 @@ class AIAgentSettings(BaseSettings):
 
     # Prompt language setting (single source of truth)
     # Change this value to switch between languages: "en" or "ja"
-    prompt_language: str = "ja"  # Default: Japanese
+    prompt_language: str = "en"  # Default: English
 
 
 # Singleton pattern

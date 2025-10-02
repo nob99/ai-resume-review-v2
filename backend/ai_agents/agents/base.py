@@ -104,16 +104,28 @@ class BaseAgent:
 
         for attempt in range(self.max_retries):
             try:
+                # Log the model we're requesting
+                logger.info(f"Calling OpenAI API - agent: {agent_name}, model: {self.settings.llm.model}, max_tokens: {max_tokens}")
+
+                # Log the actual prompts being sent to OpenAI
+                logger.info(f"=== SYSTEM PROMPT for {agent_name} ===")
+                logger.info(system_prompt)
+                logger.info(f"=== USER PROMPT for {agent_name} ===")
+                logger.info(user_prompt)
+                logger.info(f"=== END PROMPTS for {agent_name} ===")
+
                 response = await self.client.chat.completions.create(
                     model=self.settings.llm.model,
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
                     ],
-                    temperature=temperature,
-                    max_tokens=max_tokens,
+                    max_completion_tokens=max_tokens,
                     timeout=self.settings.llm.timeout_seconds
                 )
+
+                # Log the actual model used by OpenAI
+                logger.info(f"OpenAI API response - agent: {agent_name}, actual model used: {response.model}, tokens: prompt={response.usage.prompt_tokens}, completion={response.usage.completion_tokens}, total={response.usage.total_tokens}")
 
                 # Validate response
                 if not response:
