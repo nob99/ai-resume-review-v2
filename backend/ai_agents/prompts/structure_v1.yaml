@@ -2,11 +2,11 @@ metadata:
   name: structure_analysis
   version: 1.0.0
   description: Analyzes resume structure, formatting, and professional presentation
-  model: gpt-4
-  temperature: 0.3
-  max_tokens: 2000
   agent_type: structure
   industry_agnostic: true
+  # Note: LLM model/temperature/max_tokens are controlled by:
+  # - Model: backend/ai_agents/settings.py or AI_AGENT_LLM_MODEL env var
+  # - Temperature/tokens: backend/ai_agents/config/agents.yaml per-agent settings
 
 prompts:
   system: |
