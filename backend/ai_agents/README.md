@@ -51,6 +51,24 @@ Edit scoring weights, thresholds, agent parameters
 ### Prompts (`prompts/*.yaml`)
 Edit prompt templates and parsing rules
 
+### Language Settings (`settings.py`)
+
+**Single source of truth** for prompt language:
+
+```python
+# backend/ai_agents/settings.py
+prompt_language: str = "ja"  # "en" or "ja"
+```
+
+**To switch languages:**
+1. Edit `settings.py` and change `prompt_language` value
+2. Rebuild Docker: `./scripts/docker-dev.sh build`
+3. Restart: `./scripts/docker-dev.sh up`
+
+**Available prompt files:**
+- English: `prompts/*_prompt_v1_en.yaml`
+- Japanese: `prompts/*_prompt_v1_ja.yaml`
+
 ## Development Guidelines
 
 **Design Principles:**
