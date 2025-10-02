@@ -21,7 +21,7 @@ class AppealAgent(BaseAgent):
             agent_config: Optional AgentBehaviorConfig instance
         """
         super().__init__(api_key, agent_config)
-        self.prompt_template = self._load_prompt_template("appeal_v1.yaml")
+        self.prompt_template = self._load_prompt_template("appeal_prompt_v1")
         self.parsing_config = self.prompt_template.get("parsing", {})
         self.industry_config_loader = get_industry_config()
     

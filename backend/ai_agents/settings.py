@@ -64,6 +64,10 @@ class AIAgentSettings(BaseSettings):
     resilience: ResilienceConfig = ResilienceConfig()
     paths: PathConfig = PathConfig()
 
+    # Prompt language setting (single source of truth)
+    # Change this value to switch between languages: "en" or "ja"
+    prompt_language: str = "ja"  # Default: Japanese
+
 
 # Singleton pattern
 _settings: Optional[AIAgentSettings] = None

@@ -38,24 +38,32 @@ class BaseAgent:
         self.max_retries = self.settings.resilience.max_retries
         self.backoff_multiplier = self.settings.resilience.backoff_multiplier
 
-    def _load_prompt_template(self, template_name: str) -> Dict[str, Any]:
+    def _load_prompt_template(self, template_base: str) -> Dict[str, Any]:
         """Load a prompt template from YAML file.
 
         Args:
-            template_name: Name of the template file (e.g., "structure_v1.yaml")
+            template_base: Base name of the template (e.g., "structure_prompt_v1")
+                          Language suffix will be added automatically based on settings
 
         Returns:
             Loaded template dictionary
         """
+        # Get language from settings (single source of truth)
+        lang = self.settings.prompt_language
+
+        # Construct full template filename with language suffix
+        template_name = f"{template_base}_{lang}.yaml"
+
         template_path = (
             Path(__file__).parent.parent
             / self.settings.paths.prompts_dir
             / template_name
         )
 
-        with open(template_path, "r") as f:
+        with open(template_path, "r", encoding="utf-8") as f:
             template = yaml.safe_load(f)
 
+        logger.info(f"Loaded prompt template: {template_name}")
         return template
 
     async def _call_openai_with_retry(
