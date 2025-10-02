@@ -72,14 +72,15 @@ async def request_resume_analysis(
         
         logger.info(f"User {current_user.id} requesting analysis for resume {resume_id}, industry: {request.industry}")
 
-        # Request analysis (async processing)
+        # Request analysis (async processing with background tasks)
         result = await service.request_analysis(
             resume_id=resume_id,
             user_id=current_user.id,
-            industry=request.industry
+            industry=request.industry,
+            background_tasks=background_tasks
         )
-        
-        logger.info(f"Analysis completed: {result.analysis_id}")
+
+        logger.info(f"Analysis queued: {result.analysis_id}")
         return result
         
     except RateLimitExceeded:

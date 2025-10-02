@@ -1,15 +1,15 @@
 """Resume analysis service - minimal version for two-table workflow."""
 
-import asyncio
 import logging
 import uuid
 from typing import Optional, Dict, Any
 
-from fastapi import HTTPException
+from fastapi import HTTPException, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.datetime_utils import utc_now
+from app.core.database import get_postgres_connection
 
 # Import AI orchestrator from the isolated ai_agents module
 from ai_agents.orchestrator import ResumeAnalysisOrchestrator
@@ -32,6 +32,264 @@ from .schemas import (
 
 logger = logging.getLogger(__name__)
 
+
+# ============================================================================
+# Background Processing Function (runs with independent session)
+# ============================================================================
+
+async def process_analysis_background(
+    request_id: uuid.UUID,
+    resume_text: str,
+    ai_agent_industry: str
+):
+    """
+    Process resume analysis in the background with its own database session.
+
+    This function runs independently after the API request completes,
+    with a fresh database session to avoid transaction conflicts.
+
+    Args:
+        request_id: The analysis request ID
+        resume_text: The resume text to analyze
+        ai_agent_industry: The industry for AI agent analysis
+    """
+    # Create a new database session for this background task
+    postgres_conn = get_postgres_connection()
+
+    async with postgres_conn.session_context() as session:
+        try:
+            logger.info(f"Starting background analysis for request {request_id}")
+
+            # Initialize repository with the new session
+            repository = AnalysisRepository(session)
+
+            # Step 1: Update status to processing
+            try:
+                await repository.update_request_status(
+                    request_id=request_id,
+                    status="processing"
+                )
+                await session.commit()
+                logger.info(f"Updated analysis {request_id} status to 'processing'")
+            except Exception as e:
+                logger.error(f"Failed to update status for request {request_id}: {str(e)}")
+                # Continue with analysis anyway
+
+            # Step 2: Run AI analysis using orchestrator
+            logger.info(f"Calling AI orchestrator for request {request_id}")
+
+            try:
+                # Initialize the AI orchestrator
+                ai_orchestrator = ResumeAnalysisOrchestrator()
+
+                # Call the orchestrator to analyze the resume
+                ai_result = await ai_orchestrator.analyze(
+                    resume_text=resume_text,
+                    industry=ai_agent_industry,
+                    analysis_id=str(request_id)
+                )
+
+                logger.info(f"AI orchestrator completed for request {request_id}, success={ai_result.get('success', False)}")
+
+            except Exception as ai_error:
+                logger.error(f"AI orchestrator error for request {request_id}: {str(ai_error)}", exc_info=True)
+
+                # Check if we should use mock results for development/testing
+                settings = get_settings()
+                use_mock_results = getattr(settings, 'USE_MOCK_AI_RESULTS', False)
+
+                if use_mock_results:
+                    logger.info(f"Using mock AI results for request {request_id} due to AI service error")
+                    ai_result = _create_mock_ai_result(request_id, ai_agent_industry)
+                else:
+                    # Create a failure response
+                    ai_result = {
+                        "success": False,
+                        "error": f"AI analysis failed: {str(ai_error)}",
+                        "analysis_id": str(request_id)
+                    }
+
+            # Step 3: Store results and update status
+            if ai_result.get("success", False):
+                logger.info(f"AI analysis successful for request {request_id}, storing results")
+
+                try:
+                    # Store the analysis results
+                    await _store_analysis_results(session, repository, request_id, ai_result, ai_agent_industry)
+
+                    # Update status to completed
+                    await repository.update_request_status(
+                        request_id=request_id,
+                        status="completed"
+                    )
+                    await session.commit()
+
+                    logger.info(f"Analysis completed successfully for request {request_id}")
+
+                except Exception as store_error:
+                    logger.error(f"Failed to store results for request {request_id}: {str(store_error)}", exc_info=True)
+                    await repository.update_request_status(
+                        request_id=request_id,
+                        status="failed",
+                        error_message=f"Failed to store results: {str(store_error)}"
+                    )
+                    await session.commit()
+            else:
+                # AI analysis failed
+                error_msg = ai_result.get("error", "AI analysis failed")
+                logger.error(f"AI analysis failed for request {request_id}: {error_msg}")
+
+                await repository.update_request_status(
+                    request_id=request_id,
+                    status="failed",
+                    error_message=error_msg
+                )
+                await session.commit()
+
+        except Exception as e:
+            logger.error(f"Background analysis failed for request {request_id}: {str(e)}", exc_info=True)
+
+            # Try to update status to failed
+            try:
+                await repository.update_request_status(
+                    request_id=request_id,
+                    status="failed",
+                    error_message=str(e)
+                )
+                await session.commit()
+            except Exception as update_error:
+                logger.error(f"Failed to update failed status for request {request_id}: {str(update_error)}")
+
+
+async def _store_analysis_results(
+    session: AsyncSession,
+    repository: AnalysisRepository,
+    request_id: uuid.UUID,
+    ai_result: Dict[str, Any],
+    ai_agent_industry: str
+):
+    """Store AI analysis results in the database."""
+    logger.info(f"Storing analysis results for request {request_id}")
+
+    try:
+        # Extract and convert AI result data to database format
+        overall_score = _convert_score_to_int(ai_result.get("overall_score", 0))
+
+        # Extract structure scores for ATS, content, and formatting
+        structure_scores = ai_result.get("structure", {}).get("scores", {})
+        appeal_scores = ai_result.get("appeal", {}).get("scores", {})
+
+        # Map AI agent scores to database fields
+        ats_score = _convert_score_to_int(structure_scores.get("format", 0))
+        content_score = _convert_score_to_int(appeal_scores.get("achievement_relevance", 0))
+        formatting_score = _convert_score_to_int(structure_scores.get("completeness", 0))
+
+        # Extract executive summary
+        executive_summary = ai_result.get("summary", "Analysis completed successfully.")
+
+        # Ensure executive summary is not empty
+        if not executive_summary or len(executive_summary.strip()) < 10:
+            executive_summary = f"Resume analysis completed for {ai_agent_industry} industry. Overall score: {overall_score}/100."
+
+        # Create detailed scores JSON structure
+        detailed_scores = {
+            "structure_analysis": {
+                "scores": structure_scores,
+                "feedback": ai_result.get("structure", {}).get("feedback", {}),
+                "metadata": ai_result.get("structure", {}).get("metadata", {})
+            },
+            "appeal_analysis": {
+                "scores": appeal_scores,
+                "feedback": ai_result.get("appeal", {}).get("feedback", {})
+            },
+            "market_tier": ai_result.get("market_tier", "unknown"),
+            "ai_analysis_id": ai_result.get("analysis_id"),
+            "conversion_timestamp": utc_now().isoformat()
+        }
+
+        # Store results using repository
+        await repository.save_results(
+            request_id=request_id,
+            overall_score=overall_score,
+            ats_score=ats_score,
+            content_score=content_score,
+            formatting_score=formatting_score,
+            executive_summary=executive_summary,
+            detailed_scores=detailed_scores,
+            ai_model_used="gpt-4",
+            processing_time_ms=30000
+        )
+
+        logger.info(f"Successfully stored analysis results for request {request_id}")
+
+    except Exception as e:
+        logger.error(f"Failed to store analysis results for request {request_id}: {str(e)}")
+        raise
+
+
+def _convert_score_to_int(score: Any) -> int:
+    """Convert score to integer, handling various input types."""
+    if score is None:
+        return 0
+
+    try:
+        float_score = float(score)
+        return max(0, min(100, int(round(float_score))))
+    except (ValueError, TypeError):
+        logger.warning(f"Invalid score value: {score}, defaulting to 0")
+        return 0
+
+
+def _create_mock_ai_result(request_id: uuid.UUID, ai_agent_industry: str) -> Dict[str, Any]:
+    """Create mock AI result for testing when AI service is unavailable."""
+    mock_result = {
+        "success": True,
+        "analysis_id": str(request_id),
+        "overall_score": 75.0,
+        "market_tier": "mid",
+        "summary": f"Mock analysis completed for {ai_agent_industry} industry. This is a test result generated when AI services are unavailable.",
+        "structure": {
+            "scores": {
+                "format": 80.0,
+                "organization": 75.0,
+                "tone": 70.0,
+                "completeness": 85.0
+            },
+            "feedback": {
+                "issues": ["Mock formatting issue identified"],
+                "missing_sections": ["Mock missing section"],
+                "strengths": ["Mock strength identified"],
+                "recommendations": ["Mock recommendation for improvement"]
+            },
+            "metadata": {
+                "total_sections": 6,
+                "word_count": 450,
+                "reading_time": 2
+            }
+        },
+        "appeal": {
+            "scores": {
+                "achievement_relevance": 78.0,
+                "skills_alignment": 72.0,
+                "experience_fit": 76.0,
+                "competitive_positioning": 74.0
+            },
+            "feedback": {
+                "relevant_achievements": ["Mock relevant achievement"],
+                "missing_skills": ["Mock missing skill"],
+                "competitive_advantages": ["Mock competitive advantage"],
+                "improvement_areas": ["Mock improvement area"]
+            }
+        }
+    }
+
+    logger.info(f"Created mock AI result for request {request_id}, industry {ai_agent_industry}")
+    return mock_result
+
+
+# ============================================================================
+# Service Class
+# ============================================================================
 
 class AnalysisException(Exception):
     """Custom exception for analysis-related errors."""
@@ -66,7 +324,8 @@ class AnalysisService:
         self,
         resume_id: uuid.UUID,
         user_id: uuid.UUID,
-        industry: Industry
+        industry: Industry,
+        background_tasks: BackgroundTasks
     ) -> AnalysisResponse:
         """
         Request analysis for an uploaded resume using two-table workflow.
@@ -103,8 +362,9 @@ class AnalysisService:
             # Step 4: Map industry for AI agent compatibility
             ai_agent_industry = self._map_database_industry_to_ai_agent(industry)
 
-            # Step 5: Queue background analysis job
-            await self._queue_analysis_job(
+            # Step 5: Queue background analysis job with proper session management
+            background_tasks.add_task(
+                process_analysis_background,
                 request_id=review_request.id,
                 resume_text=resume.extracted_text,
                 ai_agent_industry=ai_agent_industry
@@ -156,235 +416,6 @@ class AnalysisService:
             "processing_time_ms": result.processing_time_ms,
             "completed_at": request.completed_at
         }
-
-    async def _queue_analysis_job(
-        self,
-        request_id: uuid.UUID,
-        resume_text: str,
-        ai_agent_industry: str
-    ):
-        """Queue background analysis job for two-table workflow."""
-        logger.info(f"Queuing analysis job {request_id} for AI agent industry '{ai_agent_industry}'")
-
-        # Start the background analysis task
-        asyncio.create_task(
-            self._process_analysis_background(
-                request_id=request_id,
-                resume_text=resume_text,
-                ai_agent_industry=ai_agent_industry
-            )
-        )
-
-        logger.info(f"Background analysis task created for request {request_id}")
-
-    async def _process_analysis_background(
-        self,
-        request_id: uuid.UUID,
-        resume_text: str,
-        ai_agent_industry: str
-    ):
-        """Process analysis in the background using AI agents."""
-        try:
-            logger.info(f"Starting background analysis for request {request_id}")
-
-            # Step 1: Update status to processing
-            await self._update_analysis_status(request_id, "processing")
-
-            # Step 2: Run AI analysis
-            logger.info(f"Running AI analysis for request {request_id}")
-            try:
-                ai_result = await self.ai_orchestrator.analyze(
-                    resume_text=resume_text,
-                    industry=ai_agent_industry,
-                    analysis_id=str(request_id)
-                )
-            except Exception as ai_error:
-                logger.error(f"AI orchestrator error for request {request_id}: {str(ai_error)}")
-                # Check if we should use mock results for development/testing
-                settings = get_settings()
-                use_mock_results = getattr(settings, 'USE_MOCK_AI_RESULTS', False)
-
-                if use_mock_results:
-                    logger.info(f"Using mock AI results for request {request_id} due to AI service error")
-                    ai_result = self._create_mock_ai_result(request_id, ai_agent_industry)
-                else:
-                    # Create a failure response
-                    ai_result = {
-                        "success": False,
-                        "error": f"AI analysis failed: {str(ai_error)}",
-                        "analysis_id": str(request_id)
-                    }
-
-            # Step 3: Store results and update status
-            if ai_result.get("success", False):
-                logger.info(f"AI analysis successful for request {request_id}")
-                await self._store_analysis_results(request_id, ai_result)
-                await self._update_analysis_status(request_id, "completed")
-                logger.info(f"Analysis completed successfully for request {request_id}")
-            else:
-                error_msg = ai_result.get("error", "AI analysis failed")
-                logger.error(f"AI analysis failed for request {request_id}: {error_msg}")
-                await self._update_analysis_status(request_id, "failed", error_msg)
-
-        except Exception as e:
-            logger.error(f"Background analysis failed for request {request_id}: {str(e)}")
-            await self._update_analysis_status(request_id, "failed", str(e))
-
-    async def _update_analysis_status(
-        self,
-        request_id: uuid.UUID,
-        status: str,
-        error_message: Optional[str] = None
-    ):
-        """Update the analysis request status."""
-        try:
-            await self.repository.update_request_status(
-                request_id=request_id,
-                status=status,
-                error_message=error_message
-            )
-            logger.info(f"Updated analysis {request_id} status to '{status}'")
-        except Exception as e:
-            logger.error(f"Failed to update status for request {request_id}: {str(e)}")
-
-    async def _store_analysis_results(
-        self,
-        request_id: uuid.UUID,
-        ai_result: Dict[str, Any]
-    ):
-        """Store AI analysis results in the database."""
-        logger.info(f"Storing analysis results for request {request_id}")
-
-        try:
-            # Extract and convert AI result data to database format
-            overall_score = self._convert_score_to_int(ai_result.get("overall_score", 0))
-
-            # Extract structure scores for ATS, content, and formatting
-            structure_scores = ai_result.get("structure", {}).get("scores", {})
-            appeal_scores = ai_result.get("appeal", {}).get("scores", {})
-
-            # Map AI agent scores to database fields
-            ats_score = self._convert_score_to_int(structure_scores.get("format", 0))  # Format/layout for ATS
-            content_score = self._convert_score_to_int(appeal_scores.get("achievement_relevance", 0))  # Content quality
-            formatting_score = self._convert_score_to_int(structure_scores.get("completeness", 0))  # Overall completeness
-
-            # Extract executive summary
-            executive_summary = ai_result.get("summary", "Analysis completed successfully.")
-
-            # Ensure executive summary is not empty and has reasonable length
-            if not executive_summary or len(executive_summary.strip()) < 10:
-                executive_summary = f"Resume analysis completed for {ai_agent_industry} industry. Overall score: {overall_score}/100."
-
-            # Create detailed scores JSON structure
-            detailed_scores = self._create_detailed_scores(ai_result)
-
-            # Determine AI model used (default if not specified)
-            ai_model_used = "gpt-4"  # Default model
-
-            # Calculate processing time (estimate if not provided)
-            processing_time_ms = 30000  # Default 30 seconds
-
-            # Store results using repository
-            result = await self.repository.save_results(
-                request_id=request_id,
-                overall_score=overall_score,
-                ats_score=ats_score,
-                content_score=content_score,
-                formatting_score=formatting_score,
-                executive_summary=executive_summary,
-                detailed_scores=detailed_scores,
-                ai_model_used=ai_model_used,
-                processing_time_ms=processing_time_ms
-            )
-
-            logger.info(f"Successfully stored analysis results for request {request_id}")
-            return result
-
-        except Exception as e:
-            logger.error(f"Failed to store analysis results for request {request_id}: {str(e)}")
-            raise
-
-    def _convert_score_to_int(self, score: Any) -> int:
-        """Convert score to integer, handling various input types."""
-        if score is None:
-            return 0
-
-        try:
-            # Convert to float first, then int
-            float_score = float(score)
-            # Ensure score is between 0 and 100
-            return max(0, min(100, int(round(float_score))))
-        except (ValueError, TypeError):
-            logger.warning(f"Invalid score value: {score}, defaulting to 0")
-            return 0
-
-    def _create_detailed_scores(self, ai_result: Dict[str, Any]) -> Dict[str, Any]:
-        """Create detailed scores JSON structure from AI result."""
-        structure_data = ai_result.get("structure", {})
-        appeal_data = ai_result.get("appeal", {})
-
-        detailed_scores = {
-            "structure_analysis": {
-                "scores": structure_data.get("scores", {}),
-                "feedback": structure_data.get("feedback", {}),
-                "metadata": structure_data.get("metadata", {})
-            },
-            "appeal_analysis": {
-                "scores": appeal_data.get("scores", {}),
-                "feedback": appeal_data.get("feedback", {})
-            },
-            "market_tier": ai_result.get("market_tier", "unknown"),
-            "ai_analysis_id": ai_result.get("analysis_id"),
-            "conversion_timestamp": utc_now().isoformat()
-        }
-
-        return detailed_scores
-
-    def _create_mock_ai_result(self, request_id: uuid.UUID, ai_agent_industry: str) -> Dict[str, Any]:
-        """Create mock AI result for testing when AI service is unavailable."""
-        mock_result = {
-            "success": True,
-            "analysis_id": str(request_id),
-            "overall_score": 75.0,
-            "market_tier": "mid",
-            "summary": f"Mock analysis completed for {ai_agent_industry} industry. This is a test result generated when AI services are unavailable.",
-            "structure": {
-                "scores": {
-                    "format": 80.0,
-                    "organization": 75.0,
-                    "tone": 70.0,
-                    "completeness": 85.0
-                },
-                "feedback": {
-                    "issues": ["Mock formatting issue identified"],
-                    "missing_sections": ["Mock missing section"],
-                    "strengths": ["Mock strength identified"],
-                    "recommendations": ["Mock recommendation for improvement"]
-                },
-                "metadata": {
-                    "total_sections": 6,
-                    "word_count": 450,
-                    "reading_time": 2
-                }
-            },
-            "appeal": {
-                "scores": {
-                    "achievement_relevance": 78.0,
-                    "skills_alignment": 72.0,
-                    "experience_fit": 76.0,
-                    "competitive_positioning": 74.0
-                },
-                "feedback": {
-                    "relevant_achievements": ["Mock relevant achievement"],
-                    "missing_skills": ["Mock missing skill"],
-                    "competitive_advantages": ["Mock competitive advantage"],
-                    "improvement_areas": ["Mock improvement area"]
-                }
-            }
-        }
-
-        logger.info(f"Created mock AI result for request {request_id}, industry {ai_agent_industry}")
-        return mock_result
 
     async def get_analysis_result(self, request_id: uuid.UUID, user_id: uuid.UUID) -> AnalysisResult:
         """Get detailed analysis results by ID (only for completed analyses)."""
