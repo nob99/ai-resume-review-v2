@@ -143,6 +143,11 @@ class BaseAgent:
                 if not content:
                     raise ValueError("Empty content from OpenAI API")
 
+                # Log the raw response for debugging
+                logger.info(f"=== RAW OPENAI RESPONSE for {agent_name} ===")
+                logger.info(content)
+                logger.info(f"=== END RAW RESPONSE (length: {len(content)} chars, ~{len(content.split())} words) ===")
+
                 return content
 
             except Exception as e:
