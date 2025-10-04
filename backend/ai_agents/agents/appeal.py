@@ -6,9 +6,8 @@ from typing import Dict, Any, Optional
 
 from .base import BaseAgent
 from ai_agents.config import get_industry_config
-from ai_agents.logging_utils import log_agent_start, log_agent_complete
+from ai_agents.utils import log_agent_start, log_agent_complete, build_structure_context
 from ai_agents.services import ScoreCalculator, SummaryGenerator
-from ai_agents.utils import build_structure_context
 
 logger = logging.getLogger(__name__)
 

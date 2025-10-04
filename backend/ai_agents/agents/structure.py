@@ -5,7 +5,7 @@ import re
 from typing import Dict, Any, List, Optional
 
 from .base import BaseAgent
-from ai_agents.logging_utils import log_agent_start, log_agent_complete
+from ai_agents.utils import log_agent_start, log_agent_complete
 
 logger = logging.getLogger(__name__)
 

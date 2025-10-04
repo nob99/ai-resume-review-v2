@@ -9,7 +9,7 @@ from .agents import StructureAgent, AppealAgent
 from .workflows import create_workflow, ResumeAnalysisState
 from .settings import get_settings
 from .config import get_agent_config
-from .logging_utils import log_analysis_start, log_analysis_complete, log_analysis_error
+from .utils import log_analysis_start, log_analysis_complete, log_analysis_error
 
 logger = logging.getLogger(__name__)
 

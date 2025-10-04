@@ -10,7 +10,7 @@ from openai import AsyncOpenAI
 
 from ai_agents.settings import get_settings
 from ai_agents.config import get_agent_config
-from ai_agents.logging_utils import log_api_call, log_api_response, log_prompts
+from ai_agents.utils import log_api_call, log_api_response, log_prompts
 
 logger = logging.getLogger(__name__)
 

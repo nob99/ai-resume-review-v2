@@ -29,12 +29,35 @@ Resume Text → Structure Agent → Appeal Agent → Final Results
 ai_agents/
 ├── agents/           # Agent implementations (base, structure, appeal)
 ├── workflows/        # LangGraph workflow & state definitions
+├── services/         # Business logic & calculations
+├── utils/            # Shared utilities & helpers
 ├── config/           # YAML configs (agents.yaml, industries.yaml)
 ├── prompts/          # Prompt templates (YAML)
 ├── tests/            # Unit tests
 ├── settings.py       # Infrastructure config (Python)
+├── models.py         # Data models
 └── orchestrator.py   # Main workflow executor
 ```
+
+### Folder Responsibilities
+
+**`services/` - Business Logic & Calculations**
+- Contains reusable business logic extracted from agents
+- Pure functions with no side effects (LLM calls, I/O)
+- Examples: score calculation, summary generation
+- **When to use**: Complex business rules that need isolation and testing
+- **Import**: `from ai_agents.services import ScoreCalculator, SummaryGenerator`
+
+**`utils/` - Shared Utilities & Helpers**
+- Contains helper functions used across multiple modules
+- Examples: validation, exceptions, context building, logging
+- Infrastructure-level utilities (not business logic)
+- **When to use**: Cross-cutting concerns like validation, error handling
+- **Import**: `from ai_agents.utils import validate_industry, log_agent_start`
+
+**Key Difference:**
+- `services/` = **What** (business logic: "how to calculate scores")
+- `utils/` = **How** (infrastructure: "how to validate input", "how to log")
 
 ## Configuration
 
