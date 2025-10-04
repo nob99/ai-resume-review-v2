@@ -104,19 +104,21 @@ variables:
     description: The resume text to analyze for structure and formatting
 
 # Parsing configuration (how to extract data from LLM response)
+# Note: Regex patterns follow common format defined in prompts/parsing_patterns.py
+# Pattern format: [：:\\s]*(\\d+) supports both EN/JA colons
 parsing:
   scores:
     format:
-      pattern: "Format\\s*Score[:\\s]*(\\d+)"
+      pattern: "Format\\s*Score[：:\\s]*(\\d+)"
       default: 0
     organization:
-      pattern: "Section\\s*Organization\\s*Score[:\\s]*(\\d+)"
+      pattern: "Section\\s*Organization\\s*Score[：:\\s]*(\\d+)"
       default: 0
     tone:
-      pattern: "Professional\\s*Tone\\s*Score[:\\s]*(\\d+)"
+      pattern: "Professional\\s*Tone\\s*Score[：:\\s]*(\\d+)"
       default: 0
     completeness:
-      pattern: "Completeness\\s*Score[:\\s]*(\\d+)"
+      pattern: "Completeness\\s*Score[：:\\s]*(\\d+)"
       default: 0
 
   feedback:
@@ -128,11 +130,11 @@ parsing:
 
   metadata:
     total_sections:
-      pattern: "Total\\s*Sections\\s*Found[:\\s]*(\\d+)"
+      pattern: "Total\\s*Sections\\s*Found[：:\\s]*(\\d+)"
       default: null
     word_count:
-      pattern: "Word\\s*Count[:\\s]*(\\d+)"
+      pattern: "Word\\s*Count[：:\\s]*(\\d+)"
       default: null
     reading_time:
-      pattern: "Estimated\\s*Reading\\s*Time[:\\s]*(\\d+)"
+      pattern: "Estimated\\s*Reading\\s*Time[：:\\s]*(\\d+)"
       default: null

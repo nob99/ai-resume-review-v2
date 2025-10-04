@@ -108,6 +108,8 @@ variables:
     description: 構造とフォーマットを分析する履歴書テキスト
 
 # パース設定 (LLMレスポンスからデータを抽出する方法)
+# 注意: 正規表現パターンは prompts/parsing_patterns.py で定義された共通形式に従います
+# パターン形式: [：:\\s]*(\\d+) は英語/日本語のコロンの両方に対応
 parsing:
   scores:
     format:

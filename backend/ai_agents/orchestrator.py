@@ -9,6 +9,7 @@ from .agents import StructureAgent, AppealAgent
 from .workflows import create_workflow, ResumeAnalysisState
 from .settings import get_settings
 from .config import get_agent_config
+from .logging_utils import log_analysis_start, log_analysis_complete, log_analysis_error
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,7 @@ class ResumeAnalysisOrchestrator:
             analysis_id = str(uuid.uuid4())
 
         start_time = time.time()
-        logger.info(f"Starting analysis request_id={analysis_id} industry={industry}")
+        log_analysis_start(logger, analysis_id, industry)
 
         # Initialize state
         initial_state: ResumeAnalysisState = {
@@ -80,7 +81,7 @@ class ResumeAnalysisOrchestrator:
             "error": None,
             "retry_count": 0
         }
-        
+
         try:
             # Run the workflow
             final_state = await self.workflow.ainvoke(initial_state)
@@ -88,19 +89,19 @@ class ResumeAnalysisOrchestrator:
             # Check for errors in the final state
             if final_state.get("error"):
                 elapsed = time.time() - start_time
-                logger.error(f"Analysis failed request_id={analysis_id} error={final_state['error']} time={elapsed:.1f}s")
+                log_analysis_error(logger, analysis_id, final_state['error'], elapsed, exc_info=False)
                 return self._format_error_response(final_state["error"], analysis_id)
 
             # Format and return successful results
             elapsed = time.time() - start_time
             overall_score = final_state.get("overall_score", 0)
-            logger.info(f"Analysis completed request_id={analysis_id} overall_score={overall_score} time={elapsed:.1f}s")
+            log_analysis_complete(logger, analysis_id, overall_score, elapsed)
             return self._format_success_response(final_state, analysis_id)
 
         except Exception as e:
             # Handle unexpected errors
             elapsed = time.time() - start_time
-            logger.error(f"Analysis failed request_id={analysis_id} error={str(e)} time={elapsed:.1f}s", exc_info=True)
+            log_analysis_error(logger, analysis_id, str(e), elapsed)
             return self._format_error_response(str(e), analysis_id)
     
     def _format_success_response(self, state: Dict[str, Any], analysis_id: str) -> Dict[str, Any]:

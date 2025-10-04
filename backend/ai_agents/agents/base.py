@@ -10,6 +10,7 @@ from openai import AsyncOpenAI
 
 from ai_agents.settings import get_settings
 from ai_agents.config import get_agent_config
+from ai_agents.logging_utils import log_api_call, log_api_response, log_prompts
 
 logger = logging.getLogger(__name__)
 
@@ -107,15 +108,11 @@ class BaseAgent:
 
         for attempt in range(self.max_retries):
             try:
-                # Log the model we're requesting
-                logger.info(f"Calling OpenAI API - agent: {agent_name}, model: {self.settings.llm.model}, max_tokens: {max_tokens}")
+                # Log API call
+                log_api_call(logger, agent_name, self.settings.llm.model, max_tokens)
 
                 # Log the actual prompts being sent to OpenAI
-                logger.info(f"=== SYSTEM PROMPT for {agent_name} ===")
-                logger.info(system_prompt)
-                logger.info(f"=== USER PROMPT for {agent_name} ===")
-                logger.info(user_prompt)
-                logger.info(f"=== END PROMPTS for {agent_name} ===")
+                log_prompts(logger, agent_name, system_prompt, user_prompt)
 
                 response = await self.client.chat.completions.create(
                     model=self.settings.llm.model,
@@ -127,8 +124,13 @@ class BaseAgent:
                     timeout=self.settings.llm.timeout_seconds
                 )
 
-                # Log the actual model used by OpenAI
-                logger.info(f"OpenAI API response - agent: {agent_name}, actual model used: {response.model}, tokens: prompt={response.usage.prompt_tokens}, completion={response.usage.completion_tokens}, total={response.usage.total_tokens}")
+                # Log API response
+                usage = {
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens,
+                    "total_tokens": response.usage.total_tokens
+                }
+                log_api_response(logger, agent_name, response.model, usage)
 
                 # Validate response
                 if not response:
@@ -236,3 +238,46 @@ class BaseAgent:
         # Default implementation does nothing
         # Subclasses override to add metadata, market_tier, etc.
         pass
+
+    def _get_error_defaults(self) -> Dict[str, Any]:
+        """Get default values to set in state when analysis fails.
+
+        Subclasses must override this to return their specific error defaults.
+        This ensures consistent error handling across all agents.
+
+        Returns:
+            Dictionary of state keys and their default error values
+
+        Example:
+            return {
+                "structure_scores": {"format": 0, "organization": 0},
+                "structure_feedback": {"issues": ["Analysis failed"]},
+                "structure_metadata": {}
+            }
+        """
+        raise NotImplementedError("Subclasses must implement _get_error_defaults()")
+
+    def _handle_analysis_error(self, state: Dict[str, Any], error: Exception, agent_name: str) -> Dict[str, Any]:
+        """Handle analysis error by logging and setting default state values.
+
+        This method provides consistent error handling across all agents.
+
+        Args:
+            state: Current workflow state
+            error: The exception that occurred
+            agent_name: Name of the agent for logging
+
+        Returns:
+            Updated state with error information and default values
+        """
+        error_msg = f"{agent_name.capitalize()} analysis failed: {str(error)}"
+        logger.error(error_msg, exc_info=True)
+
+        # Set error message
+        state["error"] = error_msg
+
+        # Set agent-specific default values
+        defaults = self._get_error_defaults()
+        state.update(defaults)
+
+        return state

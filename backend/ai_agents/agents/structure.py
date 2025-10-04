@@ -5,6 +5,7 @@ import re
 from typing import Dict, Any, List, Optional
 
 from .base import BaseAgent
+from ai_agents.logging_utils import log_agent_start, log_agent_complete
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ class StructureAgent(BaseAgent):
         Returns:
             Updated state with structure analysis results
         """
-        logger.info("Structure analysis started")
+        log_agent_start(logger, "structure")
 
         try:
             # Get the prompts from template
@@ -56,20 +57,35 @@ class StructureAgent(BaseAgent):
             state["structure_feedback"] = parsed_results["feedback"]
             state["structure_metadata"] = parsed_results["metadata"]
 
-            # Calculate average score
+            # Calculate average score and log completion
             scores = parsed_results["scores"]
             avg_score = sum(scores.values()) / len(scores) if scores else 0
-            logger.info(f"Structure analysis completed score={avg_score:.1f}")
+            log_agent_complete(logger, "structure", score=avg_score)
 
         except Exception as e:
-            logger.error(f"Structure analysis failed: {str(e)}", exc_info=True)
-            state["error"] = f"Structure analysis failed: {str(e)}"
-            # Set default values on error
-            state["structure_scores"] = {"format": 0, "organization": 0, "tone": 0, "completeness": 0}
-            state["structure_feedback"] = {"issues": ["Analysis failed"], "strengths": []}
-            state["structure_metadata"] = {}
+            return self._handle_analysis_error(state, e, "structure")
 
         return state
+
+    def _get_error_defaults(self) -> Dict[str, Any]:
+        """Get default values for structure analysis errors.
+
+        Returns:
+            Dictionary with structure-specific error defaults
+        """
+        return {
+            "structure_scores": {
+                "format": 0,
+                "organization": 0,
+                "tone": 0,
+                "completeness": 0
+            },
+            "structure_feedback": {
+                "issues": ["Analysis failed"],
+                "strengths": []
+            },
+            "structure_metadata": {}
+        }
 
     def _parse_agent_specific_fields(self, response: str, results: Dict[str, Any]) -> None:
         """Add metadata extraction for structure analysis.

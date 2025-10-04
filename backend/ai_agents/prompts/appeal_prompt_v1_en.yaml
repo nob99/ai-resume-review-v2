@@ -29,7 +29,7 @@ prompts:
     Provide detailed, actionable insights that help candidates understand their appeal within the {industry_title} market and how to enhance their competitive positioning.
 
   user: |
-    Analyze the following resume for industry-specific appeal and competitiveness in the {industry_display} sector.
+    Analyze the following resume for industry-specific appeal and competitiveness in the {industry_title} sector.
 
     {structure_context_section}
 
@@ -39,25 +39,25 @@ prompts:
     ANALYSIS REQUIREMENTS FOR {industry_upper} INDUSTRY:
 
     1. ACHIEVEMENT RELEVANCE ASSESSMENT (0-100 scale):
-       - Relevance of accomplishments to {industry_display} industry
+       - Relevance of accomplishments to {industry_title} industry
        - Impact and measurability of achievements
        - Industry-specific value demonstration
        - Competitive differentiation through achievements
 
     2. SKILLS ALIGNMENT ASSESSMENT (0-100 scale):
-       - Alignment with key {industry_display} skills: {key_skills_list}
+       - Alignment with key {industry_title} skills: {key_skills_list}
        - Technical and domain expertise demonstration
        - Skill progression and depth
        - Missing critical skills identification
 
     3. EXPERIENCE FIT ASSESSMENT (0-100 scale):
-       - Relevance of work experience to {industry_display}
+       - Relevance of work experience to {industry_title}
        - Career progression appropriateness
        - Industry transition readiness (if applicable)
        - Experience depth and breadth
 
     4. COMPETITIVE POSITIONING ASSESSMENT (0-100 scale):
-       - Market competitiveness within {industry_display}
+       - Market competitiveness within {industry_title}
        - Unique value proposition strength
        - Differentiation from typical candidates
        - Overall market appeal
@@ -73,16 +73,16 @@ prompts:
     DETAILED INDUSTRY ANALYSIS:
 
     Relevant Achievements:
-    - [List 3-5 most relevant achievements for {industry_display} industry]
+    - [List 3-5 most relevant achievements for {industry_title} industry]
     - [Focus on quantifiable, impactful accomplishments]
 
     Missing Skills:
-    - [List critical {industry_display} skills that are missing or underrepresented]
+    - [List critical {industry_title} skills that are missing or underrepresented]
     - [Prioritize skills by importance to industry success]
 
     Transferable Experience:
     - [Identify cross-industry experience that adds value]
-    - [Highlight experience that translates well to {industry_display}]
+    - [Highlight experience that translates well to {industry_title}]
 
     Industry Keywords:
     - [List industry-specific terms and keywords found in resume]
@@ -94,11 +94,11 @@ prompts:
 
     Competitive Advantages:
     - [List unique selling points and competitive differentiators]
-    - [Focus on strengths that set candidate apart in {industry_display}]
+    - [Focus on strengths that set candidate apart in {industry_title}]
 
     Improvement Areas:
     - [Priority areas for enhancement to improve industry appeal]
-    - [Specific recommendations for {industry_display} positioning]
+    - [Specific recommendations for {industry_title} positioning]
     - [Career development suggestions for industry advancement]
 
 variables:
@@ -115,13 +115,8 @@ variables:
   - name: industry_title
     type: string
     required: true
-    description: Formatted industry title for system prompt
-  
-  - name: industry_display
-    type: string
-    required: true
-    description: Display-friendly industry name
-  
+    description: Display-friendly industry name (e.g., "Technology Consulting")
+
   - name: industry_upper
     type: string
     required: true
@@ -139,23 +134,25 @@ variables:
     description: Optional context from structure analysis
 
 # Parsing configuration (how to extract data from LLM response)
+# Note: Regex patterns follow common format defined in prompts/parsing_patterns.py
+# Pattern format: [：:\\s]*(\\d+) supports both EN/JA colons
 parsing:
   scores:
     achievement_relevance:
-      pattern: "Achievement\\s*Relevance\\s*Score[:\\s]*(\\d+)"
+      pattern: "Achievement\\s*Relevance\\s*Score[：:\\s]*(\\d+)"
       default: 0
     skills_alignment:
-      pattern: "Skills?\\s*Alignment\\s*Score[:\\s]*(\\d+)"
+      pattern: "Skills?\\s*Alignment\\s*Score[：:\\s]*(\\d+)"
       default: 0
     experience_fit:
-      pattern: "Experience\\s*Fit\\s*Score[:\\s]*(\\d+)"
+      pattern: "Experience\\s*Fit\\s*Score[：:\\s]*(\\d+)"
       default: 0
     competitive_positioning:
-      pattern: "Competitive\\s*Positioning\\s*Score[:\\s]*(\\d+)"
+      pattern: "Competitive\\s*Positioning\\s*Score[：:\\s]*(\\d+)"
       default: 0
 
   market_tier:
-    pattern: "Market\\s*Tier[:\\s]*(entry|mid|senior|executive)"
+    pattern: "Market\\s*Tier[：:\\s]*(entry|mid|senior|executive)"
     default: "mid"
 
   feedback:

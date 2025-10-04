@@ -31,7 +31,7 @@ prompts:
     重要: 出力は日本語で行ってください。
 
   user: |
-    以下の履歴書を{industry_display}セクターにおける業界特有のアピール度と競争力の観点から分析してください。
+    以下の履歴書を{industry_title}セクターにおける業界特有のアピール度と競争力の観点から分析してください。
 
     {structure_context_section}
 
@@ -41,25 +41,25 @@ prompts:
     {industry_upper}業界の分析要件:
 
     1. 実績関連性評価 (0-100スケール):
-       - {industry_display}業界に対する業績の関連性
+       - {industry_title}業界に対する業績の関連性
        - 実績のインパクトと測定可能性
        - 業界特有の価値の実証
        - 実績による競争的差別化
 
     2. スキル適合性評価 (0-100スケール):
-       - {industry_display}の主要スキルとの整合性: {key_skills_list}
+       - {industry_title}の主要スキルとの整合性: {key_skills_list}
        - 技術的および領域の専門知識の実証
        - スキルの進行と深さ
        - 不足している重要なスキルの特定
 
     3. 経験適合度評価 (0-100スケール):
-       - {industry_display}に対する実務経験の関連性
+       - {industry_title}に対する実務経験の関連性
        - キャリア進行の適切性
        - 業界移行の準備度（該当する場合）
        - 経験の深さと広さ
 
     4. 競争的ポジショニング評価 (0-100スケール):
-       - {industry_display}内での市場競争力
+       - {industry_title}内での市場競争力
        - ユニークバリュープロポジションの強度
        - 典型的な候補者との差別化
        - 全体的な市場アピール
@@ -75,16 +75,16 @@ prompts:
     詳細な業界分析:
 
     関連する実績:
-    - [{industry_display}業界にとって最も関連性の高い3-5つの実績をリスト]
+    - [{industry_title}業界にとって最も関連性の高い3-5つの実績をリスト]
     - [定量化可能で影響力のある業績に焦点]
 
     不足しているスキル:
-    - [欠けているまたは不足している重要な{industry_display}スキルをリスト]
+    - [欠けているまたは不足している重要な{industry_title}スキルをリスト]
     - [業界での成功にとっての重要度順にスキルを優先順位付け]
 
     転用可能な経験:
     - [価値を付加する業界横断的な経験を特定]
-    - [{industry_display}にうまく転用できる経験を強調]
+    - [{industry_title}にうまく転用できる経験を強調]
 
     業界キーワード:
     - [履歴書に見つかった業界特有の用語とキーワードをリスト]
@@ -96,11 +96,11 @@ prompts:
 
     競争上の優位性:
     - [ユニークなセールスポイントと競争的差別化要因をリスト]
-    - [{industry_display}で候補者を際立たせる強みに焦点]
+    - [{industry_title}で候補者を際立たせる強みに焦点]
 
     改善領域:
     - [業界アピールを向上させるための優先的な強化領域]
-    - [{industry_display}ポジショニングのための具体的な推奨事項]
+    - [{industry_title}ポジショニングのための具体的な推奨事項]
     - [業界での昇進のためのキャリア開発提案]
 
     重要: 出力は日本語で行ってください。
@@ -119,12 +119,7 @@ variables:
   - name: industry_title
     type: string
     required: true
-    description: システムプロンプト用のフォーマットされた業界タイトル
-
-  - name: industry_display
-    type: string
-    required: true
-    description: 表示用の業界名
+    description: 表示用の業界名 (例："テクノロジーコンサルティング")
 
   - name: industry_upper
     type: string
@@ -143,6 +138,8 @@ variables:
     description: 構造分析からのオプショナルコンテキスト
 
 # パース設定 (LLMレスポンスからデータを抽出する方法)
+# 注意: 正規表現パターンは prompts/parsing_patterns.py で定義された共通形式に従います
+# パターン形式: [：:\\s]*(\\d+) は英語/日本語のコロンの両方に対応
 parsing:
   scores:
     achievement_relevance:

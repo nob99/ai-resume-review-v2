@@ -6,6 +6,7 @@ from typing import Dict, Any, List, Optional
 
 from .base import BaseAgent
 from ai_agents.config import get_industry_config
+from ai_agents.logging_utils import log_agent_start, log_agent_complete
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ class AppealAgent(BaseAgent):
             Updated state with appeal analysis results and final score
         """
         industry = state.get("industry", "general_business")
-        logger.info(f"Appeal analysis started industry={industry}")
+        log_agent_start(logger, "appeal", industry=industry)
 
         try:
             # Get industry configuration from YAML
@@ -45,12 +46,12 @@ class AppealAgent(BaseAgent):
             structure_context = self._build_structure_context(state)
 
             # Prepare prompt variables
+            industry_name = industry_data["display_name"]
             prompt_vars = {
                 "resume_text": state["resume_text"],
                 "industry": industry,
-                "industry_title": industry_data["display_name"],
-                "industry_display": industry_data["display_name"],
-                "industry_upper": industry_data["display_name"].upper(),
+                "industry_title": industry_name,
+                "industry_upper": industry_name.upper(),
                 "key_skills_list": ", ".join(industry_data["key_skills"]),
                 "structure_context_section": structure_context
             }
@@ -81,20 +82,35 @@ class AppealAgent(BaseAgent):
             # Log completion
             scores = parsed_results["scores"]
             avg_score = sum(scores.values()) / len(scores) if scores else 0
-            logger.info(f"Appeal analysis completed score={avg_score:.1f} tier={state['market_tier']}")
+            log_agent_complete(logger, "appeal", score=avg_score, tier=state['market_tier'])
 
         except Exception as e:
-            logger.error(f"Appeal analysis failed: {str(e)}", exc_info=True)
-            state["error"] = f"Appeal analysis failed: {str(e)}"
-            # Set default values on error
-            state["appeal_scores"] = {"achievement_relevance": 0, "skills_alignment": 0, "experience_fit": 0, "competitive_positioning": 0}
-            state["appeal_feedback"] = {"missing_skills": ["Analysis failed"], "competitive_advantages": []}
-            state["market_tier"] = "unknown"
-            state["overall_score"] = 0
-            state["summary"] = "Analysis could not be completed due to an error."
-        
+            return self._handle_analysis_error(state, e, "appeal")
+
         return state
     
+    def _get_error_defaults(self) -> Dict[str, Any]:
+        """Get default values for appeal analysis errors.
+
+        Returns:
+            Dictionary with appeal-specific error defaults
+        """
+        return {
+            "appeal_scores": {
+                "achievement_relevance": 0,
+                "skills_alignment": 0,
+                "experience_fit": 0,
+                "competitive_positioning": 0
+            },
+            "appeal_feedback": {
+                "missing_skills": ["Analysis failed"],
+                "competitive_advantages": []
+            },
+            "market_tier": "unknown",
+            "overall_score": 0,
+            "summary": "Analysis could not be completed due to an error."
+        }
+
     def _build_structure_context(self, state: Dict[str, Any]) -> str:
         """Build context from structure analysis results.
         
