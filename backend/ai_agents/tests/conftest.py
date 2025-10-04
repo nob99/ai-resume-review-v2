@@ -142,37 +142,61 @@ def mock_openai_client():
 
 @pytest.fixture
 def mock_structure_agent(mock_openai_client, mock_openai_structure_response):
-    """Mock structure agent."""
+    """Mock structure agent with English prompts."""
     from ai_agents.agents.structure import StructureAgent
-    
+
     agent = StructureAgent()
     agent.client = mock_openai_client
-    
+
+    # Override settings to use English prompts for testing
+    agent.settings.prompt_language = "en"
+    # Reload template with English prompts
+    agent.prompt_template = agent._load_prompt_template("structure_prompt_v1")
+    agent.parsing_config = agent.prompt_template.get("parsing", {})
+
     # Mock the OpenAI response
     mock_response = Mock()
     mock_response.choices = [Mock()]
     mock_response.choices[0].message.content = mock_openai_structure_response
-    
+    mock_response.usage = Mock(
+        prompt_tokens=100,
+        completion_tokens=200,
+        total_tokens=300
+    )
+    mock_response.model = "gpt-4"
+
     agent.client.chat.completions.create = AsyncMock(return_value=mock_response)
-    
+
     return agent
 
 
 @pytest.fixture
 def mock_appeal_agent(mock_openai_client, mock_openai_appeal_response):
-    """Mock appeal agent."""
+    """Mock appeal agent with English prompts."""
     from ai_agents.agents.appeal import AppealAgent
-    
+
     agent = AppealAgent()
     agent.client = mock_openai_client
-    
+
+    # Override settings to use English prompts for testing
+    agent.settings.prompt_language = "en"
+    # Reload template with English prompts
+    agent.prompt_template = agent._load_prompt_template("appeal_prompt_v1")
+    agent.parsing_config = agent.prompt_template.get("parsing", {})
+
     # Mock the OpenAI response
     mock_response = Mock()
     mock_response.choices = [Mock()]
     mock_response.choices[0].message.content = mock_openai_appeal_response
-    
+    mock_response.usage = Mock(
+        prompt_tokens=150,
+        completion_tokens=250,
+        total_tokens=400
+    )
+    mock_response.model = "gpt-4"
+
     agent.client.chat.completions.create = AsyncMock(return_value=mock_response)
-    
+
     return agent
 
 

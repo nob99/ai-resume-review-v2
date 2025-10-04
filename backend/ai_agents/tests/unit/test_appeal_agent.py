@@ -59,11 +59,9 @@ async def test_appeal_agent_different_industries():
 
 @pytest.mark.asyncio
 async def test_appeal_agent_build_structure_context():
-    """Test structure context building."""
-    from ai_agents.agents.appeal import AppealAgent
-    
-    agent = AppealAgent()
-    
+    """Test structure context building using utility function."""
+    from ai_agents.utils import build_structure_context
+
     state = {
         "structure_scores": {
             "format": 85,
@@ -76,9 +74,9 @@ async def test_appeal_agent_build_structure_context():
             "strengths": ["Strength 1", "Strength 2", "Strength 3"]
         }
     }
-    
-    context = agent._build_structure_context(state)
-    
+
+    context = build_structure_context(state)
+
     assert "Format Score: 85/100" in context
     assert "Organization Score: 90/100" in context
     assert "Key Issues:" in context
@@ -89,11 +87,12 @@ async def test_appeal_agent_build_structure_context():
 
 @pytest.mark.asyncio
 async def test_appeal_agent_calculate_overall_score():
-    """Test overall score calculation."""
-    from ai_agents.agents.appeal import AppealAgent
-    
-    agent = AppealAgent()
-    
+    """Test overall score calculation using ScoreCalculator service."""
+    from ai_agents.services import ScoreCalculator
+
+    # Create calculator with standard weights
+    calculator = ScoreCalculator({"structure": 0.4, "appeal": 0.6})
+
     state = {
         "structure_scores": {
             "format": 80,
@@ -108,34 +107,44 @@ async def test_appeal_agent_calculate_overall_score():
             "competitive_positioning": 90
         }
     }
-    
-    score = agent._calculate_overall_score(state)
-    
+
+    score = calculator.calculate_overall_score(state)
+
     # Should be 40% structure (80) + 60% appeal (90) = 86
     assert score == 86.0
 
 
 @pytest.mark.asyncio
 async def test_appeal_agent_generate_summary():
-    """Test summary generation."""
-    from ai_agents.agents.appeal import AppealAgent
-    
-    agent = AppealAgent()
-    
-    state = {
-        "overall_score": 85,
-        "market_tier": "senior",
-        "structure_feedback": {
-            "strengths": ["Clear formatting"]
-        },
-        "appeal_feedback": {
-            "competitive_advantages": ["Strong leadership"],
-            "improvement_areas": ["Add certifications", "More metrics"]
+    """Test summary generation using SummaryGenerator service."""
+    from ai_agents.services import SummaryGenerator
+
+    # Create generator with standard thresholds and categories
+    generator = SummaryGenerator(
+        thresholds={"excellent": 80, "strong": 70, "good": 60, "fair": 50},
+        categories={
+            "excellent": "excellent candidate",
+            "strong": "strong candidate",
+            "good": "good candidate",
+            "fair": "fair candidate",
+            "needs_improvement": "needs improvement"
         }
+    )
+
+    structure_feedback = {"strengths": ["Clear formatting"]}
+    appeal_feedback = {
+        "competitive_advantages": ["Strong leadership"],
+        "improvement_areas": ["Add certifications", "More metrics"]
     }
-    
-    summary = agent._generate_summary(state, "Technology Consulting")
-    
+
+    summary = generator.generate_summary(
+        overall_score=85,
+        market_tier="senior",
+        industry_name="Technology Consulting",
+        structure_feedback=structure_feedback,
+        appeal_feedback=appeal_feedback
+    )
+
     assert "85/100" in summary
     assert "excellent" in summary.lower()
     assert "senior" in summary
