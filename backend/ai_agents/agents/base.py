@@ -148,6 +148,15 @@ class BaseAgent:
                 logger.info(content)
                 logger.info(f"=== END RAW RESPONSE (length: {len(content)} chars, ~{len(content.split())} words) ===")
 
+                # === DATA SIZE CHECKPOINT 1: RAW OPENAI RESPONSE ===
+                logger.info(f"=== CHECKPOINT 1: RAW OPENAI RESPONSE ({agent_name}) ===")
+                logger.info(f"Total characters: {len(content)}")
+                logger.info(f"Total words: {len(content.split())}")
+                logger.info(f"Total lines: {len(content.splitlines())}")
+                logger.info(f"First 200 chars: {content[:200]}")
+                logger.info(f"Last 200 chars: {content[-200:]}")
+                logger.info(f"=== END CHECKPOINT 1 ===")
+
                 return content
 
             except Exception as e:
@@ -227,6 +236,17 @@ class BaseAgent:
 
         # Let subclasses add their specific fields (metadata, market_tier, etc.)
         self._parse_agent_specific_fields(response, results)
+
+        # === DATA SIZE CHECKPOINT 2: PARSED RESPONSE ===
+        logger.info(f"=== CHECKPOINT 2: PARSED RESPONSE ===")
+        logger.info(f"Number of score fields: {len(results['scores'])}")
+        logger.info(f"Score fields: {list(results['scores'].keys())}")
+        total_feedback_items = sum(len(v) if isinstance(v, list) else 0 for v in results['feedback'].values())
+        logger.info(f"Total feedback items across all categories: {total_feedback_items}")
+        for key, value in results['feedback'].items():
+            if isinstance(value, list):
+                logger.info(f"  - {key}: {len(value)} items")
+        logger.info(f"=== END CHECKPOINT 2 ===")
 
         return results
 

@@ -106,15 +106,15 @@ class ResumeAnalysisOrchestrator:
     
     def _format_success_response(self, state: Dict[str, Any], analysis_id: str) -> Dict[str, Any]:
         """Format successful analysis results for API response.
-        
+
         Args:
             state: Final workflow state with all results
             analysis_id: Analysis tracking ID
-            
+
         Returns:
             Formatted response dictionary
         """
-        return {
+        response = {
             "success": True,
             "analysis_id": analysis_id,
             "overall_score": state.get("overall_score", 0),
@@ -130,6 +130,33 @@ class ResumeAnalysisOrchestrator:
                 "feedback": state.get("appeal_feedback", {})
             }
         }
+
+        # === DATA SIZE CHECKPOINT 5: ORCHESTRATOR FORMATTED RESPONSE ===
+        logger.info(f"=== CHECKPOINT 5: ORCHESTRATOR FORMATTED RESPONSE ===")
+        logger.info(f"Analysis ID: {analysis_id}")
+        logger.info(f"Overall score: {response['overall_score']}")
+        logger.info(f"Market tier: {response['market_tier']}")
+
+        # Count structure feedback items
+        structure_feedback = response['structure']['feedback']
+        structure_total = sum(len(v) if isinstance(v, list) else 0 for v in structure_feedback.values())
+        logger.info(f"Structure feedback total items: {structure_total}")
+        for key, value in structure_feedback.items():
+            if isinstance(value, list):
+                logger.info(f"  - structure.{key}: {len(value)} items")
+
+        # Count appeal feedback items
+        appeal_feedback = response['appeal']['feedback']
+        appeal_total = sum(len(v) if isinstance(v, list) else 0 for v in appeal_feedback.values())
+        logger.info(f"Appeal feedback total items: {appeal_total}")
+        for key, value in appeal_feedback.items():
+            if isinstance(value, list):
+                logger.info(f"  - appeal.{key}: {len(value)} items")
+
+        logger.info(f"Total feedback items in response: {structure_total + appeal_total}")
+        logger.info(f"=== END CHECKPOINT 5 ===")
+
+        return response
     
     def _format_error_response(self, error_message: str, analysis_id: str) -> Dict[str, Any]:
         """Format error response for API.

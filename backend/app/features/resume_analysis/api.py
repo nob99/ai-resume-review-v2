@@ -121,6 +121,35 @@ async def get_analysis_status(
     if not status_result:
         raise HTTPException(status_code=404, detail="Analysis not found or not accessible")
 
+    # === DATA SIZE CHECKPOINT 10: API RESPONSE TO FRONTEND (STATUS) ===
+    if status_result.status == "completed" and status_result.result:
+        logger.info(f"=== CHECKPOINT 10: API RESPONSE TO FRONTEND (STATUS) ===")
+        logger.info(f"Analysis ID: {analysis_id}")
+        logger.info(f"User ID: {current_user.id}")
+        logger.info(f"Status: {status_result.status}")
+
+        # Check if result has detailed_scores
+        result_dict = status_result.result.dict() if hasattr(status_result.result, 'dict') else status_result.result
+        if isinstance(result_dict, dict):
+            detailed_scores = result_dict.get('detailed_scores', {})
+            if detailed_scores:
+                structure_feedback = detailed_scores.get("structure_analysis", {}).get("feedback", {})
+                structure_total = sum(len(v) if isinstance(v, list) else 0 for v in structure_feedback.values())
+                logger.info(f"Structure feedback items in API response: {structure_total}")
+                for key, value in structure_feedback.items():
+                    if isinstance(value, list):
+                        logger.info(f"  - structure.{key}: {len(value)} items")
+
+                appeal_feedback = detailed_scores.get("appeal_analysis", {}).get("feedback", {})
+                appeal_total = sum(len(v) if isinstance(v, list) else 0 for v in appeal_feedback.values())
+                logger.info(f"Appeal feedback items in API response: {appeal_total}")
+                for key, value in appeal_feedback.items():
+                    if isinstance(value, list):
+                        logger.info(f"  - appeal.{key}: {len(value)} items")
+
+                logger.info(f"Total feedback items in API response: {structure_total + appeal_total}")
+        logger.info(f"=== END CHECKPOINT 10 ===")
+
     return status_result
 
 
@@ -140,6 +169,34 @@ async def get_analysis_result(
     result = await service.get_analysis_result(analysis_id, current_user.id)
     if not result:
         raise HTTPException(status_code=404, detail="Analysis not found or not accessible")
+
+    # === DATA SIZE CHECKPOINT 11: API RESPONSE TO FRONTEND (GET RESULT) ===
+    logger.info(f"=== CHECKPOINT 11: API RESPONSE TO FRONTEND (GET RESULT) ===")
+    logger.info(f"Analysis ID: {analysis_id}")
+    logger.info(f"User ID: {current_user.id}")
+
+    result_dict = result.dict() if hasattr(result, 'dict') else result
+    if isinstance(result_dict, dict):
+        detailed_scores = result_dict.get('detailed_scores', {})
+        if detailed_scores:
+            structure_feedback = detailed_scores.get("structure_analysis", {}).get("feedback", {})
+            structure_total = sum(len(v) if isinstance(v, list) else 0 for v in structure_feedback.values())
+            logger.info(f"Structure feedback items in API response: {structure_total}")
+            for key, value in structure_feedback.items():
+                if isinstance(value, list):
+                    logger.info(f"  - structure.{key}: {len(value)} items")
+
+            appeal_feedback = detailed_scores.get("appeal_analysis", {}).get("feedback", {})
+            appeal_total = sum(len(v) if isinstance(v, list) else 0 for v in appeal_feedback.values())
+            logger.info(f"Appeal feedback items in API response: {appeal_total}")
+            for key, value in appeal_feedback.items():
+                if isinstance(value, list):
+                    logger.info(f"  - appeal.{key}: {len(value)} items")
+
+            logger.info(f"Total feedback items in API response: {structure_total + appeal_total}")
+            import json
+            logger.info(f"Total API response JSON length: {len(json.dumps(result_dict))} chars")
+    logger.info(f"=== END CHECKPOINT 11 ===")
 
     return result
 

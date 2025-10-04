@@ -1,6 +1,7 @@
 """Resume analysis repository for database operations using two-table architecture."""
 
 import uuid
+import logging
 from typing import Optional, List, Dict, Any, Tuple
 from datetime import datetime, timedelta
 
@@ -11,6 +12,8 @@ from sqlalchemy import desc, and_, func, select
 from app.core.database import BaseRepository
 from app.core.datetime_utils import utc_now
 from database.models import ReviewRequest, ReviewResult, ReviewFeedbackItem
+
+logger = logging.getLogger(__name__)
 
 
 class ReviewRequestRepository(BaseRepository[ReviewRequest]):
@@ -164,6 +167,30 @@ class ReviewResultRepository(BaseRepository[ReviewResult]):
         processing_time_ms: int
     ) -> ReviewResult:
         """Save analysis results with granular scoring"""
+        # === DATA SIZE CHECKPOINT 8: REPOSITORY BEFORE SAVE ===
+        logger.info(f"=== CHECKPOINT 8: REPOSITORY BEFORE SAVE ===")
+        logger.info(f"Request ID: {request_id}")
+        logger.info(f"Overall score: {overall_score}")
+
+        structure_feedback = detailed_scores.get("structure_analysis", {}).get("feedback", {})
+        structure_total = sum(len(v) if isinstance(v, list) else 0 for v in structure_feedback.values())
+        logger.info(f"Structure feedback items to save: {structure_total}")
+        for key, value in structure_feedback.items():
+            if isinstance(value, list):
+                logger.info(f"  - structure.{key}: {len(value)} items")
+
+        appeal_feedback = detailed_scores.get("appeal_analysis", {}).get("feedback", {})
+        appeal_total = sum(len(v) if isinstance(v, list) else 0 for v in appeal_feedback.values())
+        logger.info(f"Appeal feedback items to save: {appeal_total}")
+        for key, value in appeal_feedback.items():
+            if isinstance(value, list):
+                logger.info(f"  - appeal.{key}: {len(value)} items")
+
+        logger.info(f"Total feedback items to save: {structure_total + appeal_total}")
+        import json
+        logger.info(f"detailed_scores JSON length to save: {len(json.dumps(detailed_scores))} chars")
+        logger.info(f"=== END CHECKPOINT 8 ===")
+
         result = ReviewResult(
             review_request_id=request_id,
             overall_score=overall_score,
@@ -180,6 +207,30 @@ class ReviewResultRepository(BaseRepository[ReviewResult]):
         self.session.add(result)
         await self.session.commit()
         await self.session.refresh(result)
+
+        # === DATA SIZE CHECKPOINT 9: REPOSITORY AFTER SAVE ===
+        logger.info(f"=== CHECKPOINT 9: REPOSITORY AFTER SAVE (DB READ-BACK) ===")
+        logger.info(f"Result ID: {result.id}")
+        saved_detailed_scores = result.detailed_scores
+        if saved_detailed_scores:
+            structure_feedback_saved = saved_detailed_scores.get("structure_analysis", {}).get("feedback", {})
+            structure_total_saved = sum(len(v) if isinstance(v, list) else 0 for v in structure_feedback_saved.values())
+            logger.info(f"Structure feedback items saved (read-back): {structure_total_saved}")
+            for key, value in structure_feedback_saved.items():
+                if isinstance(value, list):
+                    logger.info(f"  - structure.{key}: {len(value)} items")
+
+            appeal_feedback_saved = saved_detailed_scores.get("appeal_analysis", {}).get("feedback", {})
+            appeal_total_saved = sum(len(v) if isinstance(v, list) else 0 for v in appeal_feedback_saved.values())
+            logger.info(f"Appeal feedback items saved (read-back): {appeal_total_saved}")
+            for key, value in appeal_feedback_saved.items():
+                if isinstance(value, list):
+                    logger.info(f"  - appeal.{key}: {len(value)} items")
+
+            logger.info(f"Total feedback items saved (read-back): {structure_total_saved + appeal_total_saved}")
+            logger.info(f"detailed_scores JSON length (read-back): {len(json.dumps(saved_detailed_scores))} chars")
+        logger.info(f"=== END CHECKPOINT 9 ===")
+
         return result
 
     async def get_by_request_id(self, request_id: uuid.UUID) -> Optional[ReviewResult]:

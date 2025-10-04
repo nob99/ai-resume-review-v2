@@ -91,6 +91,29 @@ async def process_analysis_background(
 
                 logger.info(f"AI orchestrator completed for request {request_id}, success={ai_result.get('success', False)}")
 
+                # === DATA SIZE CHECKPOINT 6: SERVICE RECEIVED AI RESULT ===
+                logger.info(f"=== CHECKPOINT 6: SERVICE RECEIVED AI RESULT ===")
+                logger.info(f"Request ID: {request_id}")
+                logger.info(f"Success: {ai_result.get('success')}")
+                if ai_result.get('success'):
+                    structure_feedback = ai_result.get('structure', {}).get('feedback', {})
+                    structure_total = sum(len(v) if isinstance(v, list) else 0 for v in structure_feedback.values())
+                    logger.info(f"Structure feedback items received: {structure_total}")
+                    for key, value in structure_feedback.items():
+                        if isinstance(value, list):
+                            logger.info(f"  - structure.{key}: {len(value)} items")
+
+                    appeal_feedback = ai_result.get('appeal', {}).get('feedback', {})
+                    appeal_total = sum(len(v) if isinstance(v, list) else 0 for v in appeal_feedback.values())
+                    logger.info(f"Appeal feedback items received: {appeal_total}")
+                    for key, value in appeal_feedback.items():
+                        if isinstance(value, list):
+                            logger.info(f"  - appeal.{key}: {len(value)} items")
+
+                    logger.info(f"Total feedback items received: {structure_total + appeal_total}")
+                logger.info(f"=== END CHECKPOINT 6 ===")
+
+
             except Exception as ai_error:
                 logger.error(f"AI orchestrator error for request {request_id}: {str(ai_error)}", exc_info=True)
 
@@ -206,6 +229,28 @@ async def _store_analysis_results(
             "ai_analysis_id": ai_result.get("analysis_id"),
             "conversion_timestamp": utc_now().isoformat()
         }
+
+        # === DATA SIZE CHECKPOINT 7: SERVICE CREATED DETAILED_SCORES ===
+        logger.info(f"=== CHECKPOINT 7: SERVICE CREATED DETAILED_SCORES ===")
+        logger.info(f"Request ID: {request_id}")
+        structure_feedback = detailed_scores["structure_analysis"]["feedback"]
+        structure_total = sum(len(v) if isinstance(v, list) else 0 for v in structure_feedback.values())
+        logger.info(f"Structure feedback items in detailed_scores: {structure_total}")
+        for key, value in structure_feedback.items():
+            if isinstance(value, list):
+                logger.info(f"  - structure.{key}: {len(value)} items")
+
+        appeal_feedback = detailed_scores["appeal_analysis"]["feedback"]
+        appeal_total = sum(len(v) if isinstance(v, list) else 0 for v in appeal_feedback.values())
+        logger.info(f"Appeal feedback items in detailed_scores: {appeal_total}")
+        for key, value in appeal_feedback.items():
+            if isinstance(value, list):
+                logger.info(f"  - appeal.{key}: {len(value)} items")
+
+        logger.info(f"Total feedback items in detailed_scores: {structure_total + appeal_total}")
+        import json
+        logger.info(f"detailed_scores JSON length: {len(json.dumps(detailed_scores))} chars")
+        logger.info(f"=== END CHECKPOINT 7 ===")
 
         # Store results using repository
         await repository.save_results(

@@ -57,6 +57,19 @@ class StructureAgent(BaseAgent):
             state["structure_feedback"] = parsed_results["feedback"]
             state["structure_metadata"] = parsed_results["metadata"]
 
+            # === DATA SIZE CHECKPOINT 3: STRUCTURE AGENT STATE ===
+            logger.info(f"=== CHECKPOINT 3: STRUCTURE AGENT STATE ===")
+            logger.info(f"Scores: {parsed_results['scores']}")
+            logger.info(f"Metadata: {parsed_results['metadata']}")
+            total_feedback_items = sum(len(v) if isinstance(v, list) else 0 for v in parsed_results['feedback'].values())
+            logger.info(f"Total feedback items: {total_feedback_items}")
+            for key, value in parsed_results['feedback'].items():
+                if isinstance(value, list):
+                    logger.info(f"  - {key}: {len(value)} items")
+                    for idx, item in enumerate(value[:3], 1):  # Show first 3 items
+                        logger.info(f"    [{idx}] {item[:100]}..." if len(item) > 100 else f"    [{idx}] {item}")
+            logger.info(f"=== END CHECKPOINT 3 ===")
+
             # Calculate average score and log completion
             scores = parsed_results["scores"]
             avg_score = sum(scores.values()) / len(scores) if scores else 0
