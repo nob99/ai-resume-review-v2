@@ -71,32 +71,14 @@ class StructureAgent(BaseAgent):
 
         return state
 
-    def _parse_response(self, response: str) -> Dict[str, Any]:
-        """Parse the GPT response using parsing config from template.
+    def _parse_agent_specific_fields(self, response: str, results: Dict[str, Any]) -> None:
+        """Add metadata extraction for structure analysis.
 
         Args:
-            response: Raw text response from GPT
-
-        Returns:
-            Parsed results with scores, feedback, and metadata
+            response: Raw LLM response text
+            results: Results dict to mutate (adds 'metadata' field)
         """
-        results = {
-            "scores": {},
-            "feedback": {},
-            "metadata": {}
-        }
-
-        # Extract scores using parsing config
-        score_configs = self.parsing_config.get("scores", {})
-        for score_name, score_config in score_configs.items():
-            pattern = score_config.get("pattern", "")
-            default = score_config.get("default", 0)
-            results["scores"][score_name] = self._extract_score(response, pattern, default)
-
-        # Extract feedback using parsing config
-        feedback_configs = self.parsing_config.get("feedback", {})
-        for feedback_key, section_name in feedback_configs.items():
-            results["feedback"][feedback_key] = self._extract_list(response, section_name)
+        results["metadata"] = {}
 
         # Extract metadata using parsing config
         metadata_configs = self.parsing_config.get("metadata", {})
@@ -108,5 +90,3 @@ class StructureAgent(BaseAgent):
                 results["metadata"][metadata_key] = int(match.group(1))
             elif default is not None:
                 results["metadata"][metadata_key] = default
-
-        return results

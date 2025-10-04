@@ -38,6 +38,9 @@ class BaseAgent:
         self.max_retries = self.settings.resilience.max_retries
         self.backoff_multiplier = self.settings.resilience.backoff_multiplier
 
+        # Initialize parsing_config placeholder (child agents will set this)
+        self.parsing_config = {}
+
     def _load_prompt_template(self, template_base: str) -> Dict[str, Any]:
         """Load a prompt template from YAML file.
 
@@ -185,3 +188,51 @@ class BaseAgent:
         if match:
             return float(match.group(1))
         return default
+
+    def _parse_response(self, response: str) -> Dict[str, Any]:
+        """Parse the GPT response using parsing config from template.
+
+        This method extracts common fields (scores and feedback) that all agents need.
+        Subclasses can override _parse_agent_specific_fields() to add custom fields.
+
+        Args:
+            response: Raw text response from GPT
+
+        Returns:
+            Parsed results with scores, feedback, and any agent-specific fields
+        """
+        results = {
+            "scores": {},
+            "feedback": {}
+        }
+
+        # Extract scores using parsing config (common to all agents)
+        score_configs = self.parsing_config.get("scores", {})
+        for score_name, score_config in score_configs.items():
+            pattern = score_config.get("pattern", "")
+            default = score_config.get("default", 0)
+            results["scores"][score_name] = self._extract_score(response, pattern, default)
+
+        # Extract feedback using parsing config (common to all agents)
+        feedback_configs = self.parsing_config.get("feedback", {})
+        for feedback_key, section_name in feedback_configs.items():
+            results["feedback"][feedback_key] = self._extract_list(response, section_name)
+
+        # Let subclasses add their specific fields (metadata, market_tier, etc.)
+        self._parse_agent_specific_fields(response, results)
+
+        return results
+
+    def _parse_agent_specific_fields(self, response: str, results: Dict[str, Any]) -> None:
+        """Hook for subclasses to add agent-specific parsed fields.
+
+        This method is called by _parse_response() after extracting common fields.
+        Subclasses should override this to add their unique fields to the results dict.
+
+        Args:
+            response: Raw LLM response text
+            results: Results dict to mutate (add agent-specific fields here)
+        """
+        # Default implementation does nothing
+        # Subclasses override to add metadata, market_tier, etc.
+        pass

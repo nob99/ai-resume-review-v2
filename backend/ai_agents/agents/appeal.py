@@ -128,28 +128,13 @@ class AppealAgent(BaseAgent):
         
         return "\n".join(context_parts)
 
-    def _parse_response(self, response: str) -> Dict[str, Any]:
-        """Parse the GPT response using parsing config from template.
+    def _parse_agent_specific_fields(self, response: str, results: Dict[str, Any]) -> None:
+        """Add market tier extraction for appeal analysis.
 
         Args:
-            response: Raw text response from GPT
-
-        Returns:
-            Parsed results with scores, feedback, and market tier
+            response: Raw LLM response text
+            results: Results dict to mutate (adds 'market_tier' field)
         """
-        results = {
-            "scores": {},
-            "feedback": {},
-            "market_tier": "mid"
-        }
-
-        # Extract scores using parsing config
-        score_configs = self.parsing_config.get("scores", {})
-        for score_name, score_config in score_configs.items():
-            pattern = score_config.get("pattern", "")
-            default = score_config.get("default", 0)
-            results["scores"][score_name] = self._extract_score(response, pattern, default)
-
         # Extract market tier using parsing config
         tier_config = self.parsing_config.get("market_tier", {})
         tier_pattern = tier_config.get("pattern", r"Market\s*Tier[:\s]*(entry|mid|senior|executive)")
@@ -158,13 +143,6 @@ class AppealAgent(BaseAgent):
             results["market_tier"] = tier_match.group(1).lower()
         else:
             results["market_tier"] = tier_config.get("default", "mid")
-
-        # Extract feedback using parsing config
-        feedback_configs = self.parsing_config.get("feedback", {})
-        for feedback_key, section_name in feedback_configs.items():
-            results["feedback"][feedback_key] = self._extract_list(response, section_name)
-
-        return results
 
     def _calculate_overall_score(self, state: Dict[str, Any]) -> float:
         """Calculate weighted overall score using config weights.
