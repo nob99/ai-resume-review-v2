@@ -56,17 +56,21 @@ class AppealAgent(BaseAgent):
             # Prepare prompt variables
             industry_name = industry_data["display_name"]
             prompt_vars = {
-                "resume_text": state["resume_text"],
-                "industry": industry,
-                "industry_title": industry_name,
-                "industry_upper": industry_name.upper(),
-                "key_skills_list": ", ".join(industry_data["key_skills"]),
-                "structure_context_section": structure_context
+                "{resume_text}": state["resume_text"],
+                "{industry}": industry,
+                "{industry_title}": industry_name,
+                "{industry_upper}": industry_name.upper(),
+                "{key_skills_list}": ", ".join(industry_data["key_skills"]),
+                "{structure_context_section}": structure_context
             }
 
-            # Get the prompts from template
-            system_prompt = self.prompt_template["prompts"]["system"].format(**prompt_vars)
-            user_prompt = self.prompt_template["prompts"]["user"].format(**prompt_vars)
+            # Get the prompts from template and replace variables
+            system_prompt = self.prompt_template["prompts"]["system"]
+            user_prompt = self.prompt_template["prompts"]["user"]
+
+            for placeholder, value in prompt_vars.items():
+                system_prompt = system_prompt.replace(placeholder, value)
+                user_prompt = user_prompt.replace(placeholder, value)
 
             # Call OpenAI with retry logic (uses agent config for temp/tokens)
             response = await self._call_openai_with_retry(
@@ -75,12 +79,12 @@ class AppealAgent(BaseAgent):
                 agent_name="appeal"
             )
 
-            # Parse the response using parsing config
+            # Parse the response (now JSON parsing)
             parsed_results = self._parse_response(response)
 
             # Update state with results
-            state["appeal_scores"] = parsed_results["scores"]
-            state["appeal_feedback"] = parsed_results["feedback"]
+            state["appeal_scores"] = parsed_results.get("scores", {})
+            state["appeal_feedback"] = parsed_results.get("feedback", {})
             state["market_tier"] = parsed_results.get("market_tier", "mid")
 
             # === DATA SIZE CHECKPOINT 4: APPEAL AGENT STATE ===
@@ -139,19 +143,3 @@ class AppealAgent(BaseAgent):
             "overall_score": 0,
             "summary": "Analysis could not be completed due to an error."
         }
-
-    def _parse_agent_specific_fields(self, response: str, results: Dict[str, Any]) -> None:
-        """Add market tier extraction for appeal analysis.
-
-        Args:
-            response: Raw LLM response text
-            results: Results dict to mutate (adds 'market_tier' field)
-        """
-        # Extract market tier using parsing config
-        tier_config = self.parsing_config.get("market_tier", {})
-        tier_pattern = tier_config.get("pattern", r"Market\s*Tier[:\s]*(entry|mid|senior|executive)")
-        tier_match = re.search(tier_pattern, response, re.IGNORECASE)
-        if tier_match:
-            results["market_tier"] = tier_match.group(1).lower()
-        else:
-            results["market_tier"] = tier_config.get("default", "mid")

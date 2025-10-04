@@ -38,8 +38,8 @@ class StructureAgent(BaseAgent):
         try:
             # Get the prompts from template
             system_prompt = self.prompt_template["prompts"]["system"]
-            user_prompt = self.prompt_template["prompts"]["user"].format(
-                resume_text=state["resume_text"]
+            user_prompt = self.prompt_template["prompts"]["user"].replace(
+                "{resume_text}", state["resume_text"]
             )
 
             # Call OpenAI with retry logic (uses agent config)
@@ -49,13 +49,13 @@ class StructureAgent(BaseAgent):
                 agent_name="structure"
             )
 
-            # Parse the response using parsing config
+            # Parse the response (now JSON parsing)
             parsed_results = self._parse_response(response)
 
             # Update state with results
-            state["structure_scores"] = parsed_results["scores"]
-            state["structure_feedback"] = parsed_results["feedback"]
-            state["structure_metadata"] = parsed_results["metadata"]
+            state["structure_scores"] = parsed_results.get("scores", {})
+            state["structure_feedback"] = parsed_results.get("feedback", {})
+            state["structure_metadata"] = parsed_results.get("metadata", {})
 
             # === DATA SIZE CHECKPOINT 3: STRUCTURE AGENT STATE ===
             logger.info(f"=== CHECKPOINT 3: STRUCTURE AGENT STATE ===")
@@ -99,23 +99,3 @@ class StructureAgent(BaseAgent):
             },
             "structure_metadata": {}
         }
-
-    def _parse_agent_specific_fields(self, response: str, results: Dict[str, Any]) -> None:
-        """Add metadata extraction for structure analysis.
-
-        Args:
-            response: Raw LLM response text
-            results: Results dict to mutate (adds 'metadata' field)
-        """
-        results["metadata"] = {}
-
-        # Extract metadata using parsing config
-        metadata_configs = self.parsing_config.get("metadata", {})
-        for metadata_key, metadata_config in metadata_configs.items():
-            pattern = metadata_config.get("pattern", "")
-            default = metadata_config.get("default")
-            match = re.search(pattern, response, re.IGNORECASE)
-            if match:
-                results["metadata"][metadata_key] = int(match.group(1))
-            elif default is not None:
-                results["metadata"][metadata_key] = default

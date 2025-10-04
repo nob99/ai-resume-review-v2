@@ -3,6 +3,7 @@
 import logging
 import re
 import yaml
+import json
 import asyncio
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -121,7 +122,8 @@ class BaseAgent:
                         {"role": "user", "content": user_prompt}
                     ],
                     max_completion_tokens=max_tokens,
-                    timeout=self.settings.llm.timeout_seconds
+                    timeout=self.settings.llm.timeout_seconds,
+                    response_format={"type": "json_object"}
                 )
 
                 # Log API response
@@ -206,63 +208,43 @@ class BaseAgent:
         return default
 
     def _parse_response(self, response: str) -> Dict[str, Any]:
-        """Parse the GPT response using parsing config from template.
-
-        This method extracts common fields (scores and feedback) that all agents need.
-        Subclasses can override _parse_agent_specific_fields() to add custom fields.
+        """Parse JSON response from GPT.
 
         Args:
-            response: Raw text response from GPT
+            response: Raw JSON string response from GPT
 
         Returns:
-            Parsed results with scores, feedback, and any agent-specific fields
+            Parsed results as dictionary
+
+        Raises:
+            ValueError: If JSON parsing fails
         """
-        results = {
-            "scores": {},
-            "feedback": {}
-        }
+        # Parse JSON
+        try:
+            results = json.loads(response)
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse JSON response: {e}")
+            logger.error(f"Raw response: {response[:500]}")
+            raise ValueError(f"Invalid JSON from OpenAI: {e}")
 
-        # Extract scores using parsing config (common to all agents)
-        score_configs = self.parsing_config.get("scores", {})
-        for score_name, score_config in score_configs.items():
-            pattern = score_config.get("pattern", "")
-            default = score_config.get("default", 0)
-            results["scores"][score_name] = self._extract_score(response, pattern, default)
+        # === DATA SIZE CHECKPOINT 2: PARSED JSON RESPONSE ===
+        logger.info(f"=== CHECKPOINT 2: PARSED JSON RESPONSE ===")
+        logger.info(f"Top-level keys: {list(results.keys())}")
 
-        # Extract feedback using parsing config (common to all agents)
-        feedback_configs = self.parsing_config.get("feedback", {})
-        for feedback_key, section_name in feedback_configs.items():
-            results["feedback"][feedback_key] = self._extract_list(response, section_name)
+        if "scores" in results:
+            logger.info(f"Score fields: {list(results['scores'].keys())}")
 
-        # Let subclasses add their specific fields (metadata, market_tier, etc.)
-        self._parse_agent_specific_fields(response, results)
+        if "feedback" in results:
+            feedback = results.get('feedback', {})
+            total_feedback_items = sum(len(v) if isinstance(v, list) else 0 for v in feedback.values())
+            logger.info(f"Total feedback items: {total_feedback_items}")
+            for key, value in feedback.items():
+                if isinstance(value, list):
+                    logger.info(f"  - {key}: {len(value)} items")
 
-        # === DATA SIZE CHECKPOINT 2: PARSED RESPONSE ===
-        logger.info(f"=== CHECKPOINT 2: PARSED RESPONSE ===")
-        logger.info(f"Number of score fields: {len(results['scores'])}")
-        logger.info(f"Score fields: {list(results['scores'].keys())}")
-        total_feedback_items = sum(len(v) if isinstance(v, list) else 0 for v in results['feedback'].values())
-        logger.info(f"Total feedback items across all categories: {total_feedback_items}")
-        for key, value in results['feedback'].items():
-            if isinstance(value, list):
-                logger.info(f"  - {key}: {len(value)} items")
         logger.info(f"=== END CHECKPOINT 2 ===")
 
         return results
-
-    def _parse_agent_specific_fields(self, response: str, results: Dict[str, Any]) -> None:
-        """Hook for subclasses to add agent-specific parsed fields.
-
-        This method is called by _parse_response() after extracting common fields.
-        Subclasses should override this to add their unique fields to the results dict.
-
-        Args:
-            response: Raw LLM response text
-            results: Results dict to mutate (add agent-specific fields here)
-        """
-        # Default implementation does nothing
-        # Subclasses override to add metadata, market_tier, etc.
-        pass
 
     def _get_error_defaults(self) -> Dict[str, Any]:
         """Get default values to set in state when analysis fails.

@@ -64,46 +64,32 @@ prompts:
        - 典型的な候補者との差別化
        - 全体的な市場アピール
 
-    期待される出力形式:
+    期待される出力形式: JSON
 
-    スコア:
-    - 実績関連性スコア: [0-100]
-    - スキル適合性スコア: [0-100]
-    - 経験適合度スコア: [0-100]
-    - 競争的ポジショニングスコア: [0-100]
+    {
+      "scores": {
+        "achievement_relevance": <0-100の整数>,
+        "skills_alignment": <0-100の整数>,
+        "experience_fit": <0-100の整数>,
+        "competitive_positioning": <0-100の整数>
+      },
+      "feedback": {
+        "relevant_achievements": ["関連実績1", "関連実績2", ...],
+        "missing_skills": ["不足スキル1", "不足スキル2", ...],
+        "transferable_experience": ["転用可能な経験1", "転用可能な経験2", ...],
+        "competitive_advantages": ["競争優位性1", "競争優位性2", ...],
+        "improvement_areas": ["改善領域1", "改善領域2", ...]
+      },
+      "market_tier": "entry|mid|senior|executive"
+    }
 
-    詳細な業界分析:
-
-    関連する実績:
-    - [{industry_title}業界にとって最も関連性の高い3-5つの実績をリスト]
-    - [定量化可能で影響力のある業績に焦点]
-
-    不足しているスキル:
-    - [欠けているまたは不足している重要な{industry_title}スキルをリスト]
-    - [業界での成功にとっての重要度順にスキルを優先順位付け]
-
-    転用可能な経験:
-    - [価値を付加する業界横断的な経験を特定]
-    - [{industry_title}にうまく転用できる経験を強調]
-
-    業界キーワード:
-    - [履歴書に見つかった業界特有の用語とキーワードをリスト]
-    - [欠けている重要なキーワードに注意]
-
-    競争力評価:
-
-    市場ティア: [経験と実績に基づいて entry/mid/senior/executive]
-
-    競争上の優位性:
-    - [ユニークなセールスポイントと競争的差別化要因をリスト]
-    - [{industry_title}で候補者を際立たせる強みに焦点]
-
-    改善領域:
-    - [業界アピールを向上させるための優先的な強化領域]
-    - [{industry_title}ポジショニングのための具体的な推奨事項]
-    - [業界での昇進のためのキャリア開発提案]
-
-    重要: 出力は日本語で行ってください。
+    重要な指示:
+    - 必ず有効なJSONフォーマットで出力してください
+    - すべてのフィールドを含めてください
+    - 配列が空の場合は [] を使用してください
+    - market_tierは必ず "entry", "mid", "senior", "executive" のいずれかを使用してください
+    - フィードバックの内容は日本語で記載してください
+    - JSONの構造のみ英語、内容は日本語で記載してください
 
 variables:
   - name: resume_text
@@ -136,32 +122,3 @@ variables:
     required: false
     default: ""
     description: 構造分析からのオプショナルコンテキスト
-
-# パース設定 (LLMレスポンスからデータを抽出する方法)
-# 注意: 正規表現パターンは prompts/parsing_patterns.py で定義された共通形式に従います
-# パターン形式: [：:\\s]*(\\d+) は英語/日本語のコロンの両方に対応
-parsing:
-  scores:
-    achievement_relevance:
-      pattern: "実績関連性スコア[：:\\s]*(\\d+)"
-      default: 0
-    skills_alignment:
-      pattern: "スキル適合性スコア[：:\\s]*(\\d+)"
-      default: 0
-    experience_fit:
-      pattern: "経験適合度スコア[：:\\s]*(\\d+)"
-      default: 0
-    competitive_positioning:
-      pattern: "競争的ポジショニングスコア[：:\\s]*(\\d+)"
-      default: 0
-
-  market_tier:
-    pattern: "市場ティア[：:\\s]*(entry|mid|senior|executive)"
-    default: "mid"
-
-  feedback:
-    relevant_achievements: "関連する実績"
-    missing_skills: "不足しているスキル"
-    transferable_experience: "転用可能な経験"
-    competitive_advantages: "競争上の優位性"
-    improvement_areas: "改善領域"

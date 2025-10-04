@@ -57,84 +57,39 @@ prompts:
        - Contact information completeness
        - Overall information adequacy
 
-    EXPECTED OUTPUT FORMAT:
+    EXPECTED OUTPUT FORMAT: JSON
 
-    SCORES:
-    - Format Score: [0-100]
-    - Section Organization Score: [0-100]
-    - Professional Tone Score: [0-100]  
-    - Completeness Score: [0-100]
+    {
+      "scores": {
+        "format": <integer 0-100>,
+        "organization": <integer 0-100>,
+        "tone": <integer 0-100>,
+        "completeness": <integer 0-100>
+      },
+      "feedback": {
+        "issues": ["formatting issue 1", "formatting issue 2", ...],
+        "missing_sections": ["missing section 1", "missing section 2", ...],
+        "tone_problems": ["tone problem 1", "tone problem 2", ...],
+        "completeness_gaps": ["completeness gap 1", "completeness gap 2", ...],
+        "strengths": ["strength 1", "strength 2", ...],
+        "recommendations": ["recommendation 1", "recommendation 2", ...]
+      },
+      "metadata": {
+        "total_sections": <number>,
+        "word_count": <number>,
+        "reading_time": <number>
+      }
+    }
 
-    STRUCTURAL ANALYSIS:
-
-    Formatting Issues:
-    - [List specific formatting problems identified]
-    - [Focus on layout, spacing, consistency issues]
-
-    Missing Sections:
-    - [List expected resume sections that are missing]
-    - [Common sections: Contact, Summary, Experience, Education, Skills]
-
-    Tone Problems:
-    - [List instances of unprofessional language or tone]
-    - [Identify informal expressions or inappropriate content]
-
-    Completeness Gaps:
-    - [List missing critical information or insufficient details]
-    - [Identify areas where more information is needed]
-
-    Strengths:
-    - [List well-executed structural and formatting elements]
-    - [Highlight positive aspects of organization and presentation]
-
-    Recommendations:
-    - [Provide specific, actionable improvement suggestions]
-    - [Focus on structure, format, and organization enhancements]
-    - [Prioritize recommendations by impact]
-
-    METADATA:
-    - Total Sections Found: [number]
-    - Word Count: [approximate word count]
-    - Estimated Reading Time: [minutes]
+    IMPORTANT INSTRUCTIONS:
+    - You MUST output valid JSON format
+    - Include all fields listed above
+    - Use [] for empty arrays
+    - Use 0 for unknown numbers
+    - Content should be in English
 
 variables:
   - name: resume_text
     type: string
     required: true
     description: The resume text to analyze for structure and formatting
-
-# Parsing configuration (how to extract data from LLM response)
-# Note: Regex patterns follow common format defined in prompts/parsing_patterns.py
-# Pattern format: [：:\\s]*(\\d+) supports both EN/JA colons
-parsing:
-  scores:
-    format:
-      pattern: "Format\\s*Score[：:\\s]*(\\d+)"
-      default: 0
-    organization:
-      pattern: "Section\\s*Organization\\s*Score[：:\\s]*(\\d+)"
-      default: 0
-    tone:
-      pattern: "Professional\\s*Tone\\s*Score[：:\\s]*(\\d+)"
-      default: 0
-    completeness:
-      pattern: "Completeness\\s*Score[：:\\s]*(\\d+)"
-      default: 0
-
-  feedback:
-    issues: "Formatting Issues"
-    missing_sections: "Missing Sections"
-    tone_problems: "Tone Problems"
-    strengths: "Strengths"
-    recommendations: "Recommendations"
-
-  metadata:
-    total_sections:
-      pattern: "Total\\s*Sections\\s*Found[：:\\s]*(\\d+)"
-      default: null
-    word_count:
-      pattern: "Word\\s*Count[：:\\s]*(\\d+)"
-      default: null
-    reading_time:
-      pattern: "Estimated\\s*Reading\\s*Time[：:\\s]*(\\d+)"
-      default: null

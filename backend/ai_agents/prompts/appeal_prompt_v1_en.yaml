@@ -62,44 +62,31 @@ prompts:
        - Differentiation from typical candidates
        - Overall market appeal
 
-    EXPECTED OUTPUT FORMAT:
+    EXPECTED OUTPUT FORMAT: JSON
 
-    SCORES:
-    - Achievement Relevance Score: [0-100]
-    - Skills Alignment Score: [0-100]
-    - Experience Fit Score: [0-100]
-    - Competitive Positioning Score: [0-100]
+    {
+      "scores": {
+        "achievement_relevance": <integer 0-100>,
+        "skills_alignment": <integer 0-100>,
+        "experience_fit": <integer 0-100>,
+        "competitive_positioning": <integer 0-100>
+      },
+      "feedback": {
+        "relevant_achievements": ["achievement 1", "achievement 2", ...],
+        "missing_skills": ["skill 1", "skill 2", ...],
+        "transferable_experience": ["experience 1", "experience 2", ...],
+        "competitive_advantages": ["advantage 1", "advantage 2", ...],
+        "improvement_areas": ["improvement 1", "improvement 2", ...]
+      },
+      "market_tier": "entry|mid|senior|executive"
+    }
 
-    DETAILED INDUSTRY ANALYSIS:
-
-    Relevant Achievements:
-    - [List 3-5 most relevant achievements for {industry_title} industry]
-    - [Focus on quantifiable, impactful accomplishments]
-
-    Missing Skills:
-    - [List critical {industry_title} skills that are missing or underrepresented]
-    - [Prioritize skills by importance to industry success]
-
-    Transferable Experience:
-    - [Identify cross-industry experience that adds value]
-    - [Highlight experience that translates well to {industry_title}]
-
-    Industry Keywords:
-    - [List industry-specific terms and keywords found in resume]
-    - [Note important keywords that are missing]
-
-    COMPETITIVE ASSESSMENT:
-
-    Market Tier: [entry/mid/senior/executive based on experience and achievements]
-
-    Competitive Advantages:
-    - [List unique selling points and competitive differentiators]
-    - [Focus on strengths that set candidate apart in {industry_title}]
-
-    Improvement Areas:
-    - [Priority areas for enhancement to improve industry appeal]
-    - [Specific recommendations for {industry_title} positioning]
-    - [Career development suggestions for industry advancement]
+    IMPORTANT INSTRUCTIONS:
+    - You MUST output valid JSON format
+    - Include all fields listed above
+    - Use [] for empty arrays
+    - market_tier MUST be one of: "entry", "mid", "senior", "executive"
+    - Content should be in English
 
 variables:
   - name: resume_text
@@ -132,32 +119,3 @@ variables:
     required: false
     default: ""
     description: Optional context from structure analysis
-
-# Parsing configuration (how to extract data from LLM response)
-# Note: Regex patterns follow common format defined in prompts/parsing_patterns.py
-# Pattern format: [：:\\s]*(\\d+) supports both EN/JA colons
-parsing:
-  scores:
-    achievement_relevance:
-      pattern: "Achievement\\s*Relevance\\s*Score[：:\\s]*(\\d+)"
-      default: 0
-    skills_alignment:
-      pattern: "Skills?\\s*Alignment\\s*Score[：:\\s]*(\\d+)"
-      default: 0
-    experience_fit:
-      pattern: "Experience\\s*Fit\\s*Score[：:\\s]*(\\d+)"
-      default: 0
-    competitive_positioning:
-      pattern: "Competitive\\s*Positioning\\s*Score[：:\\s]*(\\d+)"
-      default: 0
-
-  market_tier:
-    pattern: "Market\\s*Tier[：:\\s]*(entry|mid|senior|executive)"
-    default: "mid"
-
-  feedback:
-    relevant_achievements: "Relevant Achievements"
-    missing_skills: "Missing Skills"
-    transferable_experience: "Transferable Experience"
-    competitive_advantages: "Competitive Advantages"
-    improvement_areas: "Improvement Areas"
