@@ -17,7 +17,7 @@ class LLMConfig(BaseSettings):
     openai_api_key: str = ""  # Empty default, should be set via env var
 
     # Model settings
-    model: str = "gpt-5-2025-08-07"
+    model: str = "gpt-5-mini-2025-08-07"
     fallback_model: Optional[str] = "gpt-4o"
 
     # Default parameters (can be overridden per agent in agents.yaml)
@@ -66,7 +66,7 @@ class AIAgentSettings(BaseSettings):
 
     # Prompt language setting (single source of truth)
     # Change this value to switch between languages: "en" or "ja"
-    prompt_language: str = "en"  # Default: English
+    prompt_language: str = "ja"  # Default: English
 
 
 # Singleton pattern

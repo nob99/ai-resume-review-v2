@@ -514,7 +514,7 @@ class AnalysisService:
                     industry=Industry(request.target_industry),
                     overall_score=result.overall_score if result else None,
                     market_tier=None,  # Will be extracted from detailed_scores if needed
-                    status=AnalysisStatus(request.status),
+                    status=request.status,
                     created_at=request.requested_at
                 ))
 
