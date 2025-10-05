@@ -1,5 +1,6 @@
 # Industry configurations for resume analysis
 # Can be edited by recruiters/product managers
+# V1.1: Added appeal_points for industry-specific analysis
 
 industries:
   tech_consulting:
@@ -11,6 +12,19 @@ industries:
       - System Design
       - Agile
       - DevOps
+    appeal_points:
+      - name: "Cloud Migration Leadership"
+        description: "Led cloud migration or infrastructure modernization projects"
+        keywords: ["AWS", "Azure", "GCP", "cloud migration", "クラウド移行", "infrastructure"]
+      - name: "Digital Transformation"
+        description: "Drove digital transformation initiatives"
+        keywords: ["DX", "digital transformation", "デジタル変革", "デジタル化", "digitalization"]
+      - name: "Architecture Design"
+        description: "Designed enterprise-scale system architectures"
+        keywords: ["architecture", "アーキテクチャ", "design", "設計", "enterprise", "システム設計"]
+      - name: "Quantitative Impact"
+        description: "Demonstrated measurable technical impact with metrics"
+        keywords: ["performance", "cost reduction", "パフォーマンス", "コスト削減", "%", "improvement"]
 
   finance_banking:
     display_name: "Finance & Banking"
@@ -21,6 +35,19 @@ industries:
       - Bloomberg
       - Excel
       - VBA
+    appeal_points:
+      - name: "Deal Execution"
+        description: "Experience executing financial transactions or deals"
+        keywords: ["M&A", "IPO", "deal", "transaction", "案件", "ディール"]
+      - name: "Quantitative Analysis"
+        description: "Strong quantitative modeling and analysis skills"
+        keywords: ["modeling", "valuation", "DCF", "モデリング", "評価", "分析"]
+      - name: "Regulatory Expertise"
+        description: "Knowledge of financial regulations and compliance"
+        keywords: ["regulation", "compliance", "規制", "コンプライアンス", "Basel", "IFRS"]
+      - name: "Quantitative Impact"
+        description: "Demonstrated measurable business impact with metrics"
+        keywords: ["revenue", "AUM", "cost reduction", "売上", "削減", "billion", "億円", "%"]
 
   general_business:
     display_name: "General Business"
@@ -31,6 +58,19 @@ industries:
       - Leadership
       - Communication
       - Problem Solving
+    appeal_points:
+      - name: "Leadership Experience"
+        description: "Led teams or managed people"
+        keywords: ["team lead", "manager", "チームリード", "マネージャー", "supervised", "managed"]
+      - name: "Cross-functional Collaboration"
+        description: "Worked across departments or functions"
+        keywords: ["cross-functional", "collaboration", "部門横断", "連携", "stakeholder"]
+      - name: "Process Improvement"
+        description: "Improved business processes or operations"
+        keywords: ["process improvement", "optimization", "efficiency", "プロセス改善", "効率化", "最適化"]
+      - name: "Quantitative Impact"
+        description: "Demonstrated measurable business results"
+        keywords: ["revenue", "cost", "productivity", "売上", "コスト", "生産性", "%", "improvement"]
 
   system_integrator:
     display_name: "Systems Integration"
@@ -41,6 +81,19 @@ industries:
       - Database Management
       - Testing
       - Implementation
+    appeal_points:
+      - name: "Large-scale Integration"
+        description: "Experience with enterprise-scale system integration"
+        keywords: ["enterprise", "large-scale", "大規模", "エンタープライズ", "integration", "統合"]
+      - name: "Technical Architecture"
+        description: "Designed or implemented technical architectures"
+        keywords: ["architecture", "design", "アーキテクチャ", "設計", "API", "middleware"]
+      - name: "Implementation Success"
+        description: "Successfully delivered integration projects"
+        keywords: ["implementation", "delivery", "go-live", "実装", "導入", "稼働"]
+      - name: "Quantitative Impact"
+        description: "Demonstrated measurable project outcomes"
+        keywords: ["performance", "uptime", "cost reduction", "パフォーマンス", "稼働率", "削減", "%"]
 
   strategy_consulting:
     display_name: "Strategy Consulting"
@@ -51,6 +104,19 @@ industries:
       - PowerPoint
       - Excel
       - Client Management
+    appeal_points:
+      - name: "CXO Communication"
+        description: "Experience communicating with C-level executives"
+        keywords: ["CXO", "CEO", "CFO", "COO", "経営層", "役員", "executive", "board"]
+      - name: "Big Transformation Lead"
+        description: "Led large-scale organizational transformations"
+        keywords: ["transformation", "変革", "組織改革", "large-scale", "大規模", "restructuring"]
+      - name: "Problem-Solving Framework"
+        description: "Applied structured problem-solving frameworks"
+        keywords: ["framework", "フレームワーク", "MECE", "ロジックツリー", "hypothesis", "issue tree"]
+      - name: "Quantitative Impact"
+        description: "Demonstrated measurable business impact with metrics"
+        keywords: ["revenue", "profit", "market share", "売上", "利益", "シェア", "billion", "億円", "%"]
 
   full_service_consulting:
     display_name: "Full Service Consulting"
@@ -61,3 +127,16 @@ industries:
       - Stakeholder Management
       - Presentation
       - Analytics
+    appeal_points:
+      - name: "Change Management"
+        description: "Led organizational change initiatives"
+        keywords: ["change management", "変革管理", "組織変革", "transformation", "adoption"]
+      - name: "Stakeholder Engagement"
+        description: "Managed diverse stakeholder groups"
+        keywords: ["stakeholder", "ステークホルダー", "engagement", "alignment", "関係者"]
+      - name: "Process Optimization"
+        description: "Optimized business processes for efficiency"
+        keywords: ["process", "optimization", "プロセス", "最適化", "efficiency", "BPR"]
+      - name: "Quantitative Impact"
+        description: "Demonstrated measurable business outcomes"
+        keywords: ["cost reduction", "efficiency", "productivity", "コスト削減", "効率", "生産性", "%"]

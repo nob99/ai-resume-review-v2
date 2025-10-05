@@ -66,7 +66,13 @@ class AIAgentSettings(BaseSettings):
 
     # Prompt language setting (single source of truth)
     # Change this value to switch between languages: "en" or "ja"
-    prompt_language: str = "ja"  # Default: English
+    prompt_language: str = "ja"  # Default: Japanese
+
+    # Prompt version setting (single source of truth)
+    # Change this value to switch between prompt versions: "v1.0" or "v1.1"
+    # v1.0: Original prompts with simple string lists
+    # v1.1: Enhanced prompts with structured feedback (SCR, quantitative, appeal points)
+    prompt_version: str = "v1.1"  # Default: v1.1 (enhanced feedback)
 
 
 # Singleton pattern

@@ -5,6 +5,23 @@ from pydantic import BaseModel, Field
 from app.core.industries import IndustryConfig, get_supported_industries
 
 
+class SpecificFeedbackItem(BaseModel):
+    """Detailed feedback item with context and actionable suggestion.
+
+    This model supports v1.1 prompts for granular, recruiter-friendly feedback.
+    """
+    category: str = Field(
+        ...,
+        description="Feedback category: 'grammar', 'structure', 'scr_framework', 'quantitative_impact', 'appeal_point'"
+    )
+    target_text: Optional[str] = Field(
+        None,
+        description="The specific resume text being referenced (achievement, sentence, etc.)"
+    )
+    issue: str = Field(..., description="What is wrong or missing")
+    suggestion: str = Field(..., description="Concrete recommendation on how to fix it")
+
+
 class StructureScores(BaseModel):
     """Scores from structure analysis."""
     format: float = Field(ge=0, le=100, description="Format and layout score")
@@ -14,12 +31,27 @@ class StructureScores(BaseModel):
 
 
 class StructureFeedback(BaseModel):
-    """Feedback from structure analysis."""
-    issues: List[str] = Field(default_factory=list, description="Formatting issues identified")
-    missing_sections: List[str] = Field(default_factory=list, description="Missing resume sections")
-    tone_problems: List[str] = Field(default_factory=list, description="Tone and language issues")
-    strengths: List[str] = Field(default_factory=list, description="Structure strengths")
-    recommendations: List[str] = Field(default_factory=list, description="Improvement recommendations")
+    """Feedback from structure analysis.
+
+    V1.1: Two-level feedback approach
+    - Level 1: Overall strengths/improvement_areas (summary)
+    - Level 2: specific_feedback (detailed, actionable items)
+
+    V1.0 fields kept for backward compatibility but deprecated.
+    """
+    # V1.1: Two-level feedback
+    strengths: List[str] = Field(default_factory=list, description="Overall structure strengths")
+    improvement_areas: List[str] = Field(default_factory=list, description="Overall improvement points")
+    specific_feedback: List[SpecificFeedbackItem] = Field(
+        default_factory=list,
+        description="Detailed, actionable feedback items (v1.1)"
+    )
+
+    # V1.0: Deprecated but kept for backward compatibility
+    issues: List[str] = Field(default_factory=list, description="[DEPRECATED v1.0] Formatting issues identified")
+    missing_sections: List[str] = Field(default_factory=list, description="[DEPRECATED v1.0] Missing resume sections")
+    tone_problems: List[str] = Field(default_factory=list, description="[DEPRECATED v1.0] Tone and language issues")
+    recommendations: List[str] = Field(default_factory=list, description="[DEPRECATED v1.0] Improvement recommendations")
 
 
 class StructureMetadata(BaseModel):
@@ -45,12 +77,27 @@ class AppealScores(BaseModel):
 
 
 class AppealFeedback(BaseModel):
-    """Feedback from appeal analysis."""
-    relevant_achievements: List[str] = Field(default_factory=list, description="Most relevant achievements")
-    missing_skills: List[str] = Field(default_factory=list, description="Missing critical skills")
-    transferable_experience: List[str] = Field(default_factory=list, description="Transferable experience")
-    competitive_advantages: List[str] = Field(default_factory=list, description="Competitive advantages")
-    improvement_areas: List[str] = Field(default_factory=list, description="Priority improvement areas")
+    """Feedback from appeal analysis.
+
+    V1.1: Two-level feedback approach
+    - Level 1: Overall strengths/improvement_areas (summary)
+    - Level 2: specific_feedback (SCR framework, quantitative impact, appeal points)
+
+    V1.0 fields kept for backward compatibility but deprecated.
+    """
+    # V1.1: Two-level feedback
+    strengths: List[str] = Field(default_factory=list, description="Overall appeal strengths")
+    improvement_areas: List[str] = Field(default_factory=list, description="Overall improvement points")
+    specific_feedback: List[SpecificFeedbackItem] = Field(
+        default_factory=list,
+        description="Detailed, actionable feedback items (v1.1)"
+    )
+
+    # V1.0: Deprecated but kept for backward compatibility
+    relevant_achievements: List[str] = Field(default_factory=list, description="[DEPRECATED v1.0] Most relevant achievements")
+    missing_skills: List[str] = Field(default_factory=list, description="[DEPRECATED v1.0] Missing critical skills")
+    transferable_experience: List[str] = Field(default_factory=list, description="[DEPRECATED v1.0] Transferable experience")
+    competitive_advantages: List[str] = Field(default_factory=list, description="[DEPRECATED v1.0] Competitive advantages")
 
 
 class AppealAnalysisResult(BaseModel):

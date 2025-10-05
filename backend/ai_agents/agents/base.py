@@ -47,17 +47,18 @@ class BaseAgent:
         """Load a prompt template from YAML file.
 
         Args:
-            template_base: Base name of the template (e.g., "structure_prompt_v1")
-                          Language suffix will be added automatically based on settings
+            template_base: Base name without version (e.g., "structure_prompt")
+                          Version and language suffix will be added automatically
 
         Returns:
             Loaded template dictionary
         """
-        # Get language from settings (single source of truth)
+        # Get language and version from settings (single source of truth)
         lang = self.settings.prompt_language
+        version = self.settings.prompt_version
 
-        # Construct full template filename with language suffix
-        template_name = f"{template_base}_{lang}.yaml"
+        # Construct full template filename with version and language suffix
+        template_name = f"{template_base}_{version}_{lang}.yaml"
 
         template_path = (
             Path(__file__).parent.parent
@@ -68,7 +69,7 @@ class BaseAgent:
         with open(template_path, "r", encoding="utf-8") as f:
             template = yaml.safe_load(f)
 
-        logger.info(f"Loaded prompt template: {template_name}")
+        logger.info(f"Loaded prompt template: {template_name} (version: {version}, language: {lang})")
         return template
 
     async def _call_openai_with_retry(

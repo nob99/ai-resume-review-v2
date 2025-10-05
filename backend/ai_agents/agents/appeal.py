@@ -23,7 +23,7 @@ class AppealAgent(BaseAgent):
             agent_config: Optional AgentBehaviorConfig instance
         """
         super().__init__(api_key, agent_config)
-        self.prompt_template = self._load_prompt_template("appeal_prompt_v1")
+        self.prompt_template = self._load_prompt_template("appeal_prompt")
         self.parsing_config = self.prompt_template.get("parsing", {})
         self.industry_config_loader = get_industry_config()
 
@@ -53,6 +53,9 @@ class AppealAgent(BaseAgent):
             # Build structure context from previous analysis using utility
             structure_context = build_structure_context(state)
 
+            # Format appeal_points_description from industries.yaml
+            appeal_points_desc = self._format_appeal_points(industry_data.get("appeal_points", []))
+
             # Prepare prompt variables
             industry_name = industry_data["display_name"]
             prompt_vars = {
@@ -61,6 +64,7 @@ class AppealAgent(BaseAgent):
                 "{industry_title}": industry_name,
                 "{industry_upper}": industry_name.upper(),
                 "{key_skills_list}": ", ".join(industry_data["key_skills"]),
+                "{appeal_points_description}": appeal_points_desc,
                 "{structure_context_section}": structure_context
             }
 
@@ -122,6 +126,26 @@ class AppealAgent(BaseAgent):
 
         return state
     
+    def _format_appeal_points(self, appeal_points: list) -> str:
+        """Format appeal points from industries.yaml into a readable description.
+
+        Args:
+            appeal_points: List of appeal point dictionaries from industries.yaml
+
+        Returns:
+            Formatted string describing the appeal points for the industry
+        """
+        if not appeal_points:
+            return "No specific appeal points defined for this industry."
+
+        formatted_lines = []
+        for idx, point in enumerate(appeal_points, 1):
+            name = point.get("name", "Unknown")
+            description = point.get("description", "")
+            formatted_lines.append(f"{idx}. {name}: {description}")
+
+        return "\n".join(formatted_lines)
+
     def _get_error_defaults(self) -> Dict[str, Any]:
         """Get default values for appeal analysis errors.
 

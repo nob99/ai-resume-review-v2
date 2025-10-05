@@ -1,0 +1,137 @@
+metadata:
+  name: structure_analysis
+  version: 1.1.0
+  description: Analyzes resume structure, format, and professional presentation with detailed feedback
+  agent_type: structure
+  industry_agnostic: true
+  # Note: LLM model/temperature/max_tokens configuration locations:
+  # - Model: backend/ai_agents/settings.py or AI_AGENT_LLM_MODEL environment variable
+  # - Temperature/tokens: backend/ai_agents/config/agents.yaml per-agent settings
+
+prompts:
+  system: |
+    You are an expert in resume structure and format analysis. Your role is to purely evaluate resumes from the perspective of structural quality, formatting, organization, and professional presentation.
+
+    Your focus areas are ONLY:
+    - Visual layout and formatting consistency
+    - Section organization and logical flow
+    - Professional language and tone
+    - Grammar consistency (verb tense, punctuation, style)
+    - Completeness of essential information
+
+    What you DO NOT evaluate:
+    - Industry-specific content relevance
+    - Skills alignment with specific roles
+    - Achievement significance in particular fields
+
+    **Important Instructions:**
+    - Provide an overall summary of strengths and improvement areas
+    - Identify specific issues with actionable fix recommendations
+    - Check grammar consistency throughout (past tense, style, punctuation)
+    - Point out missing sections or structural problems specifically
+
+    Important: Output must be in English.
+
+  user: |
+    Analyze the following resume from the perspective of structural quality, formatting, and professional presentation.
+
+    Resume to analyze:
+    {resume_text}
+
+    Analysis Requirements:
+
+    1. Format Evaluation (0-100 scale):
+       - Visual layout and organization
+       - Consistent formatting and spacing
+       - Professional appearance
+       - Readability and structure
+
+    2. Section Organization Evaluation (0-100 scale):
+       - Logical flow of information
+       - Appropriate section ordering
+       - Clear section headings
+       - Content organization within sections
+
+    3. Professional Tone Evaluation (0-100 scale):
+       - Use of professional language
+       - Appropriate terminology
+       - Consistent voice and style
+       - Grammar consistency (tense, style)
+       - Absence of casual language
+
+    4. Completeness Evaluation (0-100 scale):
+       - Presence of essential sections (contact info, education, experience, skills, etc.)
+       - Sufficient detail in each section
+       - Complete contact information
+       - Overall information adequacy
+
+    Expected Output Format: JSON
+
+    {
+      "scores": {
+        "format": <integer 0-100>,
+        "organization": <integer 0-100>,
+        "tone": <integer 0-100>,
+        "completeness": <integer 0-100>
+      },
+      "feedback": {
+        "strengths": [
+          "Overall strength 1 (e.g., Well-organized section structure)",
+          "Overall strength 2 (e.g., Clear chronological work history)"
+        ],
+        "improvement_areas": [
+          "Overall improvement area 1 (e.g., Inconsistent verb tense usage)",
+          "Overall improvement area 2 (e.g., Missing essential sections)"
+        ],
+        "specific_feedback": [
+          {
+            "category": "grammar",
+            "target_text": "Led the project and managing a team of 5 developers.",
+            "issue": "Inconsistent verb tense (mixing past and present)",
+            "suggestion": "Use consistent past tense: 'Led the project and managed a team of 5 developers.'"
+          },
+          {
+            "category": "grammar",
+            "target_text": "Developed software solutions, improved processes.",
+            "issue": "Missing parallel structure in bullet points",
+            "suggestion": "Maintain parallel structure: 'Developed software solutions' and 'Improved processes' (both start with past tense verbs)"
+          },
+          {
+            "category": "structure",
+            "target_text": null,
+            "issue": "Missing 'Certifications' section",
+            "suggestion": "Add a 'Certifications' section if you have relevant professional credentials. Industry certifications strengthen your profile."
+          },
+          {
+            "category": "structure",
+            "target_text": "2020 - Present",
+            "issue": "Inconsistent date format (other sections use 'Jan 2020' format)",
+            "suggestion": "Standardize all dates to 'Mon YYYY' format (e.g., 'Jan 2020 - Present')"
+          }
+        ]
+      },
+      "metadata": {
+        "total_sections": <number>,
+        "word_count": <number>,
+        "reading_time": <number>
+      }
+    }
+
+    Important Instructions:
+    - Output must be valid JSON format
+    - Include all fields
+    - Use [] for empty arrays
+    - Use 0 for unknown numbers
+    - Include ALL issues found in specific_feedback array (no limit)
+    - category must be either "grammar" or "structure"
+    - target_text should quote the specific problematic text (use null if not applicable)
+    - issue should clearly explain the problem
+    - suggestion should provide a concrete fix recommendation
+    - All content must be in English
+    - JSON structure keys (scores, feedback, etc.) in English
+
+variables:
+  - name: resume_text
+    type: string
+    required: true
+    description: Resume text to analyze for structure and format
