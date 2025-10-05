@@ -1,15 +1,16 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosProgressEvent } from 'axios'
-import { 
-  LoginRequest, 
-  LoginResponse, 
-  User, 
-  ApiError, 
-  AuthExpiredError, 
-  AuthInvalidError, 
-  NetworkError, 
+import {
+  LoginRequest,
+  LoginResponse,
+  User,
+  Candidate,
+  CandidateListResponse,
+  CandidateCreateRequest,
+  CandidateCreateResponse,
+  AuthExpiredError,
+  AuthInvalidError,
+  NetworkError,
   ApiResult,
-  DetailedProgressInfo,
-  UploadedFileV2,
 } from '@/types'
 
 // Base API URL - will be configurable via environment variable
@@ -18,9 +19,8 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 // Create axios instance with default configuration
 const api: AxiosInstance = axios.create({
   baseURL: `${BASE_URL}/api/v1`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  // Don't set default Content-Type - let axios auto-detect based on request data
+  // This allows FormData to use multipart/form-data automatically
   timeout: 10000, // 10 second timeout
 })
 
@@ -76,7 +76,7 @@ api.interceptors.response.use(
 
     // Handle 401 errors (token expired) - but NOT for login attempts
     const isLoginRequest = originalRequest.url?.includes('/auth/login')
-    
+
     if (error.response?.status === 401 && !originalRequest._retry && !isLoginRequest) {
       originalRequest._retry = true
 
@@ -286,17 +286,20 @@ export function isAuthenticated(): boolean {
 export const uploadApi = {
   async uploadFile(
     file: File,
+    candidateId: string,
     onProgress?: (progress: AxiosProgressEvent) => void,
     abortController?: AbortController
-  ): Promise<ApiResult<UploadedFileV2>> {
+  ): Promise<ApiResult<any>> {
     try {
       const formData = new FormData()
       formData.append('file', file)
 
-      const response = await api.post<UploadedFileV2>('/files/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      // Debug logging
+      console.log('Upload debug - File:', file.name, file.size, 'bytes, type:', file.type)
+      console.log('Upload debug - FormData has file:', formData.has('file'))
+
+      const response = await api.post(`/resume_upload/candidates/${candidateId}/resumes`, formData, {
+        // Don't set Content-Type header - let axios handle it for FormData
         onUploadProgress: onProgress,
         signal: abortController?.signal,
       })
@@ -338,16 +341,18 @@ export const uploadApi = {
 
   async uploadMultipleFiles(
     files: File[],
+    candidateId: string,
     onProgress?: (fileId: string, progress: AxiosProgressEvent) => void,
     abortControllers?: Map<string, AbortController>
-  ): Promise<ApiResult<UploadedFileV2[]>> {
+  ): Promise<ApiResult<any[]>> {
     try {
       const uploadPromises = files.map(async (file) => {
         const fileId = `${file.name}-${Date.now()}`
         const abortController = abortControllers?.get(fileId)
-        
+
         const result = await this.uploadFile(
           file,
+          candidateId,
           (progress) => onProgress?.(fileId, progress),
           abortController
         )
@@ -373,9 +378,9 @@ export const uploadApi = {
     }
   },
 
-  async getFileStatus(fileId: string): Promise<ApiResult<UploadedFileV2>> {
+  async getFileStatus(fileId: string): Promise<ApiResult<any>> {
     try {
-      const response = await api.get<UploadedFileV2>(`/files/${fileId}/status`)
+      const response = await api.get(`/resume_upload/${fileId}/status`)
       return {
         success: true,
         data: response.data
@@ -406,7 +411,7 @@ export const uploadApi = {
 
   async cancelUpload(fileId: string): Promise<ApiResult<void>> {
     try {
-      await api.post(`/files/${fileId}/cancel`)
+      await api.delete(`/resume_upload/${fileId}/cancel`)
       return {
         success: true
       }
@@ -436,7 +441,7 @@ export const uploadApi = {
 
   async deleteFile(fileId: string): Promise<ApiResult<void>> {
     try {
-      await api.delete(`/files/${fileId}`)
+      await api.delete(`/resume_upload/${fileId}`)
       return {
         success: true
       }
@@ -469,13 +474,13 @@ export const uploadApi = {
     fileId: string,
     onProgress?: (progress: AxiosProgressEvent) => void,
     abortController?: AbortController
-  ): Promise<ApiResult<UploadedFileV2>> {
+  ): Promise<ApiResult<any>> {
     try {
       const formData = new FormData()
       formData.append('file', file)
       formData.append('retry_file_id', fileId)
 
-      const response = await api.post<UploadedFileV2>('/files/retry', formData, {
+      const response = await api.post('/resume_upload/batch', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -517,6 +522,185 @@ export const uploadApi = {
       }
     }
   },
+}
+
+// Candidate API functions
+export const candidateApi = {
+  async getCandidates(): Promise<ApiResult<Candidate[]>> {
+    try {
+      const response = await api.get<CandidateListResponse>('/candidates')
+
+      if (response.data.candidates) {
+        return {
+          success: true,
+          data: response.data.candidates
+        }
+      } else {
+        return {
+          success: false,
+          error: new Error('Invalid response format')
+        }
+      }
+    } catch (error: any) {
+      console.error('Error fetching candidates:', error)
+
+      // Handle different error types
+      if (error.response?.status === 401) {
+        return {
+          success: false,
+          error: new AuthExpiredError('Authentication required')
+        }
+      } else if (error.code === 'ECONNABORTED' || error.code === 'ENOTFOUND') {
+        return {
+          success: false,
+          error: new NetworkError('Network connection failed')
+        }
+      } else {
+        const errorMessage = error.response?.data?.detail || error.message || 'Failed to load candidates'
+        return {
+          success: false,
+          error: new Error(errorMessage)
+        }
+      }
+    }
+  },
+
+  async createCandidate(data: CandidateCreateRequest): Promise<ApiResult<CandidateCreateResponse>> {
+    try {
+      const response = await api.post<CandidateCreateResponse>('/candidates/', data)
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+        return {
+          success: false,
+          error: new Error('Unexpected error occurred')
+        }
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+    }
+  }
+}
+
+// Analysis API functions
+export const analysisApi = {
+  async requestAnalysis(
+    resumeId: string,
+    industry: string,
+    analysisDepth: string = 'standard'
+  ): Promise<ApiResult<any>> {
+    try {
+      const response = await api.post(`/analysis/resumes/${resumeId}/analyze`, {
+        industry,
+        analysis_depth: analysisDepth,
+        compare_to_market: false
+      })
+
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+        // This line should never be reached since handleApiError always throws
+        return {
+          success: false,
+          error: new Error('Unexpected error occurred')
+        }
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+    }
+  },
+
+  async getAnalysisStatus(analysisId: string): Promise<ApiResult<any>> {
+    try {
+      const response = await api.get(`/analysis/analysis/${analysisId}/status`)
+
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+        // This line should never be reached since handleApiError always throws
+        return {
+          success: false,
+          error: new Error('Unexpected error occurred')
+        }
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+    }
+  },
+
+  async getAnalysisResult(analysisId: string): Promise<ApiResult<any>> {
+    try {
+      const response = await api.get(`/analysis/analysis/${analysisId}`)
+
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+        // This line should never be reached since handleApiError always throws
+        return {
+          success: false,
+          error: new Error('Unexpected error occurred')
+        }
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+    }
+  }
 }
 
 // WebSocket connection for real-time progress updates
@@ -593,8 +777,299 @@ export class UploadWebSocket {
   }
 }
 
+// Admin user management API functions
+export const adminApi = {
+  async getUsers(params?: {
+    page?: number
+    page_size?: number
+    search?: string
+    role?: string
+    is_active?: boolean
+  }): Promise<ApiResult<any>> {
+    try {
+      const response = await api.get('/admin/users', { params })
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+
+      return {
+        success: false,
+        error: new Error('Failed to load users')
+      }
+    }
+  },
+
+  async createUser(userData: {
+    email: string
+    first_name: string
+    last_name: string
+    role: string
+    temporary_password: string
+  }): Promise<ApiResult<any>> {
+    try {
+      const response = await api.post('/admin/users', userData)
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+
+      return {
+        success: false,
+        error: new Error('Failed to create user')
+      }
+    }
+  },
+
+  async updateUser(userId: string, userData: {
+    first_name?: string
+    last_name?: string
+    email?: string
+    is_active?: boolean
+    role?: string
+    email_verified?: boolean
+  }): Promise<ApiResult<any>> {
+    try {
+      const response = await api.patch(`/admin/users/${userId}`, userData)
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+
+      return {
+        success: false,
+        error: new Error('Failed to update user')
+      }
+    }
+  },
+
+  async getUserDetail(userId: string): Promise<ApiResult<any>> {
+    try {
+      const response = await api.get(`/admin/users/${userId}`)
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+
+      return {
+        success: false,
+        error: new Error('Failed to get user details')
+      }
+    }
+  },
+
+  async resetPassword(userId: string, passwordData: {
+    new_password: string
+    force_password_change?: boolean
+  }): Promise<ApiResult<any>> {
+    try {
+      const response = await api.post(`/admin/users/${userId}/reset-password`, passwordData)
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+
+      return {
+        success: false,
+        error: new Error('Failed to reset password')
+      }
+    }
+  }
+}
+
+// History API functions
+export const historyApi = {
+  async getHistory(params?: {
+    candidate_id?: string
+    status?: string
+    industry?: string
+    page?: number
+    page_size?: number
+  }): Promise<ApiResult<any>> {
+    try {
+      const response = await api.get('/analysis/', { params })
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+
+      return {
+        success: false,
+        error: new Error('Failed to load history')
+      }
+    }
+  }
+}
+
+// Profile API functions
+export const profileApi = {
+  async updateProfile(profileData: {
+    first_name: string
+    last_name: string
+  }): Promise<ApiResult<User>> {
+    try {
+      const response = await api.patch<User>('/profile/me', profileData)
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+
+      return {
+        success: false,
+        error: new Error('Failed to update profile')
+      }
+    }
+  },
+
+  async changePassword(passwordData: {
+    current_password: string
+    new_password: string
+  }): Promise<ApiResult<{ message: string }>> {
+    try {
+      const response = await api.post<{ message: string }>('/profile/change-password', passwordData)
+      return {
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      if (error instanceof AuthExpiredError || error instanceof AuthInvalidError || error instanceof NetworkError) {
+        return {
+          success: false,
+          error
+        }
+      }
+
+      try {
+        handleApiError(error as AxiosError)
+      } catch (customError) {
+        return {
+          success: false,
+          error: customError as Error
+        }
+      }
+
+      return {
+        success: false,
+        error: new Error('Failed to change password')
+      }
+    }
+  }
+}
+
 // Export the configured axios instance for custom requests
 export default api
 
 // Export token storage for auth context
-export { TokenStorage }
+export { TokenStorage, BASE_URL }

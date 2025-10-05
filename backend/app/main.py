@@ -12,10 +12,15 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api.auth import router as auth_router
-from app.database.connection import init_database, close_database, get_db_health
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent.parent))
+from database.connection import init_database, close_database, get_db_health
 from app.core.rate_limiter import rate_limiter
 from app.core.security import SecurityError
+from app.core.config import get_settings
+
+settings = get_settings()
 
 # Configure logging
 logging.basicConfig(
@@ -39,6 +44,11 @@ async def lifespan(app: FastAPI):
         # Initialize rate limiter
         await rate_limiter.connect()
         logger.info("Rate limiter initialized")
+        
+        # Initialize async infrastructure
+        from app.core.database import init_postgres
+        await init_postgres()
+        logger.info("PostgreSQL async connection initialized")
         
         logger.info("Application startup completed successfully")
         
@@ -121,80 +131,67 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",  # React dev server
         "http://localhost:8000",  # Local development
-        "https://*.airesumereview.com",  # Production domains
+        "https://airesumereview.com",  # Production domain
+        "https://www.airesumereview.com",  # Production www domain
+        "https://api.airesumereview.com",  # Production API domain
     ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
-# Include routers with API versioning
-app.include_router(auth_router, prefix="/api/v1")
+# Include API routers
+from app.features.auth.api import router as auth_router
+from app.features.candidate.api import router as candidate_router
+from app.features.resume_upload.api import router as resume_upload_router
+from app.features.resume_analysis.api import router as analysis_router
+from app.features.admin.api import router as admin_router
+from app.features.profile.api import router as profile_router
+
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(profile_router, prefix="/api/v1/profile", tags=["profile"])
+app.include_router(candidate_router, prefix="/api/v1/candidates", tags=["candidates"])
+app.include_router(resume_upload_router, prefix="/api/v1/resume_upload", tags=["resumes"])
+app.include_router(analysis_router, prefix="/api/v1/analysis", tags=["analysis"])
+app.include_router(admin_router, prefix="/api/v1/admin", tags=["admin"])
+
+logger.info("All API routes registered successfully")
 
 # Global exception handlers
-@app.exception_handler(SecurityError)
-async def security_error_handler(request: Request, exc: SecurityError):
-    """Handle security errors."""
-    client_ip = request.client.host if request.client else "unknown"
-    logger.warning(f"Security error: {str(exc)} - IP: {client_ip}")
-    return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        content={
-            "error": "Security Error",
-            "message": str(exc),
-            "type": "security_error"
-        }
-    )
-
-
-@app.exception_handler(RequestValidationError)
-async def validation_error_handler(request: Request, exc: RequestValidationError):
-    """Handle request validation errors."""
-    client_ip = request.client.host if request.client else "unknown"
-    logger.warning(f"Validation error: {exc.errors()} - IP: {client_ip}")
-    
-    # Ensure error details are JSON serializable
-    errors = []
-    for error in exc.errors():
-        serializable_error = {}
-        for key, value in error.items():
-            if isinstance(value, bytes):
-                serializable_error[key] = value.decode('utf-8', errors='replace')
-            else:
-                serializable_error[key] = value
-        errors.append(serializable_error)
-    
-    return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={
-            "detail": errors
-        }
-    )
-
-
-@app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(request: Request, exc: StarletteHTTPException):
-    """Handle HTTP exceptions."""
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={
-            "detail": exc.detail
-        }
-    )
-
-
 @app.exception_handler(Exception)
-async def general_exception_handler(request: Request, exc: Exception):
-    """Handle unexpected exceptions."""
+async def handle_exceptions(request: Request, exc: Exception):
+    """
+    Unified exception handler for all errors.
+    Handles both expected client errors (4xx) and unexpected server errors (5xx).
+    """
     client_ip = request.client.host if request.client else "unknown"
+
+    # Handle expected client errors (400-level)
+    if isinstance(exc, (SecurityError, ValueError)):
+        logger.warning(f"Client error: {str(exc)} - IP: {client_ip}")
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": "Bad Request", "message": str(exc)}
+        )
+
+    if isinstance(exc, RequestValidationError):
+        logger.warning(f"Validation error: {exc.errors()} - IP: {client_ip}")
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content={"error": "Validation Error", "detail": exc.errors()}
+        )
+
+    if isinstance(exc, StarletteHTTPException):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"error": exc.detail}
+        )
+
+    # Handle unexpected server errors (500-level)
     logger.error(f"Unexpected error: {str(exc)} - IP: {client_ip}", exc_info=True)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={
-            "error": "Internal Server Error",
-            "message": "An unexpected error occurred",
-            "type": "server_error"
-        }
+        content={"error": "Internal Server Error", "message": "An unexpected error occurred"}
     )
 
 
@@ -264,13 +261,8 @@ async def root():
     }
 
 
-# Startup message
-@app.on_event("startup")
-async def startup_message():
-    """Log startup message."""
-    logger.info("🚀 AI Resume Review Platform API is ready!")
-    logger.info("📚 Documentation: http://localhost:8000/docs")
-    logger.info("🏥 Health Check: http://localhost:8000/health")
+# Startup message - moved to lifespan function for proper async handling
+# The new infrastructure initialization is now handled in the lifespan function above
 
 
 if __name__ == "__main__":

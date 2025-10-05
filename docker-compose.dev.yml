@@ -66,6 +66,12 @@ services:
     volumes:
       # Mount source code for hot reload in development
       - ./backend/app:/app/app:ro
+      # Mount AI agents module for prompt hot reload
+      - ./backend/ai_agents:/app/ai_agents:ro
+      # Mount database module for schema v1.1 integration
+      - ./database:/app/database:ro
+      # Mount infrastructure module for new architecture
+      - ./backend/infrastructure:/app/infrastructure:ro
       # Mount logs directory
       - ./backend/logs:/app/logs
     environment:
@@ -103,15 +109,15 @@ services:
       - "3000:3000"
     volumes:
       # Mount source code for hot reload in development
-      - ./frontend/src:/app/src:ro
-      - ./frontend/public:/app/public:ro
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
       # Mount package files for dependency management
       - ./frontend/package.json:/app/package.json:ro
       - ./frontend/package-lock.json:/app/package-lock.json:ro
       # Mount Next.js config
       - ./frontend/next.config.ts:/app/next.config.ts:ro
-      # Mount for hot reload
-      - ./frontend/.next:/app/.next
+      # Note: .next directory mount removed to prevent build cache corruption
+      # Container will manage its own .next cache internally for stability
     environment:
       # API configuration - using localhost for browser requests (not internal Docker hostname)
       NEXT_PUBLIC_API_URL: http://localhost:8000

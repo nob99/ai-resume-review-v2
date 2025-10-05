@@ -2,19 +2,23 @@
 
 import React, { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/auth-context'
-import LoginForm from '@/components/forms/LoginForm'
+import { useAuth } from '@/contexts/AuthContext'
+import LoginForm from '@/features/auth/components/LoginForm'
 import { Container, Section } from '@/components/layout'
 import { Loading } from '@/components/ui'
 
+/**
+ * Login Page Component
+ * Handles authentication flow and redirects
+ */
 const LoginPage: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth()
   const router = useRouter()
 
-  // Redirect to dashboard if already authenticated
+  // Redirect to upload if already authenticated
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      router.push('/dashboard')
+      router.push('/upload')
     }
   }, [isAuthenticated, isLoading, router])
 
@@ -36,14 +40,14 @@ const LoginPage: React.FC = () => {
       <Loading
         variant="spinner"
         size="lg"
-        text="Redirecting to dashboard..."
+        text="Redirecting to upload..."
         fullScreen
       />
     )
   }
 
   const handleLoginSuccess = () => {
-    router.push('/dashboard')
+    router.push('/upload')
   }
 
   return (
@@ -64,7 +68,7 @@ const LoginPage: React.FC = () => {
           </div>
 
           {/* Login Form */}
-          <LoginForm 
+          <LoginForm
             onSuccess={handleLoginSuccess}
             showTitle={false}
             className="shadow-xl"

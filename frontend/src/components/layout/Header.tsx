@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useAuth } from '@/lib/auth-context'
+import Link from 'next/link'
+import { useAuth } from '@/contexts/AuthContext'
 import { useToastActions } from '@/components/ui/Toast'
 import { cn } from '@/lib/utils'
 import Button from '@/components/ui/Button'
@@ -21,7 +22,7 @@ const UserMenu: React.FC<{ isOpen: boolean; onToggle: () => void }> = ({ isOpen,
     try {
       await logout()
       showSuccess('Successfully logged out')
-    } catch (error) {
+    } catch {
       showError('Failed to log out')
     }
     onToggle() // Close menu
@@ -82,25 +83,13 @@ const UserMenu: React.FC<{ isOpen: boolean; onToggle: () => void }> = ({ isOpen,
             </div>
 
             {/* Menu items */}
-            <button
-              onClick={() => {
-                // TODO: Implement profile settings in future sprint
-                onToggle()
-              }}
+            <a
+              href="/profile"
               className="block w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 focus:bg-neutral-50"
+              onClick={onToggle}
             >
               Profile Settings
-            </button>
-            
-            <button
-              onClick={() => {
-                // TODO: Implement account settings in future sprint
-                onToggle()
-              }}
-              className="block w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 focus:bg-neutral-50"
-            >
-              Account Settings
-            </button>
+            </a>
 
             <hr className="my-1 border-neutral-100" />
 
@@ -119,14 +108,10 @@ const UserMenu: React.FC<{ isOpen: boolean; onToggle: () => void }> = ({ isOpen,
 
 // Main navigation items
 const NavigationItems: React.FC = () => {
+  const { user } = useAuth()
+
   return (
     <nav className="hidden md:flex items-center space-x-8">
-      <a
-        href="/dashboard"
-        className="text-neutral-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
-      >
-        Dashboard
-      </a>
       <a
         href="/upload"
         className="text-neutral-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
@@ -139,12 +124,27 @@ const NavigationItems: React.FC = () => {
       >
         Review History
       </a>
+      <a
+        href="/register-candidate"
+        className="text-neutral-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+      >
+        Register Candidate
+      </a>
+      {user?.role === 'admin' && (
+        <a
+          href="/admin"
+          className="text-neutral-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+        >
+          User Management
+        </a>
+      )}
     </nav>
   )
 }
 
 // Mobile menu component
 const MobileMenu: React.FC<{ isOpen: boolean; onToggle: () => void }> = ({ isOpen, onToggle }) => {
+  const { user } = useAuth()
   return (
     <>
       {/* Mobile menu button */}
@@ -186,13 +186,6 @@ const MobileMenu: React.FC<{ isOpen: boolean; onToggle: () => void }> = ({ isOpe
         <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-neutral-200 shadow-lg" id="mobile-menu">
           <div className="px-2 pt-2 pb-3 space-y-1">
             <a
-              href="/dashboard"
-              className="block px-3 py-2 text-base font-medium text-neutral-700 hover:text-primary-600 hover:bg-neutral-50 rounded-md"
-              onClick={onToggle}
-            >
-              Dashboard
-            </a>
-            <a
               href="/upload"
               className="block px-3 py-2 text-base font-medium text-neutral-700 hover:text-primary-600 hover:bg-neutral-50 rounded-md"
               onClick={onToggle}
@@ -206,6 +199,22 @@ const MobileMenu: React.FC<{ isOpen: boolean; onToggle: () => void }> = ({ isOpe
             >
               Review History
             </a>
+            <a
+              href="/register-candidate"
+              className="block px-3 py-2 text-base font-medium text-neutral-700 hover:text-primary-600 hover:bg-neutral-50 rounded-md"
+              onClick={onToggle}
+            >
+              Register Candidate
+            </a>
+            {user?.role === 'admin' && (
+              <a
+                href="/admin"
+                className="block px-3 py-2 text-base font-medium text-neutral-700 hover:text-primary-600 hover:bg-neutral-50 rounded-md"
+                onClick={onToggle}
+              >
+                User Management
+              </a>
+            )}
           </div>
         </div>
       )}
@@ -248,14 +257,17 @@ const Header: React.FC<HeaderProps> = ({ className, showUserMenu = true }) => {
         <div className="flex items-center justify-between h-16">
           {/* Logo and brand */}
           <div className="flex items-center">
-            <a href="/" className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center">
-                <span className="font-bold text-sm">AI</span>
+            <Link href="/" className="flex items-center">
+              {/* Brand text */}
+              <div className="flex flex-col">
+                <span className="font-bold text-xl text-neutral-900 leading-tight">
+                  Yatagarasu
+                </span>
+                <span className="text-[12px] text-neutral-500">
+                  Resume Review
+                </span>
               </div>
-              <span className="font-bold text-xl text-neutral-900">
-                Resume Review
-              </span>
-            </a>
+            </Link>
           </div>
 
           {/* Navigation and user menu */}

@@ -91,11 +91,17 @@ mypy app           # Type checking
 │   └── tests/      # Jest tests mirroring src structure
 ├── backend/        # FastAPI Python API
 │   ├── app/
-│   │   ├── api/    # API endpoints
-│   │   ├── core/   # Core utilities
-│   │   ├── models/ # SQLAlchemy models
-│   │   └── services/  # Business logic
-│   └── tests/      # Pytest tests by feature
+│   │   ├── core/   # Core utilities (config, security, database, cache)
+│   │   │   ├── database/  # Database connection & BaseRepository
+│   │   │   └── cache/     # Redis connection & cache service
+│   │   └── features/  # Feature modules (auth, candidate, resume_upload, etc.)
+│   │       └── feature_name/
+│   │           ├── api.py         # HTTP endpoints
+│   │           ├── service.py     # Business logic (optional)
+│   │           ├── repository.py  # Database operations
+│   │           ├── schemas.py     # Pydantic models
+│   │           └── tests/         # Feature tests
+│   └── ai_agents/  # LangChain/LangGraph AI agents
 ├── database/       # Migrations and scripts
 ├── infrastructure/ # Terraform GCP setup
 └── scripts/        # Development utilities
