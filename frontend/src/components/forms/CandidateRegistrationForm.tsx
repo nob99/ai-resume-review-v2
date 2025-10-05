@@ -113,7 +113,7 @@ const CandidateRegistrationForm: React.FC<CandidateRegistrationFormProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="firstName" className="block text-sm font-medium text-neutral-700 mb-1">
-                First Name <span className="text-error-500">*</span>
+                ファーストネーム / First Name <span className="text-error-500">*</span>
               </label>
               <Input
                 id="firstName"
@@ -138,7 +138,7 @@ const CandidateRegistrationForm: React.FC<CandidateRegistrationFormProps> = ({
 
             <div>
               <label htmlFor="lastName" className="block text-sm font-medium text-neutral-700 mb-1">
-                Last Name <span className="text-error-500">*</span>
+                ラストネーム / Last Name <span className="text-error-500">*</span>
               </label>
               <Input
                 id="lastName"
@@ -166,7 +166,7 @@ const CandidateRegistrationForm: React.FC<CandidateRegistrationFormProps> = ({
           <div className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-1">
-                Email Address
+                メールアドレス / Email Address
               </label>
               <Input
                 id="email"
@@ -189,7 +189,7 @@ const CandidateRegistrationForm: React.FC<CandidateRegistrationFormProps> = ({
 
             <div>
               <label htmlFor="phone" className="block text-sm font-medium text-neutral-700 mb-1">
-                Phone Number
+                電話番号 / Phone Number
               </label>
               <Input
                 id="phone"
@@ -209,7 +209,7 @@ const CandidateRegistrationForm: React.FC<CandidateRegistrationFormProps> = ({
 
             <div>
               <label htmlFor="currentCompany" className="block text-sm font-medium text-neutral-700 mb-1">
-                Current Company
+                現在の会社 / Current Company
               </label>
               <Input
                 id="currentCompany"
@@ -229,7 +229,7 @@ const CandidateRegistrationForm: React.FC<CandidateRegistrationFormProps> = ({
 
             <div>
               <label htmlFor="currentPosition" className="block text-sm font-medium text-neutral-700 mb-1">
-                Current Position
+                現在の役職 / Current Position
               </label>
               <Input
                 id="currentPosition"
@@ -249,7 +249,7 @@ const CandidateRegistrationForm: React.FC<CandidateRegistrationFormProps> = ({
 
             <div>
               <label htmlFor="yearsExperience" className="block text-sm font-medium text-neutral-700 mb-1">
-                Years of Experience
+                経験年数 / Years of Experience
               </label>
               <Input
                 id="yearsExperience"
@@ -281,7 +281,7 @@ const CandidateRegistrationForm: React.FC<CandidateRegistrationFormProps> = ({
               onClick={handleCancel}
               disabled={isSubmitting}
             >
-              Cancel
+              キャンセル / Cancel
             </Button>
 
             <Button
@@ -289,7 +289,7 @@ const CandidateRegistrationForm: React.FC<CandidateRegistrationFormProps> = ({
               loading={isSubmitting}
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Registering...' : 'Register Candidate'}
+              {isSubmitting ? '登録中... / Registering...' : '登録 / Register Candidate'}
             </Button>
           </div>
         </form>

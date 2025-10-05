@@ -52,10 +52,10 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
           {isAnalyzing ? (
             <>
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></div>
-              {analysisStatus === 'processing' ? 'Analyzing...' : 'Starting...'}
+              {analysisStatus === 'processing' ? 'AIが分析中... / Analyzing...' : '分析依頼中... / Starting...'}
             </>
           ) : (
-            'Analyze Resume'
+            'AI分析 / Analyze Resume'
           )}
         </Button>
       </div>

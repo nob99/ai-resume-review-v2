@@ -87,17 +87,17 @@ const AdminPage: React.FC = () => {
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h1 className="text-3xl font-bold text-neutral-900 mb-4">
-                  User Management
+                  ユーザー管理 / User Management
                 </h1>
                 <p className="text-lg text-neutral-600">
-                  Manage system users and their permissions
+                  ユーザー情報の編集と権限を管理できます / Manage system users and their permissions
                 </p>
               </div>
               <button
                 onClick={handleCreateUser}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
               >
-                + Add User
+                + ユーザー作成 / Add User
               </button>
             </div>
 

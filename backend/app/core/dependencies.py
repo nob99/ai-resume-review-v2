@@ -23,7 +23,7 @@ from app.core.database import get_async_session
 from app.features.auth.repository import UserRepository
 from database.models.auth import User, UserRole
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
@@ -54,6 +54,14 @@ async def get_current_user(
         ):
             return {"user": current_user.email}
     """
+    # Check if credentials were provided (auto_error=False allows None)
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No authentication credentials provided",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+
     try:
         token = credentials.credentials
         user_data = verify_token(token)

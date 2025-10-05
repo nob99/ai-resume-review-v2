@@ -39,11 +39,10 @@ const UploadPage: React.FC = () => {
           {/* Page Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-neutral-900 mb-4">
-              Upload Resume Files
+              レジュメのアップロード&AI分析
             </h1>
             <p className="text-lg text-neutral-600">
-              Upload your resume files to get started with AI-powered analysis.
-              Support for PDF and Word documents up to 10MB each.
+              レジュメファイルをアップロードして、AI分析を開始しましょう。PDF及びWordドキュメント（各10MBまで）に対応しています
             </p>
           </div>
 
@@ -52,7 +51,7 @@ const UploadPage: React.FC = () => {
               <Card>
                 <CardHeader>
                   <h2 className="text-xl font-semibold text-neutral-900">
-                    Step 1: Select Candidate
+                    Step 1: 候補者の選択 / Select Candidate
                   </h2>
                 </CardHeader>
                 <CardContent className="pt-6 space-y-4">
@@ -66,14 +65,13 @@ const UploadPage: React.FC = () => {
                   {/* Helper: Register new candidate */}
                   <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-md">
                     <p className="text-sm text-neutral-700 mb-2">
-                      Can't find your candidate?{' '}
+                      候補者が見つからない場合は、まず候補者を登録してください  {' '}
                       <button
                         onClick={() => router.push('/register-candidate')}
                         className="font-medium text-blue-600 hover:text-blue-700 underline"
                       >
-                        Register them first
+                        [候補者登録ページ / Register Candidate]
                       </button>
-                      {' '}before uploading their resume.
                     </p>
                   </div>
                 </CardContent>
@@ -84,11 +82,11 @@ const UploadPage: React.FC = () => {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold text-neutral-900">
-                      Step 2: Select Resume Files
+                      Step 2: レジュメの選択 / Select Resume Files
                     </h2>
                     {!state.selectedCandidate && (
                       <span className="text-sm text-neutral-500 bg-neutral-100 px-3 py-1 rounded-full">
-                        Complete Step 1 first
+                        Step 1を完了してください / Complete Step 1 first
                       </span>
                     )}
                   </div>
@@ -104,7 +102,7 @@ const UploadPage: React.FC = () => {
                   {!state.selectedCandidate && (
                     <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                       <p className="text-sm text-yellow-800">
-                        Please select a candidate first before uploading files.
+                        候補者を選択してからレジュメをアップロードしてください / Please select a candidate first before uploading files.
                       </p>
                     </div>
                   )}
@@ -150,11 +148,11 @@ const UploadPage: React.FC = () => {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold text-neutral-900">
-                      Step 3: Select Industry & Analyze
+                      Step 3: 応募する業界の選択 & AI分析 / Select Industry & Analyze
                     </h2>
                     {successFiles.length === 0 && (
                       <span className="text-sm text-neutral-500 bg-neutral-100 px-3 py-1 rounded-full">
-                        Complete Step 2 first
+                        Step 2を完了してください / Complete Step 2 first
                       </span>
                     )}
                   </div>
@@ -164,10 +162,10 @@ const UploadPage: React.FC = () => {
                     <div className="p-8 text-center bg-neutral-50 rounded-lg border-2 border-dashed border-neutral-200">
                       <div className="text-4xl mb-3">📊</div>
                       <p className="text-neutral-600 font-medium mb-1">
-                        Industry Selection
+                        業界の選択 / Industry Selection
                       </p>
                       <p className="text-sm text-neutral-500">
-                        Upload and complete Step 2 to select industry and analyze your resume
+                        レジュメをアップロードしてStep 2を完了してください / Upload and complete Step 2 to select industry and analyze your resume
                       </p>
                     </div>
                   ) : (

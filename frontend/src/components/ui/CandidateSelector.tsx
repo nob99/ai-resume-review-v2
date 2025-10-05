@@ -215,7 +215,7 @@ export const CandidateSelector: React.FC<CandidateSelectorProps> = ({
         onChange={handleInputChange}
         onFocus={handleInputFocus}
         onKeyDown={handleKeyDown}
-        placeholder="Type to search candidates..."
+        placeholder="候補者名の検索... / Type to search candidates..."
         disabled={disabled}
         required={required}
         className={cn(
@@ -334,7 +334,7 @@ export const CandidateSelector: React.FC<CandidateSelectorProps> = ({
   return (
     <div className={cn('space-y-2', className)}>
       <label className="block text-sm font-medium text-neutral-700">
-        Select Candidate {required && <span className="text-red-500">*</span>}
+        候補者の選択 / Select Candidate {required && <span className="text-red-500">*</span>}
       </label>
 
       {candidates.length > 0 ? (

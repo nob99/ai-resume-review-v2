@@ -23,7 +23,7 @@ const UserSearchBar: React.FC<UserSearchBarProps> = ({
           <div className="flex-1">
             <Input
               type="search"
-              placeholder="Search users by name or email..."
+              placeholder="名前またはメールアドレスでユーザーを検索 / Search users by name or email..."
               value={searchTerm}
               onChange={(e) => onSearch(e.target.value)}
             />

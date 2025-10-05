@@ -159,7 +159,7 @@ class AuthService:
             SecurityError: If refresh token is invalid
         """
         # Check if token is blacklisted
-        if is_token_blacklisted(refresh_token_str):
+        if await is_token_blacklisted(refresh_token_str):
             raise SecurityError("Token has been revoked")
         
         # Find refresh token by hash
@@ -186,9 +186,9 @@ class AuthService:
         refresh_token.rotate_token(new_refresh_token)
         await self.token_repo.session.flush()
         await self.token_repo.commit()
-        
+
         # Blacklist old refresh token
-        blacklist_token(refresh_token_str)
+        await blacklist_token(refresh_token_str)
         
         logger.info(f"Token refreshed for user {user.email}")
         
@@ -217,8 +217,8 @@ class AuthService:
             True if logout successful
         """
         # Blacklist access token
-        blacklist_token(access_token)
-        
+        await blacklist_token(access_token)
+
         if refresh_token_str:
             # Find and revoke refresh token
             token_hash = RefreshToken._hash_token(refresh_token_str)
@@ -233,10 +233,10 @@ class AuthService:
                     refresh_token.revoke()
                 
                 await self.token_repo.commit()
-                
+
                 # Blacklist refresh token
-                blacklist_token(refresh_token_str)
-                
+                await blacklist_token(refresh_token_str)
+
                 logger.info(f"User logged out (session: {refresh_token.session_id})")
         
         return True

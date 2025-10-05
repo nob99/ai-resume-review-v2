@@ -129,12 +129,6 @@ const NavigationItems: React.FC = () => {
       >
         Register Candidate
       </a>
-      <a
-        href="/dashboard"
-        className="text-neutral-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
-      >
-        Dashboard
-      </a>
       {user?.role === 'admin' && (
         <a
           href="/admin"
@@ -211,13 +205,6 @@ const MobileMenu: React.FC<{ isOpen: boolean; onToggle: () => void }> = ({ isOpe
             >
               Register Candidate
             </a>
-            <a
-              href="/dashboard"
-              className="block px-3 py-2 text-base font-medium text-neutral-700 hover:text-primary-600 hover:bg-neutral-50 rounded-md"
-              onClick={onToggle}
-            >
-              Dashboard
-            </a>
             {user?.role === 'admin' && (
               <a
                 href="/admin"
@@ -269,13 +256,15 @@ const Header: React.FC<HeaderProps> = ({ className, showUserMenu = true }) => {
         <div className="flex items-center justify-between h-16">
           {/* Logo and brand */}
           <div className="flex items-center">
-            <a href="/" className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center">
-                <span className="font-bold text-sm">AI</span>
+            <a href="/" className="flex items-center">
+              <div className="flex flex-col">
+                <span className="font-bold text-xl text-neutral-900">
+                  Yatagarasu
+                </span>
+                <span className="text-[12px] text-neutral-500">
+                  Resume Review
+                </span>
               </div>
-              <span className="font-bold text-xl text-neutral-900">
-                Resume Review
-              </span>
             </a>
           </div>
 
