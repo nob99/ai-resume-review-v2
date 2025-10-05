@@ -60,9 +60,13 @@ class BaseAgent:
         # Construct full template filename with version and language suffix
         template_name = f"{template_base}_{version}_{lang}.yaml"
 
+        # Extract agent type from template_base (e.g., "appeal_prompt" → "appeal")
+        agent_type = template_base.split('_')[0]
+
         template_path = (
             Path(__file__).parent.parent
             / self.settings.paths.prompts_dir
+            / agent_type
             / template_name
         )
 

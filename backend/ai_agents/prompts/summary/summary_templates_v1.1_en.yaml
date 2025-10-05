@@ -1,0 +1,11 @@
+metadata:
+  name: summary_templates
+  version: 1.0.0
+  description: Executive summary templates for resume analysis (English)
+  language: en
+
+templates:
+  main_score: "This resume scores {overall_score}/100, indicating a {category} candidate for {industry_name} roles."
+  market_tier: "The candidate appears to be at the {market_tier} level."
+  key_strengths: "Key strengths include: {strengths}."
+  priority_improvements: "Priority improvements: {improvements}."
