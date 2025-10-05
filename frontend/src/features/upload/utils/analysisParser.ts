@@ -1,26 +1,30 @@
-import { AnalysisStatusResponse, ParsedAIFeedback } from '../types'
+import { AnalysisStatusResponse, ParsedAIFeedback, StructureFeedback, AppealFeedback } from '@/types'
 
 /**
  * Parse the detailed_scores from API response into a more usable format
+ * Supports both v1.1 (specific_feedback) and v1.0 (deprecated fields) formats
  */
 export function parseAIFeedback(analysisResult: AnalysisStatusResponse): ParsedAIFeedback | null {
   const detailedScores = analysisResult.result?.detailed_scores
 
   if (!detailedScores) return null
 
-  return {
-    // Structure feedback
-    issues: detailedScores.structure_analysis?.feedback?.issues || [],
-    recommendations: detailedScores.structure_analysis?.feedback?.recommendations || [],
-    missingSection: detailedScores.structure_analysis?.feedback?.missing_sections || [],
-    strengths: detailedScores.structure_analysis?.feedback?.strengths || [],
+  const structureFeedback = detailedScores.structure_analysis?.feedback as StructureFeedback
+  const appealFeedback = detailedScores.appeal_analysis?.feedback as AppealFeedback
 
-    // Appeal feedback
-    relevantAchievements: detailedScores.appeal_analysis?.feedback?.relevant_achievements || [],
-    missingSkills: detailedScores.appeal_analysis?.feedback?.missing_skills || [],
-    competitiveAdvantages: detailedScores.appeal_analysis?.feedback?.competitive_advantages || [],
-    improvementAreas: detailedScores.appeal_analysis?.feedback?.improvement_areas || [],
-    transferableExperience: detailedScores.appeal_analysis?.feedback?.transferable_experience || [],
+  return {
+    // V1.0: Structure feedback (deprecated, kept for backward compatibility)
+    issues: structureFeedback?.issues || [],
+    recommendations: structureFeedback?.recommendations || [],
+    missingSection: structureFeedback?.missing_sections || [],
+    strengths: structureFeedback?.strengths || [],
+
+    // V1.0: Appeal feedback (deprecated, kept for backward compatibility)
+    relevantAchievements: appealFeedback?.relevant_achievements || [],
+    missingSkills: appealFeedback?.missing_skills || [],
+    competitiveAdvantages: appealFeedback?.competitive_advantages || [],
+    improvementAreas: appealFeedback?.improvement_areas || [],
+    transferableExperience: appealFeedback?.transferable_experience || [],
 
     // Detailed scores
     structureScores: detailedScores.structure_analysis?.scores || {
@@ -44,6 +48,22 @@ export function parseAIFeedback(analysisResult: AnalysisStatusResponse): ParsedA
       reading_time: 0
     }
   }
+}
+
+/**
+ * Get structure feedback in v1.1 format (two-level feedback with specific items)
+ */
+export function getStructureFeedback(analysisResult: AnalysisStatusResponse): StructureFeedback | null {
+  const structureFeedback = analysisResult.result?.detailed_scores?.structure_analysis?.feedback as StructureFeedback
+  return structureFeedback || null
+}
+
+/**
+ * Get appeal feedback in v1.1 format (two-level feedback with specific items)
+ */
+export function getAppealFeedback(analysisResult: AnalysisStatusResponse): AppealFeedback | null {
+  const appealFeedback = analysisResult.result?.detailed_scores?.appeal_analysis?.feedback as AppealFeedback
+  return appealFeedback || null
 }
 
 /**

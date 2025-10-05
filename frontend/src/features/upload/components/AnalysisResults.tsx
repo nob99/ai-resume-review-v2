@@ -2,16 +2,14 @@
 
 import React from 'react'
 import { Card, CardContent, CardHeader } from '@/components/ui'
-import { AnalysisStatusResponse } from '@/types'
-import { parseAIFeedback, formatMarketTier } from '../utils/analysisParser'
-import FeedbackSection from './FeedbackSection'
-import DetailedScores from './DetailedScores'
+import { AnalysisStatusResponse, SpecificFeedbackItem } from '@/types'
+import { getStructureFeedback, getAppealFeedback, formatScore, getScoreColor, getScoreBarColor, formatMarketTier } from '../utils/analysisParser'
 
 interface AnalysisResultsProps {
   analysis: AnalysisStatusResponse
-  industryOptions: Array<{ value: string; label: string }>
-  onAnalyzeAgain: () => void
-  onUploadNew: () => void
+  industryOptions?: Array<{ value: string; label: string }>
+  onAnalyzeAgain?: () => void
+  onUploadNew?: () => void
   className?: string
   elapsedTime?: number
 }
@@ -30,16 +28,84 @@ function formatElapsedTime(ms: number): string {
   return `${seconds}秒 / ${seconds}s`
 }
 
+/**
+ * Get category icon and color for specific feedback items
+ */
+function getCategoryStyle(category: string) {
+  const styles = {
+    grammar: { icon: '📝', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
+    structure: { icon: '🏗️', color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200' },
+    scr_framework: { icon: '📖', color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-200' },
+    quantitative_impact: { icon: '📊', color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200' },
+    appeal_point: { icon: '🎯', color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200' },
+  }
+  return styles[category as keyof typeof styles] || { icon: '💡', color: 'text-gray-600', bg: 'bg-gray-50', border: 'border-gray-200' }
+}
+
+/**
+ * Specific Feedback Item Component
+ */
+function FeedbackItemCard({ item }: { item: SpecificFeedbackItem }) {
+  const style = getCategoryStyle(item.category)
+
+  return (
+    <div className={`p-4 rounded-lg border-l-4 ${style.border} ${style.bg}`}>
+      <div className="flex items-start space-x-3">
+        <span className="text-2xl flex-shrink-0">{style.icon}</span>
+        <div className="flex-1 space-y-2">
+          <div className={`text-xs font-bold uppercase tracking-wide ${style.color}`}>
+            {item.category.replace('_', ' ')}
+          </div>
+          {item.target_text && (
+            <div className="text-sm text-gray-700 bg-white p-2 rounded border border-gray-200">
+              <span className="font-medium">対象テキスト / Target:</span> "{item.target_text}"
+            </div>
+          )}
+          <div className="text-sm">
+            <span className="font-semibold text-gray-900">問題点 / Issue:</span>
+            <p className="text-gray-700 mt-1">{item.issue}</p>
+          </div>
+          <div className="text-sm">
+            <span className="font-semibold text-gray-900">提案 / Suggestion:</span>
+            <p className="text-gray-700 mt-1">{item.suggestion}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Score Bar Component
+ */
+function ScoreBar({ label, score }: { label: string; score: number }) {
+  const scoreColor = getScoreColor(score)
+  const barColor = getScoreBarColor(score)
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-gray-700">{label}</span>
+        <span className={`text-lg font-bold ${scoreColor}`}>{formatScore(score)}</span>
+      </div>
+      <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className={`${barColor} h-2 rounded-full transition-all`} style={{ width: `${score}%` }} />
+      </div>
+    </div>
+  )
+}
+
 export default function AnalysisResults({
   analysis,
-  industryOptions,
+  industryOptions = [],
   onAnalyzeAgain,
   onUploadNew,
   className = '',
   elapsedTime = 0
 }: AnalysisResultsProps) {
   const result = analysis.result
-  const feedback = parseAIFeedback(analysis)
+  const structureFeedback = getStructureFeedback(analysis)
+  const appealFeedback = getAppealFeedback(analysis)
 
   if (!result) {
     return (
@@ -51,33 +117,23 @@ export default function AnalysisResults({
     )
   }
 
-  if (!feedback) {
-    return (
-      <Card className={`border-2 border-yellow-300 ${className}`}>
-        <CardHeader className="bg-yellow-50">
-          <h2 className="text-xl font-bold text-neutral-900">AI分析結果 / Analysis Results (Basic View)</h2>
-        </CardHeader>
-        <CardContent className="p-6">
-          <div className="text-center">
-            <div className="text-4xl font-bold text-primary-600 mb-2">
-              {result.overall_score}/100
-            </div>
-            <div className="text-sm text-neutral-600 mb-4">全体スコア / Overall Score</div>
-            {result.executive_summary && (
-              <div className="mt-4">
-                <h3 className="font-semibold text-neutral-900 mb-2">要約 / Summary</h3>
-                <p className="text-neutral-700">{result.executive_summary}</p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
+  const detailedScores = result.detailed_scores
+  const structureScores = detailedScores?.structure_analysis?.scores
+  const appealScores = detailedScores?.appeal_analysis?.scores
+  const metadata = detailedScores?.structure_analysis?.metadata
+  const marketTier = detailedScores?.market_tier || 'unknown'
+
+  // Calculate averages
+  const structureAvg = structureScores
+    ? (structureScores.format + structureScores.organization + structureScores.tone + structureScores.completeness) / 4
+    : 0
+  const appealAvg = appealScores
+    ? (appealScores.achievement_relevance + appealScores.skills_alignment + appealScores.experience_fit + appealScores.competitive_positioning) / 4
+    : 0
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Overall Summary */}
+      {/* Card 1: Summary */}
       <Card className="border-2 border-green-500">
         <CardHeader className="bg-green-50">
           <h2 className="text-xl font-bold text-neutral-900 flex items-center">
@@ -87,68 +143,23 @@ export default function AnalysisResults({
         </CardHeader>
         <CardContent className="p-6 space-y-6">
           {/* Main Scores Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-primary-600">
-                {result.overall_score}/100
-              </div>
-              <div className="text-sm text-neutral-600">全体スコア / Overall Score</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center p-4 bg-primary-50 rounded-lg">
+              <div className="text-3xl font-bold text-primary-600">{formatScore(result.overall_score)}</div>
+              <div className="text-xs text-gray-600 mt-1">総合 / Overall</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-semibold text-blue-600">
-                {result.ats_score}/100
-              </div>
-              <div className="text-sm text-neutral-600">ATS互換性 / ATS Compatibility</div>
+            <div className="text-center p-4 bg-blue-50 rounded-lg">
+              <div className="text-3xl font-bold text-blue-600">{formatScore(structureAvg)}</div>
+              <div className="text-xs text-gray-600 mt-1">構造 / Structure</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-semibold text-purple-600">
-                {result.content_score}/100
-              </div>
-              <div className="text-sm text-neutral-600">記載内容の品質 / Content Quality</div>
+            <div className="text-center p-4 bg-purple-50 rounded-lg">
+              <div className="text-3xl font-bold text-purple-600">{formatScore(appealAvg)}</div>
+              <div className="text-xs text-gray-600 mt-1">魅力 / Appeal</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-semibold text-orange-600">
-                {result.formatting_score}/100
-              </div>
-              <div className="text-sm text-neutral-600">フォーマット / Formatting</div>
+            <div className="text-center p-4 bg-amber-50 rounded-lg">
+              <div className="text-lg font-bold text-amber-700 uppercase">{formatMarketTier(marketTier)}</div>
+              <div className="text-xs text-gray-600 mt-1">ティア / Tier</div>
             </div>
-          </div>
-
-          {/* Industry, Market Tier, and Processing Time */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-gray-200">
-            <div className="text-center">
-              <div className="text-lg font-semibold text-neutral-900">
-                {industryOptions.find(i => i.value === result.industry)?.label || result.industry}
-              </div>
-              <div className="text-sm text-neutral-600">対象業界 / Target Industry</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-semibold text-neutral-900">
-                {formatMarketTier(feedback.marketTier)}
-              </div>
-              <div className="text-sm text-neutral-600">マーケットにおける位置づけ / Market Tier</div>
-            </div>
-            {elapsedTime > 0 && (
-              <div className="text-center">
-                <div className="text-lg font-semibold text-green-600 flex items-center justify-center">
-                  <svg
-                    className="w-5 h-5 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  {formatElapsedTime(elapsedTime)}
-                </div>
-                <div className="text-sm text-neutral-600">処理時間 / Processing Time</div>
-              </div>
-            )}
           </div>
 
           {/* Executive Summary */}
@@ -158,160 +169,219 @@ export default function AnalysisResults({
                 <span className="text-lg mr-2">📋</span>
                 要約 / Executive Summary
               </h3>
-              <p className="text-neutral-700 leading-relaxed">{result.executive_summary}</p>
+              <p className="text-neutral-700 leading-relaxed bg-gray-50 p-4 rounded-lg">{result.executive_summary}</p>
             </div>
           )}
-        </CardContent>
-      </Card>
 
-      {/* スコア詳細 / Detailed Score Breakdown */}
-      <DetailedScores
-        structureScores={feedback.structureScores}
-        appealScores={feedback.appealScores}
-      />
-
-      {/* フィードバックセクション / Feedback Sections Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Issues Found */}
-        <FeedbackSection
-          title="問題点 / Issues Found"
-          items={feedback.issues}
-          type="issues"
-          icon="⚠️"
-        />
-
-        {/* Recommendations */}
-        <FeedbackSection
-          title="推奨事項 / Recommendations"
-          items={feedback.recommendations}
-          type="recommendations"
-          icon="💡"
-        />
-
-        {/* 不足しているセクション / Missing Sections */}
-        <FeedbackSection
-          title="不足しているセクション / Missing Sections"
-          items={feedback.missingSection}
-          type="missing"
-          icon="❌"
-        />
-
-        {/* 強み / Strengths */}
-        <FeedbackSection
-          title="強み / Strengths"
-          items={feedback.strengths}
-          type="strengths"
-          icon="✅"
-        />
-      </div>
-
-      {/* スキル分析セクション / Skills Analysis Section */}
-      <Card>
-        <CardHeader>
-          <h3 className="text-xl font-semibold text-neutral-900 flex items-center">
-            <span className="text-2xl mr-2">🎯</span>
-            スキル & 業界分析 / Skills & Industry Analysis
-          </h3>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* 関連する成果 / Relevant Achievements */}
-            <FeedbackSection
-              title="関連する成果 / Relevant Achievements"
-              items={feedback.relevantAchievements}
-              type="achievements"
-              icon="🏆"
-              className="border-0 shadow-none"
-            />
-
-            {/* 不足しているスキル / Missing Skills */}
-            <FeedbackSection
-              title="不足しているスキル / Missing Skills"
-              items={feedback.missingSkills}
-              type="skills"
-              icon="🎓"
-              className="border-0 shadow-none"
-            />
-
-            {/* 競合優位性 / Competitive Advantages */}
-            <FeedbackSection
-              title="競合優位性 / Competitive Advantages"
-              items={feedback.competitiveAdvantages}
-              type="advantages"
-              icon="⭐"
-              className="border-0 shadow-none"
-            />
-
-            {/* 改善点 / Improvement Areas */}
-            <FeedbackSection
-              title="改善点 / Priority Improvements"
-              items={feedback.improvementAreas}
-              type="improvements"
-              icon="🔧"
-              className="border-0 shadow-none"
-            />
-          </div>
-
-          {/* 転職先でも発揮できる経験値 / Transferable Experience */}
-          {feedback.transferableExperience.length > 0 && (
-            <div className="pt-4 border-t border-gray-200">
-              <FeedbackSection
-                title="転職先でも発揮できる経験値 / Transferable Experience"
-                items={feedback.transferableExperience}
-                type="advantages"
-                icon="🔄"
-                className="border-0 shadow-none"
-              />
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* レジュメメタデータ / Resume Metadata */}
-      <Card>
-        <CardHeader>
-          <h3 className="text-lg font-semibold text-neutral-900 flex items-center">
-            <span className="text-xl mr-2">📄</span>
-            Resume Statistics
-          </h3>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Metadata */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200 text-sm">
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-600">{feedback.metadata.total_sections}</div>
-              <div className="text-sm text-gray-500">セクション数 / Total Sections</div>
+              <div className="font-semibold text-gray-900">
+                {industryOptions.find(i => i.value === result.industry)?.label || result.industry}
+              </div>
+              <div className="text-xs text-gray-500">業界 / Industry</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-600">{feedback.metadata.word_count}</div>
-              <div className="text-sm text-gray-500">単語数 / Word Count</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-600">{feedback.metadata.reading_time}min</div>
-              <div className="text-sm text-gray-500">読み時間 / Reading Time</div>
-            </div>
+            {metadata && (
+              <>
+                <div className="text-center">
+                  <div className="font-semibold text-gray-900">{metadata.total_sections}</div>
+                  <div className="text-xs text-gray-500">セクション / Sections</div>
+                </div>
+                <div className="text-center">
+                  <div className="font-semibold text-gray-900">{metadata.word_count}</div>
+                  <div className="text-xs text-gray-500">単語 / Words</div>
+                </div>
+                <div className="text-center">
+                  <div className="font-semibold text-gray-900">{metadata.reading_time}min</div>
+                  <div className="text-xs text-gray-500">読了時間 / Reading</div>
+                </div>
+              </>
+            )}
+            {elapsedTime > 0 && (
+              <div className="text-center col-span-2 md:col-span-4">
+                <div className="font-semibold text-green-600">{formatElapsedTime(elapsedTime)}</div>
+                <div className="text-xs text-gray-500">処理時間 / Processing Time</div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* アクションボタン / Action Buttons */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <button
-              onClick={onAnalyzeAgain}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors"
-            >
-              Analyze Different Industry / 異なる業界で分析
-            </button>
-            <button
-              onClick={onUploadNew}
-              className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-md font-medium transition-colors"
-            >
-              Upload New Resume / 新しいレジュメをアップロード
-            </button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Card 2: Structure Analysis */}
+      {structureFeedback && structureScores && (
+        <Card className="border-2 border-blue-300">
+          <CardHeader className="bg-blue-50">
+            <h2 className="text-xl font-bold text-neutral-900 flex items-center">
+              <span className="text-2xl mr-2">🏗️</span>
+              レジュメ構造分析 / Resume Structure Analysis
+            </h2>
+          </CardHeader>
+          <CardContent className="p-6 space-y-6">
+            {/* 4 Structure Scores */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">📊 4つのスコア / Scores</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <ScoreBar label="フォーマット / Format" score={structureScores.format} />
+                <ScoreBar label="整理 / Organization" score={structureScores.organization} />
+                <ScoreBar label="トーン / Tone" score={structureScores.tone} />
+                <ScoreBar label="完全性 / Completeness" score={structureScores.completeness} />
+              </div>
+            </div>
+
+            {/* Strengths */}
+            {structureFeedback.strengths && structureFeedback.strengths.length > 0 && (
+              <div className="pt-4 border-t border-gray-200">
+                <h3 className="text-sm font-semibold text-green-700 mb-3 flex items-center">
+                  <span className="mr-2">✅</span>
+                  強み / Strengths ({structureFeedback.strengths.length})
+                </h3>
+                <ul className="space-y-2">
+                  {structureFeedback.strengths.map((item, idx) => (
+                    <li key={idx} className="flex items-start space-x-2 text-sm">
+                      <span className="text-green-500 mt-1">•</span>
+                      <span className="text-gray-700">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Improvement Areas */}
+            {structureFeedback.improvement_areas && structureFeedback.improvement_areas.length > 0 && (
+              <div className="pt-4 border-t border-gray-200">
+                <h3 className="text-sm font-semibold text-orange-700 mb-3 flex items-center">
+                  <span className="mr-2">⚠️</span>
+                  改善点 / Improvement Areas ({structureFeedback.improvement_areas.length})
+                </h3>
+                <ul className="space-y-2">
+                  {structureFeedback.improvement_areas.map((item, idx) => (
+                    <li key={idx} className="flex items-start space-x-2 text-sm">
+                      <span className="text-orange-500 mt-1">•</span>
+                      <span className="text-gray-700">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Specific Feedback */}
+            {structureFeedback.specific_feedback && structureFeedback.specific_feedback.length > 0 && (
+              <div className="pt-4 border-t border-gray-200">
+                <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center">
+                  <span className="mr-2">📝</span>
+                  具体的なフィードバック / Specific Feedback ({structureFeedback.specific_feedback.length})
+                </h3>
+                <div className="space-y-3">
+                  {structureFeedback.specific_feedback.map((item, idx) => (
+                    <FeedbackItemCard key={idx} item={item} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Card 3: Appeal Analysis */}
+      {appealFeedback && appealScores && (
+        <Card className="border-2 border-purple-300">
+          <CardHeader className="bg-purple-50">
+            <h2 className="text-xl font-bold text-neutral-900 flex items-center">
+              <span className="text-2xl mr-2">🎯</span>
+              業界魅力分析 / Industry Appeal Analysis
+            </h2>
+          </CardHeader>
+          <CardContent className="p-6 space-y-6">
+            {/* 4 Appeal Scores */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">📊 4つのスコア / Scores</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <ScoreBar label="成果関連性 / Achievement Relevance" score={appealScores.achievement_relevance} />
+                <ScoreBar label="スキル整合性 / Skills Alignment" score={appealScores.skills_alignment} />
+                <ScoreBar label="経験適合性 / Experience Fit" score={appealScores.experience_fit} />
+                <ScoreBar label="競合優位性 / Competitive Positioning" score={appealScores.competitive_positioning} />
+              </div>
+            </div>
+
+            {/* Strengths */}
+            {appealFeedback.strengths && appealFeedback.strengths.length > 0 && (
+              <div className="pt-4 border-t border-gray-200">
+                <h3 className="text-sm font-semibold text-green-700 mb-3 flex items-center">
+                  <span className="mr-2">✅</span>
+                  強み / Strengths ({appealFeedback.strengths.length})
+                </h3>
+                <ul className="space-y-2">
+                  {appealFeedback.strengths.map((item, idx) => (
+                    <li key={idx} className="flex items-start space-x-2 text-sm">
+                      <span className="text-green-500 mt-1">•</span>
+                      <span className="text-gray-700">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Improvement Areas */}
+            {appealFeedback.improvement_areas && appealFeedback.improvement_areas.length > 0 && (
+              <div className="pt-4 border-t border-gray-200">
+                <h3 className="text-sm font-semibold text-orange-700 mb-3 flex items-center">
+                  <span className="mr-2">⚠️</span>
+                  改善点 / Improvement Areas ({appealFeedback.improvement_areas.length})
+                </h3>
+                <ul className="space-y-2">
+                  {appealFeedback.improvement_areas.map((item, idx) => (
+                    <li key={idx} className="flex items-start space-x-2 text-sm">
+                      <span className="text-orange-500 mt-1">•</span>
+                      <span className="text-gray-700">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Specific Feedback */}
+            {appealFeedback.specific_feedback && appealFeedback.specific_feedback.length > 0 && (
+              <div className="pt-4 border-t border-gray-200">
+                <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center">
+                  <span className="mr-2">📝</span>
+                  具体的なフィードバック / Specific Feedback ({appealFeedback.specific_feedback.length})
+                </h3>
+                <div className="space-y-3">
+                  {appealFeedback.specific_feedback.map((item, idx) => (
+                    <FeedbackItemCard key={idx} item={item} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Action Buttons */}
+      {(onAnalyzeAgain || onUploadNew) && (
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              {onAnalyzeAgain && (
+                <button
+                  onClick={onAnalyzeAgain}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors"
+                >
+                  異なる業界で分析 / Analyze Different Industry
+                </button>
+              )}
+              {onUploadNew && (
+                <button
+                  onClick={onUploadNew}
+                  className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-md font-medium transition-colors"
+                >
+                  新しいレジュメをアップロード / Upload New Resume
+                </button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
