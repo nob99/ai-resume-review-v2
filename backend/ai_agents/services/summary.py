@@ -1,6 +1,10 @@
 """Summary generation service for resume analysis."""
 
+import yaml
+from pathlib import Path
 from typing import Dict, Any, List
+
+from ai_agents.settings import get_settings
 
 
 class SummaryGenerator:
@@ -15,6 +19,31 @@ class SummaryGenerator:
         """
         self.thresholds = thresholds
         self.categories = categories
+
+        # Load language-aware summary templates
+        settings = get_settings()
+        self.templates = self._load_summary_templates(settings.prompt_language)
+
+    def _load_summary_templates(self, language: str) -> Dict[str, str]:
+        """Load summary templates from YAML file based on language.
+
+        Args:
+            language: Language code (e.g., "en", "ja")
+
+        Returns:
+            Dictionary of template strings
+        """
+        template_name = f"summary_templates_v1_{language}.yaml"
+        template_path = (
+            Path(__file__).parent.parent
+            / "prompts"
+            / template_name
+        )
+
+        with open(template_path, "r", encoding="utf-8") as f:
+            template_data = yaml.safe_load(f)
+
+        return template_data.get("templates", {})
 
     def generate_summary(
         self,
@@ -47,17 +76,25 @@ class SummaryGenerator:
         )
         improvements = appeal_feedback.get("improvement_areas", [])[:2]
 
-        # Build summary
+        # Build summary using language-aware templates
         summary_parts = [
-            f"This resume scores {overall_score}/100, indicating a {category} candidate for {industry_name} roles.",
-            f"The candidate appears to be at the {market_tier} level."
+            self.templates["main_score"].format(
+                overall_score=overall_score,
+                category=category,
+                industry_name=industry_name
+            ),
+            self.templates["market_tier"].format(market_tier=market_tier)
         ]
 
         if strengths:
-            summary_parts.append(f"Key strengths include: {', '.join(strengths)}.")
+            summary_parts.append(
+                self.templates["key_strengths"].format(strengths=", ".join(strengths))
+            )
 
         if improvements:
-            summary_parts.append(f"Priority improvements: {', '.join(improvements)}.")
+            summary_parts.append(
+                self.templates["priority_improvements"].format(improvements=", ".join(improvements))
+            )
 
         return " ".join(summary_parts)
 
