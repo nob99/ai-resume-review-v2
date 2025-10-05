@@ -7,7 +7,6 @@ import { Card, CardHeader, CardContent, Button, CandidateSelector } from '@/comp
 import FileUpload from '@/features/upload/components/FileUpload'
 import FileList from '@/features/upload/components/FileList'
 import IndustrySelector from '@/features/upload/components/IndustrySelector'
-import UploadStats from '@/features/upload/components/UploadStats'
 import AnalysisResults from '@/features/upload/components/AnalysisResults'
 import useUploadFlow from '@/features/upload/hooks/useUploadFlow'
 import { INDUSTRY_OPTIONS } from '@/features/upload/types'
@@ -192,14 +191,6 @@ const UploadPage: React.FC = () => {
                   elapsedTime={state.elapsedTime}
                 />
               )}
-
-            {/* Summary Stats */}
-            <UploadStats
-              files={state.files}
-              uploadingFiles={uploadingFiles}
-              successFiles={successFiles}
-              errorFiles={errorFiles}
-            />
           </div>
         </Container>
       </main>

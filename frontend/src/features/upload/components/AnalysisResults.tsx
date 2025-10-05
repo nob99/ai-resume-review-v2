@@ -272,9 +272,19 @@ export default function AnalysisResults({
                   具体的なフィードバック / Specific Feedback ({structureFeedback.specific_feedback.length})
                 </h3>
                 <div className="space-y-3">
-                  {structureFeedback.specific_feedback.map((item, idx) => (
-                    <FeedbackItemCard key={idx} item={item} />
-                  ))}
+                  {(() => {
+                    // Structure Analysis category order: grammar → structure
+                    const categoryOrder: Record<string, number> = {
+                      grammar: 1,
+                      structure: 2
+                    }
+                    const sortedFeedback = [...structureFeedback.specific_feedback].sort(
+                      (a, b) => (categoryOrder[a.category] || 99) - (categoryOrder[b.category] || 99)
+                    )
+                    return sortedFeedback.map((item, idx) => (
+                      <FeedbackItemCard key={idx} item={item} />
+                    ))
+                  })()}
                 </div>
               </div>
             )}
@@ -347,9 +357,20 @@ export default function AnalysisResults({
                   具体的なフィードバック / Specific Feedback ({appealFeedback.specific_feedback.length})
                 </h3>
                 <div className="space-y-3">
-                  {appealFeedback.specific_feedback.map((item, idx) => (
-                    <FeedbackItemCard key={idx} item={item} />
-                  ))}
+                  {(() => {
+                    // Appeal Analysis category order: scr_framework → quantitative_impact → appeal_point
+                    const categoryOrder: Record<string, number> = {
+                      scr_framework: 1,
+                      quantitative_impact: 2,
+                      appeal_point: 3
+                    }
+                    const sortedFeedback = [...appealFeedback.specific_feedback].sort(
+                      (a, b) => (categoryOrder[a.category] || 99) - (categoryOrder[b.category] || 99)
+                    )
+                    return sortedFeedback.map((item, idx) => (
+                      <FeedbackItemCard key={idx} item={item} />
+                    ))
+                  })()}
                 </div>
               </div>
             )}
