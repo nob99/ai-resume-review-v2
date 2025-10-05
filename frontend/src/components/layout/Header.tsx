@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToastActions } from '@/components/ui/Toast'
 import { cn } from '@/lib/utils'
@@ -21,7 +22,7 @@ const UserMenu: React.FC<{ isOpen: boolean; onToggle: () => void }> = ({ isOpen,
     try {
       await logout()
       showSuccess('Successfully logged out')
-    } catch (error) {
+    } catch {
       showError('Failed to log out')
     }
     onToggle() // Close menu
@@ -256,16 +257,17 @@ const Header: React.FC<HeaderProps> = ({ className, showUserMenu = true }) => {
         <div className="flex items-center justify-between h-16">
           {/* Logo and brand */}
           <div className="flex items-center">
-            <a href="/" className="flex items-center">
+            <Link href="/" className="flex items-center">
+              {/* Brand text */}
               <div className="flex flex-col">
-                <span className="font-bold text-xl text-neutral-900">
+                <span className="font-bold text-xl text-neutral-900 leading-tight">
                   Yatagarasu
                 </span>
                 <span className="text-[12px] text-neutral-500">
                   Resume Review
                 </span>
               </div>
-            </a>
+            </Link>
           </div>
 
           {/* Navigation and user menu */}
