@@ -185,10 +185,10 @@ const ProfilePage: React.FC = () => {
             {/* Page Header */}
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-neutral-900 mb-2">
-                Profile Settings
+                プロファイル設定 / Profile Settings
               </h1>
               <p className="text-neutral-600">
-                Manage your personal information and security settings
+                あなたのプロファイル設定を変更できます / Manage your personal information and security settings
               </p>
             </div>
 
@@ -197,7 +197,7 @@ const ProfilePage: React.FC = () => {
               <Card>
                 <CardHeader>
                   <h2 className="text-xl font-semibold text-neutral-900">
-                    Personal Information
+                    プロファイル設定 / Personal Information
                   </h2>
                 </CardHeader>
                 <CardContent className="pt-6">
@@ -205,7 +205,7 @@ const ProfilePage: React.FC = () => {
                     {/* First Name */}
                     <div>
                       <label className="block text-sm font-medium text-neutral-700 mb-1">
-                        First Name <span className="text-red-500">*</span>
+                        ファーストネーム / First Name <span className="text-red-500">*</span>
                       </label>
                       <Input
                         type="text"
@@ -220,7 +220,7 @@ const ProfilePage: React.FC = () => {
                     {/* Last Name */}
                     <div>
                       <label className="block text-sm font-medium text-neutral-700 mb-1">
-                        Last Name <span className="text-red-500">*</span>
+                        ラストネーム / Last Name <span className="text-red-500">*</span>
                       </label>
                       <Input
                         type="text"
@@ -235,7 +235,7 @@ const ProfilePage: React.FC = () => {
                     {/* Email (Read-only) */}
                     <div>
                       <label className="block text-sm font-medium text-neutral-700 mb-1">
-                        Email
+                        メールアドレス / Email
                       </label>
                       <p className="text-base text-neutral-600">
                         {user.email}
@@ -245,7 +245,7 @@ const ProfilePage: React.FC = () => {
                     {/* Role (Read-only with badge) */}
                     <div>
                       <label className="block text-sm font-medium text-neutral-700 mb-1">
-                        Role
+                        ロール / Role
                       </label>
                       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRoleBadgeColor(user.role)}`}>
                         {formatRole(user.role)}
@@ -260,7 +260,7 @@ const ProfilePage: React.FC = () => {
                         onClick={handleCancel}
                         disabled={isLoading || !hasChanges}
                       >
-                        Cancel
+                        キャンセル / Cancel
                       </Button>
                       <Button
                         type="submit"
@@ -270,10 +270,10 @@ const ProfilePage: React.FC = () => {
                         {isLoading ? (
                           <>
                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                            Saving...
+                            保存中... / Saving...
                           </>
                         ) : (
-                          'Save Changes'
+                          '保存 / Save Changes'
                         )}
                       </Button>
                     </div>
@@ -285,7 +285,7 @@ const ProfilePage: React.FC = () => {
               <Card>
                 <CardHeader>
                   <h2 className="text-xl font-semibold text-neutral-900">
-                    Change Password
+                    パスワード変更 / Change Password
                   </h2>
                 </CardHeader>
                 <CardContent className="pt-6">
@@ -293,7 +293,7 @@ const ProfilePage: React.FC = () => {
                     {/* Current Password */}
                     <div>
                       <label className="block text-sm font-medium text-neutral-700 mb-1">
-                        Current Password <span className="text-red-500">*</span>
+                        現在のパスワード / Current Password <span className="text-red-500">*</span>
                       </label>
                       <Input
                         type="password"
@@ -308,7 +308,7 @@ const ProfilePage: React.FC = () => {
                     {/* New Password */}
                     <div>
                       <label className="block text-sm font-medium text-neutral-700 mb-1">
-                        New Password <span className="text-red-500">*</span>
+                        新しいパスワード / New Password <span className="text-red-500">*</span>
                       </label>
                       <Input
                         type="password"
@@ -323,7 +323,7 @@ const ProfilePage: React.FC = () => {
                     {/* Confirm New Password */}
                     <div>
                       <label className="block text-sm font-medium text-neutral-700 mb-1">
-                        Confirm New Password <span className="text-red-500">*</span>
+                        新しいパスワード再入力 / Confirm New Password <span className="text-red-500">*</span>
                       </label>
                       <Input
                         type="password"
@@ -343,7 +343,7 @@ const ProfilePage: React.FC = () => {
                         onClick={handlePasswordCancel}
                         disabled={isPasswordLoading}
                       >
-                        Cancel
+                         キャンセル / Cancel
                       </Button>
                       <Button
                         type="submit"
@@ -353,10 +353,10 @@ const ProfilePage: React.FC = () => {
                         {isPasswordLoading ? (
                           <>
                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                            Changing...
+                            変更中... / Changing...
                           </>
                         ) : (
-                          'Change Password'
+                          'パスワード変更 / Change Password'
                         )}
                       </Button>
                     </div>

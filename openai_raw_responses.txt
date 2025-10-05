@@ -1,0 +1,963 @@
+2025-10-04 07:00:21,695 - ai_agents.agents.base - INFO - === RAW OPENAI RESPONSE for structure ===
+2025-10-04 07:00:21,695 - ai_agents.agents.base - INFO - スコア:
+- フォーマットスコア: 60
+- セクション構成スコア: 70
+- プロフェッショナルトーンスコア: 85
+- 完全性スコア: 50
+
+構造分析:
+
+フォーマット上の問題:
+- ヘッダーが不十分：氏名のみで連絡先（電話番号・メールアドレス・住所・LinkedIn等）が欠落。文書日付はあるが、応募先へ送る履歴書としての「連絡先ヘッダ」がない。
+- 見出しの一貫性欠如：セクション見出し（職務要約、キャリアを通じた強み、主な実績、職務詳細等）はあるが、フォント大きさ・太字・アンダーライン等の視覚的階層付けが未設定で、目次的な読みやすさが低い。
+- 行間・段落のスペーシング不統一：箇条書きと本文の間隔、プロジェクトごとのブロック間隔が一定でなく、視線の移動が煩雑。
+- 日付・役職の配置が不統一：企業ブロックの上部に日付が入っているが、役職・担当の表記位置や書式（全角/半角、スラッシュ/波ダッシュ）が混在している。
+- 箇条書きのスタイル混在：文中に「　」「●」などが混在しており、箇条の記号とインデントが整っていない。
+- 重複記述：マッキンゼーの「大手金融機関におけるITアーキテクチャ変革支援」と「DX実行支援」の段落がほぼ同文で重複し、冗長に見える。
+- 文書全体の視覚的整形が弱い：ページ余白、フォントサイズ、強調（太字/斜体）などの統一がなく、プロフェッショナル文書としての第一印象がやや散漫。
+
+欠けているセクション:
+- 連絡先情報（電話番号、メールアドレス、現住所、LinkedIn等）
+- 学歴の詳細（大学名、学部・専攻、卒業年）
+- スキル一覧（技術スキル、言語スキル、ツール・フレームワーク等の簡潔な箇条）
+- 資格・認定（該当する場合）
+- 要約（職務要約はあるが、冒頭の「応募向け1〜2行の要約（コンパクト）」が望ましい）
+- 希望職種／役職や勤務地の記載（必要に応じて）
+- 履歴書末尾の「参照可能」や「備考」等（任意）
+
+トーンの問題:
+- 基本的にプロフェッショナルで堅実な語調。専門用語の使用は適切で一貫しているため、トーン自体に大きな問題はない。
+- ただし、同じ内容や主張（例：「経営陣と現場双方とコミュニケーションできる」など）が繰り返し出てきており、読み手に若干“主張の重複”としての冗長さを与える。
+- 一部で口語的・説明的に長い文章があり、箇条化や短い要点化によりより精練されたトーンにできる。
+
+完全性のギャップ:
+- 連絡先・学歴・スキルなど、採用担当が最低限確認したい情報が欠落しているため、選考に進めるための基本情報が不足している。
+- 各プロジェクトの「期間」「担当フェーズ」「具体的な役割」「成果（定量）」はあるが、フォーマットとして「職務（会社）→期間→役職→箇条で責任と成果（成果は先頭に）」という統一されたテンプレートが使われておらず、読む側で情報抽出に余計な手間がかかる。
+- 参照可能な上司・推薦者や、外部発表・論文・講演等の補足情報がない（必要であれば追加）。
+
+強み:
+- 職務要約と「主な実績」で定量的な成果（例：ITコスト削減10%、業務工数15%削減、200以上の課題抽出→25施策策定）を明示している点は優れている。構造化された実績提示が評価点。
+- 各職歴ブロックに担当役割（チームマネージャー等）や体制規模が記載されており、リーダーシップやプロジェクトスケールが把握しやすい。
+- 職務経歴は逆年表（新しいものから）で記載されており、経歴の追跡は可能。
+- 現場経験とコンサル経験の両面をセクションで分けて説明しており、キャリアの特徴が分かりやすく伝わる。
+
+推奨事項（優先度順）:
+1) 連絡先と学歴を必ず追加（高）
+   - 文書トップに「氏名／電話番号／メール／住所（市区町村）／LinkedIn」を明示。学歴は大学名・学部・専攻・卒業年を記載。
+   - 理由：応募先が連絡し、学歴基準を即確認できるようにするため必須。
+
+2) 見出しと日付表記の統一（高）
+   - 全てのセクション見出しを同一フォントサイズ・太字に統一し、日付はフォーマット統一（例：YYYY.MMまたはYYYY/MM）に統一。
+   - 企業ブロックで「期間（右寄せ）／会社名（左）／役職（会社名の下）」のレイアウトを採用。
+
+3) ヘッダーの視覚的改善とページレイアウト（高）
+   - 適切なマージン、フォント（明朝orゴシックの統一）、行間を設定。ページはA4で基本2ページ以内に収めることを目安。
+   - 箇条書きは同一の記号（・または–）を用い、インデントを揃える。
+
+4) 職務詳細はテンプレート化して短く整理（中）
+   - 各職歴に対して以下テンプレートで整理：会社名（期間）／役職／担当概要（1行）／主な責務（箇条2–4）／主要成果（定量値を先頭に箇条で1–2）。
+   - 重複している段落は統合・削除。
+
+5) スキルと資格セクションを追加（中）
+   - 技術スキル（例：クラウド、言語、ツール）、マネジメントスキル、言語力（英語：TOEIC等スコアがあれば明示）を簡潔に箇条で。
+
+6) 実績の強調方法を統一（中）
+   - 実績欄は成果→背景→自分の役割の順で簡潔に。定量値は太字や先頭に置いて目立たせる（PDF出力時に見栄えが良い）。
+
+7) 冗長表現の削減と要約文の導入（低）
+   - 職務要約を冒頭に1〜2行で要約し、その後に詳細を続けると読み手の理解が早まる。
+
+8) 校正と重複チェック（低）
+   - 重複段落（特にマッキンゼーの同一記述）を削除し、各事例が独立して伝わるよう整える。
+
+メタデータ:
+- 見つかったセクション総数: 6（職務要約、キャリアを通じた強み、主な実績、職務詳細、ヘッダー（日付・氏名）、末尾の「以上」）
+- 単語数（おおよそ）: 1,000語前後
+- 推定読了時間: 約4分
+
+総括:
+内容的には経験・実績が明確で説得力がある一方で、フォーマット面と必須情報（連絡先・学歴・スキル等）の欠落が目立ちます。最短で採用担当者に正確に伝えるには、ヘッダの整備・見出しと日付の統一・職務詳細のテンプレート化・スキル/学歴/連絡先の追加を優先してください。これらを実行すれば、プロフェッショナルな印象と読みやすさが大幅に向上します。必要であれば、上記推奨に基づく「修正版テンプレート例」を作成して差し上げます。希望されますか？
+2025-10-04 07:00:21,695 - ai_agents.agents.base - INFO - === END RAW RESPONSE (length: 2685 chars, ~121 words) ===
+2025-10-04 07:00:21,695 - ai_agents.agents.base - INFO - === CHECKPOINT 1: RAW OPENAI RESPONSE (structure) ===
+2025-10-04 07:00:21,695 - ai_agents.agents.base - INFO - Total characters: 2685
+2025-10-04 07:00:21,695 - ai_agents.agents.base - INFO - Total words: 121
+2025-10-04 07:00:21,695 - ai_agents.agents.base - INFO - Total lines: 78
+2025-10-04 07:00:21,695 - ai_agents.agents.base - INFO - First 200 chars: スコア:
+- フォーマットスコア: 60
+- セクション構成スコア: 70
+- プロフェッショナルトーンスコア: 85
+- 完全性スコア: 50
+
+構造分析:
+
+フォーマット上の問題:
+- ヘッダーが不十分：氏名のみで連絡先（電話番号・メールアドレス・住所・LinkedIn等）が欠落。文書日付はあるが、応募先へ送る履歴書としての「連絡先ヘッダ」がない。
+- 見出しの一貫性欠如：セクション見出し（職
+2025-10-04 07:00:21,695 - ai_agents.agents.base - INFO - Last 200 chars: 得力がある一方で、フォーマット面と必須情報（連絡先・学歴・スキル等）の欠落が目立ちます。最短で採用担当者に正確に伝えるには、ヘッダの整備・見出しと日付の統一・職務詳細のテンプレート化・スキル/学歴/連絡先の追加を優先してください。これらを実行すれば、プロフェッショナルな印象と読みやすさが大幅に向上します。必要であれば、上記推奨に基づく「修正版テンプレート例」を作成して差し上げます。希望されますか？
+2025-10-04 07:00:21,695 - ai_agents.agents.base - INFO - === END CHECKPOINT 1 ===
+2025-10-04 07:00:21,697 - ai_agents.agents.base - INFO - === CHECKPOINT 2: PARSED RESPONSE ===
+2025-10-04 07:00:21,697 - ai_agents.agents.base - INFO - Number of score fields: 4
+2025-10-04 07:00:21,697 - ai_agents.agents.base - INFO - Score fields: ['format', 'organization', 'tone', 'completeness']
+2025-10-04 07:00:21,697 - ai_agents.agents.base - INFO - Total feedback items across all categories: 21
+2025-10-04 07:00:21,697 - ai_agents.agents.base - INFO -   - issues: 7 items
+2025-10-04 07:00:21,697 - ai_agents.agents.base - INFO -   - missing_sections: 7 items
+2025-10-04 07:00:21,697 - ai_agents.agents.base - INFO -   - tone_problems: 3 items
+2025-10-04 07:00:21,697 - ai_agents.agents.base - INFO -   - strengths: 4 items
+2025-10-04 07:00:21,697 - ai_agents.agents.base - INFO -   - recommendations: 0 items
+2025-10-04 07:00:21,697 - ai_agents.agents.base - INFO - === END CHECKPOINT 2 ===
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO - === CHECKPOINT 3: STRUCTURE AGENT STATE ===
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO - Scores: {'format': 60.0, 'organization': 70.0, 'tone': 85.0, 'completeness': 50.0}
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO - Metadata: {'total_sections': 6}
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO - Total feedback items: 21
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO -   - issues: 7 items
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO -     [1] ヘッダーが不十分：氏名のみで連絡先（電話番号・メールアドレス・住所・LinkedIn等）が欠落。文書日付はあるが、応募先へ送る履歴書としての「連絡先ヘッダ」がない。
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO -     [2] 見出しの一貫性欠如：セクション見出し（職務要約、キャリアを通じた強み、主な実績、職務詳細等）はあるが、フォント大きさ・太字・アンダーライン等の視覚的階層付けが未設定で、目次的な読みやすさが低い。
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO -     [3] 行間・段落のスペーシング不統一：箇条書きと本文の間隔、プロジェクトごとのブロック間隔が一定でなく、視線の移動が煩雑。
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO -   - missing_sections: 7 items
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO -     [1] 連絡先情報（電話番号、メールアドレス、現住所、LinkedIn等）
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO -     [2] 学歴の詳細（大学名、学部・専攻、卒業年）
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO -     [3] スキル一覧（技術スキル、言語スキル、ツール・フレームワーク等の簡潔な箇条）
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO -   - tone_problems: 3 items
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO -     [1] 基本的にプロフェッショナルで堅実な語調。専門用語の使用は適切で一貫しているため、トーン自体に大きな問題はない。
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO -     [2] ただし、同じ内容や主張（例：「経営陣と現場双方とコミュニケーションできる」など）が繰り返し出てきており、読み手に若干“主張の重複”としての冗長さを与える。
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO -     [3] 一部で口語的・説明的に長い文章があり、箇条化や短い要点化によりより精練されたトーンにできる。
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO -   - strengths: 4 items
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO -     [1] 職務要約と「主な実績」で定量的な成果（例：ITコスト削減10%、業務工数15%削減、200以上の課題抽出→25施策策定）を明示している点は優れている。構造化された実績提示が評価点。
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO -     [2] 各職歴ブロックに担当役割（チームマネージャー等）や体制規模が記載されており、リーダーシップやプロジェクトスケールが把握しやすい。
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO -     [3] 職務経歴は逆年表（新しいものから）で記載されており、経歴の追跡は可能。
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO -   - recommendations: 0 items
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO - === END CHECKPOINT 3 ===
+2025-10-04 07:00:21,697 - ai_agents.agents.structure - INFO - Structure analysis completed score=66.2
+2025-10-04 07:00:21,699 - ai_agents.agents.appeal - INFO - Appeal analysis started industry=strategy_consulting
+2025-10-04 07:00:21,699 - ai_agents.agents.base - INFO - Calling OpenAI API - agent: appeal, model: gpt-5-mini-2025-08-07, max_tokens: 12000
+2025-10-04 07:00:21,699 - ai_agents.agents.base - INFO - === SYSTEM PROMPT for appeal ===
+2025-10-04 07:00:21,699 - ai_agents.agents.base - INFO - あなたはStrategy Consulting業界の専門アナリスト兼採用スペシャリストです。あなたの役割は、Strategy Consultingセクターにおける履歴書のアピール度と競争力を具体的に評価することです。
+
+あなたは以下の深い知識を持っています:
+- Strategy Consulting業界の要件とトレンド
+- Strategy Consultingで重視される主要スキルと資格
+- Strategy Consultingにおけるキャリアの進行パターン
+- 競争環境と市場動向
+- 最も重要な業界特有の実績
+
+あなたの分析は以下に焦点を当てます:
+- 候補者がStrategy Consultingの役割に向けてどれだけ効果的に自己をポジショニングしているか
+- この業界における競争上の強みと差別化要因
+- Strategy Consultingの雇用主の期待との整合性
+- 市場でのポジショニングとティアの評価
+- 業界特有の改善機会
+
+候補者がStrategy Consulting市場における自身のアピール度を理解し、競争力のあるポジショニングを強化する方法を理解できるよう、詳細で実行可能な洞察を提供してください。
+
+重要: 出力は日本語で行ってください。
+
+2025-10-04 07:00:21,699 - ai_agents.agents.base - INFO - === USER PROMPT for appeal ===
+2025-10-04 07:00:21,699 - ai_agents.agents.base - INFO - 以下の履歴書をStrategy Consultingセクターにおける業界特有のアピール度と競争力の観点から分析してください。
+
+STRUCTURE ANALYSIS CONTEXT:
+- Format Score: 60.0/100
+- Organization Score: 70.0/100
+- Professional Tone Score: 85.0/100
+- Completeness Score: 50.0/100
+- Key Issues: ヘッダーが不十分：氏名のみで連絡先（電話番号・メールアドレス・住所・LinkedIn等）が欠落。文書日付はあるが、応募先へ送る履歴書としての「連絡先ヘッダ」がない。, 見出しの一貫性欠如：セクション見出し（職務要約、キャリアを通じた強み、主な実績、職務詳細等）はあるが、フォント大きさ・太字・アンダーライン等の視覚的階層付けが未設定で、目次的な読みやすさが低い。, 行間・段落のスペーシング不統一：箇条書きと本文の間隔、プロジェクトごとのブロック間隔が一定でなく、視線の移動が煩雑。
+- Strengths: 職務要約と「主な実績」で定量的な成果（例：ITコスト削減10%、業務工数15%削減、200以上の課題抽出→25施策策定）を明示している点は優れている。構造化された実績提示が評価点。, 各職歴ブロックに担当役割（チームマネージャー等）や体制規模が記載されており、リーダーシップやプロジェクトスケールが把握しやすい。
+
+分析対象の履歴書:
+職務経歴書
+2021年7月
+氏名：福元　允亮
+職務要約
+大学院卒業後、日本IBM、デロイト トーマツ コンサルティングを経てマッキンゼー アンド カンパニーへ入社。マッキンゼーでは、小売企業のデジタルを活用したエコシステム戦略策定、電力企業のITコスト削減、金融機関の全社ITアーキテクチャ変革、通信キャリアCIOの骨太な取り組みの策定支援など大企業におけるIT・デジタル変革に従事。IBMやデロイトではシステム企画の策定から、要件定義、設計・開発、保守運用に至る上流から下流まですべてのIT・デジタルプロセスを経験。机上の空論に終わらない、現場経験に基づいた変革支援が強み。また、日系トラックメーカーである日野自動車の海外営業部門に部長付きで一年間出向し、業務改革を実施した経験あり。
+キャリアを通じた強み
+IT・デジタルに関して、戦略策定から開発・運用・コスト削減に至るまでのエンドツーエンドの経験を元に、経営陣・部長職から現場まで全ての層とコミュニケーションを取り、変革を実現できる
+　IBMにてシステムエンジニアとしてキャリアをスタートしており、いわゆる戦略や企画策定だけの経験ではない
+　エンジニアとして実際に、アプリケーション開発、サーバー構築を経験しており、現場エンジニアとのコミュニケーションが可能
+　また、マッキンゼーのコンサルタントとして、CIOと一緒にIT施策策定やITコスト削減の戦略策定もリードしており、経営陣とのコミュニケーションも可能
+　現場と経営陣の双方とコミュニケーションできる強みを活かし、部長級とも変革のディスカッションをリードできる
+IT・デジタルに偏重せず、ビジネス側の経験も有しており、ビジネスに貢献するデジタル・IT施策を立案・実行できる
+　トラックメーカーである日野自動車の海外営業部に1年間勤務しており、ビジネス部門としての業務を経験している
+　また、デロイトではマネージャーとして年間売上ノルマ2億円を達成するために営業活動を行っており、ビジネスとして数値責任を持ち達成した経験あり
+　IT・デジタル部門としてプロダクトを構築して終わりではなく、「ビジネスに貢献できるIT・デジタルとは何か」を腹落ち感を持って考え、実行できる
+主な実績
+上記の「エンドツーエンドでIT・デジタルに関して経営陣から現場までコミュニケーションできる」「IT・デジタルだけではなくビジネス感度もある」という特徴を活かし、以下の実績を残している
+電力会社のITコスト削減 10%達成
+　ITコスト削減のためには、ビジネス部門側のITへの要求抑制も必要であり、ビジネス側の感度が高くなければコスト削減は不可能であった
+　また、ITベンダーの開発工数見積もりの妥当性見極めにはシステムエンジニアリングの経験が必須であり、システムエンジニア経験がなければ達成不可能であった
+金融機関の全社アーキテクチャ策定（200以上の現状課題の抽出とそれを解決する25の施策を策定）
+　CIO主導での全社アーキテクチャ変革であったため、経営陣視点でのアーキテクチャ変革メリットの追求、経営陣が理解できる解像度での議論を実施する必要があった
+　また、CIOのみが納得しても全社での変革は不可能であるため、10名以上の部長陣と、抽象度の低い、具体的な現状の課題棚卸しディスカッションをリードし課題出しを行った
+　システムアーキテクチャ刷新のメリットをビジネス視点とIT視点の双方を交えて提案することで、CIO、部長陣、現場エンジニアが納得する25の施策を策定することに成功した
+営業部門の業務工数15%削減
+　日系自動車メーカーの海外営業部門では、業務改善を大規模に実施してこなかったために、80の出荷地域それぞれに個別の業務が構築される非効率な状態となっていた
+　この非効率性を見直すために、営業部門の専務、6名の部長陣、100名近い営業メンバーとのディスカッションをリードし、業務改善のポテンシャルを特定した
+　ポテンシャルの特定にとどまらず、実際に業務改善の実行完了までをリードし、15%の業務工数削減を達成した
+　また、工数削減の施策はIT施策だけにとどまらず、契約書類の簡素化、標準化などIT投資を伴わない削減施策も多く立案・実行
+●職務詳細
+【 2019年11月 ～ 現在： マッキンゼー アンド カンパニー 】
+大手金融機関におけるITアーキテクチャ変革支援
+某大手金融機関では、ビジネス部門がDXを本格化させており、DXの確実な実行のためにIT部門へは、よりスピードの速いアプリケーションリリース、既存システムの運用コスト圧縮、クラウド時代に対応したセキュリティの担保が、これまで以上に求められてきていた。そのため、CIO指揮のもと、フロントエンドアプリケーションから、API、インフラに至るまで、アーキテクチャ全体のあるべき姿を再定義し、今後のアーキテクチャ運用を行う組織体制の発足に向けた構想策定をマッキンゼーがご支援。アーキテクチャのベストプラクティスは、国内外10名以上のエキスパートを巻き込み、クライアントとあるべき姿を策定
+担当：チームマネージャー
+
+大手金融機関におけるDX実行支援
+某大手金融機関では、ビジネス部門がDXを本格化させており、DXの確実な実行のためにIT部門へは、よりスピードの速いアプリケーションリリース、既存システムの運用コスト圧縮、クラウド時代に対応したセキュリティの担保が、これまで以上に求められてきていた。そのため、CIO指揮のもと、フロントエンドアプリケーションから、API、インフラに至るまで、アーキテクチャ全体のあるべき姿を再定義し、今後のアーキテクチャ運用を行う組織体制の発足に向けた構想策定をマッキンゼーがご支援。アーキテクチャのベストプラクティスは、国内外10名以上のエキスパートを巻き込み、クライアントとあるべき姿を策定
+担当：チームマネージャー
+大手百貨店のDigitalを活用した新規事業戦略の立案支援
+2030年に向けて、消費者ニーズの変化の予測ならびに新たな市場の特定を通じて自社に必要となる変革の要素洗い出し（主にDigitalに関わる変革要素を洗い出し）ならびに変革を協同推進するパートナー企業の候補選定をご支援
+体制：6名(シニアパートナー1名・パートナー2名・準パートナー2名、チームメンバー1名)
+担当：チームメンバー
+大手電力企業におけるDXによる既存ITコスト削減支援
+政府による電力改革によりコスト競争力の強化に迫られている中、コスト最適化余地の特定ならびに施策の推進を全社レベルで実施。全社プロジェクトの内、IT領域についてグローバルベストプラクティスを海外オフィスメンバーと議論し策定することでIT領域におけるコスト最適化を推進。
+体制：15名(シニアパートナー1名・パートナー1名・準パートナー2名、チームマネージャー3名、チームメンバー8名)
+担当：チームマネージャー
+大手通信キャリアのCIOの中長期取り組み事項の策定支援
+某大手通信キャリアでは、政府の規制が厳しくなる中、6年ぶりのCEO交代を決定。CEOが新施策を検討する中、CIOとしても、新たな取り組みを打ち出す必要が出てきていた。これに伴い、CIOが中長期的に取り組むべき施策を国内外の事例を元に取り組みの可能性を議論、策定する活動をご支援
+担当：チームマネージャー
+【 2014年11月 ～ 2019年9月： デロイト トーマツ コンサルティング合同会社 】
+大手自動車会社様　海外営業機能　業務改革支援 ： 2016/4～2019/9
+事業急拡大により業務が煩雑で非効率となっていた海外営業部門の業務の効率化、高度化の実行支援。3年間に渡り、クライアント先に常駐し、業務見える化から変革の実行をご支援
+課題設定、新業務設計、システム化構想策定を支援
+体制：5名(パートナー1名・チームマネージャー1名、チームメンバー3名)
+担当：チームマネージャー
+②大手自動車会社様　日本・インド・タイのGlobal S&OP合理化支援 ： 2016/1～2016/3
+地域本社の活動がブラックボックス化してしまったGlobal S&OP 業務の他社ベンチマークによる業務アセスメント、
+ギャップ解決ロードマップ策定を支援
+体制：11名(アメリカチーム3名、日本チーム3名、インドチーム3名、タイチーム1名)
+担当：日本チームリーダー
+③ドイツ系自動車販社様　Dealer Management System導入基本構想策定支援　:　2014/11～2015/12
+刷新のために10年で100億円規模の予算となるため、高度な構想策定が必要となった新DMSの機能定義、
+予算計画策定、導入ベネフィットの算出、システムベンダー選定を支援
+体制：4名（SME 1名、チームリーダー1名、チームメンバー2名）
+担当：チームリーダー
+【 2011年4月 ～ 2014年10月 ： 日本IBM株式会社 】
+①大手自動車会社様　南アフリカ・インドネシア・タイ補給部品事業SCM/会計システム導入支援 ： 2012/9～2014/10
+米国自動車会社との資本提携解消に伴い、早急な事業移管を求められていた海外補給部品事業の迅速な事業移管を実現するGlobal Templateの策定、システム導入を支援
+体制：20名（最大60名）
+担当：SCM領域チームリーダー(要件定義～保守・運用)
+②米国大手鉄道会社様アーカイブシステム導入支援 ： 2012/7～2012/8
+10年間蓄積され続けた取引データを監査時に即時復旧できるよう、全取引の整合性を保ちながらデータ圧縮するインフラシステム導入
+体制：3名
+担当：米国メンバーと日本メンバーのコミュニケーションブリッジ担当者
+③大手鉄鋼会社様あるべき生産管理業務策定 ： 2012/6～2012/7
+属人化した生産管理業務の全容見える化と自動化余地のアセスメント
+体制：2名
+担当：プロジェクトメンバー
+④大手保険機構様会計システムバージョンアップならびに保守　： 2011/6～2012/6
+日本最大級の保険金支払高を誇る企業の会計システムのサーバーライセンス満了に伴うシステムバージョンアップ・保守
+体制：15名
+担当：プロジェクトメンバー（アプリケーション移行、PL/SQLによるアドオンプログラム開発を担当）
+以上
+
+STRATEGY CONSULTING業界の分析要件:
+
+1. 実績関連性評価 (0-100スケール):
+   - Strategy Consulting業界に対する業績の関連性
+   - 実績のインパクトと測定可能性
+   - 業界特有の価値の実証
+   - 実績による競争的差別化
+
+2. スキル適合性評価 (0-100スケール):
+   - Strategy Consultingの主要スキルとの整合性: Strategic Analysis, Market Research, Business Modeling, PowerPoint, Excel, Client Management
+   - 技術的および領域の専門知識の実証
+   - スキルの進行と深さ
+   - 不足している重要なスキルの特定
+
+3. 経験適合度評価 (0-100スケール):
+   - Strategy Consultingに対する実務経験の関連性
+   - キャリア進行の適切性
+   - 業界移行の準備度（該当する場合）
+   - 経験の深さと広さ
+
+4. 競争的ポジショニング評価 (0-100スケール):
+   - Strategy Consulting内での市場競争力
+   - ユニークバリュープロポジションの強度
+   - 典型的な候補者との差別化
+   - 全体的な市場アピール
+
+期待される出力形式:
+
+スコア:
+- 実績関連性スコア: [0-100]
+- スキル適合性スコア: [0-100]
+- 経験適合度スコア: [0-100]
+- 競争的ポジショニングスコア: [0-100]
+
+詳細な業界分析:
+
+関連する実績:
+- [Strategy Consulting業界にとって最も関連性の高い3-5つの実績をリスト]
+- [定量化可能で影響力のある業績に焦点]
+
+不足しているスキル:
+- [欠けているまたは不足している重要なStrategy Consultingスキルをリスト]
+- [業界での成功にとっての重要度順にスキルを優先順位付け]
+
+転用可能な経験:
+- [価値を付加する業界横断的な経験を特定]
+- [Strategy Consultingにうまく転用できる経験を強調]
+
+業界キーワード:
+- [履歴書に見つかった業界特有の用語とキーワードをリスト]
+- [欠けている重要なキーワードに注意]
+
+競争力評価:
+
+市場ティア: [経験と実績に基づいて entry/mid/senior/executive]
+
+競争上の優位性:
+- [ユニークなセールスポイントと競争的差別化要因をリスト]
+- [Strategy Consultingで候補者を際立たせる強みに焦点]
+
+改善領域:
+- [業界アピールを向上させるための優先的な強化領域]
+- [Strategy Consultingポジショニングのための具体的な推奨事項]
+- [業界での昇進のためのキャリア開発提案]
+
+重要: 出力は日本語で行ってください。
+
+2025-10-04 07:00:21,699 - ai_agents.agents.base - INFO - === END PROMPTS for appeal ===
+2025-10-04 07:00:23,034 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-04 07:00:23,034 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-10-04 07:00:23,034 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:00:23,034 - sqlalchemy.engine.Engine - INFO - [cached since 80.96s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:00:23,034 INFO sqlalchemy.engine.Engine SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:00:23,034 INFO sqlalchemy.engine.Engine [cached since 80.96s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:00:23,045 - ai_agents.agents.base - INFO - Loaded prompt template: structure_prompt_v1_ja.yaml
+2025-10-04 07:00:23,052 - ai_agents.agents.base - INFO - Loaded prompt template: appeal_prompt_v1_ja.yaml
+2025-10-04 07:00:23,055 - app.features.resume_analysis.service - INFO - AnalysisService initialized successfully
+2025-10-04 07:00:23,055 - sqlalchemy.engine.Engine - INFO - SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+2025-10-04 07:00:23,055 INFO sqlalchemy.engine.Engine SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:00:23,055 INFO sqlalchemy.engine.Engine [cached since 80.96s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:00:23,055 - sqlalchemy.engine.Engine - INFO - [cached since 80.96s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:23,056 INFO sqlalchemy.engine.Engine SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:00:23,056 - sqlalchemy.engine.Engine - INFO - SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:00:23,056 - sqlalchemy.engine.Engine - INFO - [cached since 80.96s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:23,056 INFO sqlalchemy.engine.Engine [cached since 80.96s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+INFO:     172.66.0.243:45734 - "GET /api/v1/analysis/analysis/2359be37-29bd-40d2-bbb1-75513674090c/status HTTP/1.1" 200 OK
+2025-10-04 07:00:23,056 INFO sqlalchemy.engine.Engine COMMIT
+2025-10-04 07:00:23,056 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-10-04 07:00:27,037 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-10-04 07:00:27,037 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-04 07:00:27,037 INFO sqlalchemy.engine.Engine SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:00:27,037 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:00:27,037 INFO sqlalchemy.engine.Engine [cached since 84.97s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:00:27,037 - sqlalchemy.engine.Engine - INFO - [cached since 84.97s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:00:27,048 - ai_agents.agents.base - INFO - Loaded prompt template: structure_prompt_v1_ja.yaml
+2025-10-04 07:00:27,055 - ai_agents.agents.base - INFO - Loaded prompt template: appeal_prompt_v1_ja.yaml
+2025-10-04 07:00:27,059 - app.features.resume_analysis.service - INFO - AnalysisService initialized successfully
+2025-10-04 07:00:27,059 INFO sqlalchemy.engine.Engine SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:00:27,059 INFO sqlalchemy.engine.Engine [cached since 84.97s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:27,059 - sqlalchemy.engine.Engine - INFO - SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:00:27,059 - sqlalchemy.engine.Engine - INFO - [cached since 84.97s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:27,060 INFO sqlalchemy.engine.Engine SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+2025-10-04 07:00:27,060 - sqlalchemy.engine.Engine - INFO - SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:00:27,060 - sqlalchemy.engine.Engine - INFO - [cached since 84.97s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:00:27,060 INFO sqlalchemy.engine.Engine [cached since 84.97s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+INFO:     172.66.0.243:45734 - "GET /api/v1/analysis/analysis/2359be37-29bd-40d2-bbb1-75513674090c/status HTTP/1.1" 200 OK
+2025-10-04 07:00:27,060 INFO sqlalchemy.engine.Engine COMMIT
+2025-10-04 07:00:27,060 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-10-04 07:00:31,037 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-04 07:00:31,037 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-10-04 07:00:31,037 INFO sqlalchemy.engine.Engine SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:00:31,037 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:00:31,037 INFO sqlalchemy.engine.Engine [cached since 88.97s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:00:31,037 - sqlalchemy.engine.Engine - INFO - [cached since 88.97s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:00:31,050 - ai_agents.agents.base - INFO - Loaded prompt template: structure_prompt_v1_ja.yaml
+2025-10-04 07:00:31,059 - ai_agents.agents.base - INFO - Loaded prompt template: appeal_prompt_v1_ja.yaml
+2025-10-04 07:00:31,063 - app.features.resume_analysis.service - INFO - AnalysisService initialized successfully
+2025-10-04 07:00:31,064 - sqlalchemy.engine.Engine - INFO - SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:00:31,064 - sqlalchemy.engine.Engine - INFO - [cached since 88.97s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:31,064 INFO sqlalchemy.engine.Engine SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:00:31,064 INFO sqlalchemy.engine.Engine [cached since 88.97s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:31,064 INFO sqlalchemy.engine.Engine SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:00:31,064 INFO sqlalchemy.engine.Engine [cached since 88.97s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:31,064 - sqlalchemy.engine.Engine - INFO - SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:00:31,064 - sqlalchemy.engine.Engine - INFO - [cached since 88.97s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+INFO:     172.66.0.243:45734 - "GET /api/v1/analysis/analysis/2359be37-29bd-40d2-bbb1-75513674090c/status HTTP/1.1" 200 OK
+2025-10-04 07:00:31,065 INFO sqlalchemy.engine.Engine COMMIT
+2025-10-04 07:00:31,065 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-10-04 07:00:35,035 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-04 07:00:35,035 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-10-04 07:00:35,035 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:00:35,035 INFO sqlalchemy.engine.Engine SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:00:35,036 INFO sqlalchemy.engine.Engine [cached since 92.96s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:00:35,036 - sqlalchemy.engine.Engine - INFO - [cached since 92.96s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:00:35,048 - ai_agents.agents.base - INFO - Loaded prompt template: structure_prompt_v1_ja.yaml
+2025-10-04 07:00:35,056 - ai_agents.agents.base - INFO - Loaded prompt template: appeal_prompt_v1_ja.yaml
+2025-10-04 07:00:35,060 - app.features.resume_analysis.service - INFO - AnalysisService initialized successfully
+2025-10-04 07:00:35,060 INFO sqlalchemy.engine.Engine SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:00:35,060 INFO sqlalchemy.engine.Engine [cached since 92.97s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:35,060 - sqlalchemy.engine.Engine - INFO - SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:00:35,060 - sqlalchemy.engine.Engine - INFO - [cached since 92.97s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:35,061 INFO sqlalchemy.engine.Engine SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:00:35,061 INFO sqlalchemy.engine.Engine [cached since 92.97s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:35,061 - sqlalchemy.engine.Engine - INFO - SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:00:35,061 - sqlalchemy.engine.Engine - INFO - [cached since 92.97s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+INFO:     172.66.0.243:45734 - "GET /api/v1/analysis/analysis/2359be37-29bd-40d2-bbb1-75513674090c/status HTTP/1.1" 200 OK
+2025-10-04 07:00:35,061 INFO sqlalchemy.engine.Engine COMMIT
+2025-10-04 07:00:35,061 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-10-04 07:00:35,979 - database.connection - ERROR - Database health check error: 'QueuePool' object has no attribute 'invalid'
+INFO:     127.0.0.1:53280 - "GET /health HTTP/1.1" 200 OK
+2025-10-04 07:00:39,037 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-04 07:00:39,037 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-10-04 07:00:39,037 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:00:39,037 INFO sqlalchemy.engine.Engine SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:00:39,037 - sqlalchemy.engine.Engine - INFO - [cached since 96.97s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:00:39,037 INFO sqlalchemy.engine.Engine [cached since 96.97s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:00:39,054 - ai_agents.agents.base - INFO - Loaded prompt template: structure_prompt_v1_ja.yaml
+2025-10-04 07:00:39,066 - ai_agents.agents.base - INFO - Loaded prompt template: appeal_prompt_v1_ja.yaml
+2025-10-04 07:00:39,071 - app.features.resume_analysis.service - INFO - AnalysisService initialized successfully
+2025-10-04 07:00:39,072 INFO sqlalchemy.engine.Engine SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:00:39,072 INFO sqlalchemy.engine.Engine [cached since 96.98s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:39,072 - sqlalchemy.engine.Engine - INFO - SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:00:39,072 - sqlalchemy.engine.Engine - INFO - [cached since 96.98s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:39,073 - sqlalchemy.engine.Engine - INFO - SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:00:39,073 - sqlalchemy.engine.Engine - INFO - [cached since 96.98s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:39,073 INFO sqlalchemy.engine.Engine SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:00:39,073 INFO sqlalchemy.engine.Engine [cached since 96.98s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+INFO:     172.66.0.243:45734 - "GET /api/v1/analysis/analysis/2359be37-29bd-40d2-bbb1-75513674090c/status HTTP/1.1" 200 OK
+2025-10-04 07:00:39,073 INFO sqlalchemy.engine.Engine COMMIT
+2025-10-04 07:00:39,073 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-10-04 07:00:43,037 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-10-04 07:00:43,037 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-04 07:00:43,038 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:00:43,038 INFO sqlalchemy.engine.Engine SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:00:43,038 - sqlalchemy.engine.Engine - INFO - [cached since 101s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:00:43,038 INFO sqlalchemy.engine.Engine [cached since 101s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:00:43,057 - ai_agents.agents.base - INFO - Loaded prompt template: structure_prompt_v1_ja.yaml
+2025-10-04 07:00:43,068 - ai_agents.agents.base - INFO - Loaded prompt template: appeal_prompt_v1_ja.yaml
+2025-10-04 07:00:43,073 - app.features.resume_analysis.service - INFO - AnalysisService initialized successfully
+2025-10-04 07:00:43,074 INFO sqlalchemy.engine.Engine SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+2025-10-04 07:00:43,074 - sqlalchemy.engine.Engine - INFO - SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:00:43,074 - sqlalchemy.engine.Engine - INFO - [cached since 101s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:00:43,074 INFO sqlalchemy.engine.Engine [cached since 101s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:43,075 - sqlalchemy.engine.Engine - INFO - SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:00:43,075 INFO sqlalchemy.engine.Engine SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:00:43,075 INFO sqlalchemy.engine.Engine [cached since 101s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:43,075 - sqlalchemy.engine.Engine - INFO - [cached since 101s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+INFO:     172.66.0.243:45734 - "GET /api/v1/analysis/analysis/2359be37-29bd-40d2-bbb1-75513674090c/status HTTP/1.1" 200 OK
+2025-10-04 07:00:43,075 INFO sqlalchemy.engine.Engine COMMIT
+2025-10-04 07:00:43,075 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-10-04 07:00:47,037 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-10-04 07:00:47,037 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-04 07:00:47,038 INFO sqlalchemy.engine.Engine SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:00:47,038 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:00:47,038 INFO sqlalchemy.engine.Engine [cached since 105s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:00:47,038 - sqlalchemy.engine.Engine - INFO - [cached since 105s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:00:47,057 - ai_agents.agents.base - INFO - Loaded prompt template: structure_prompt_v1_ja.yaml
+2025-10-04 07:00:47,069 - ai_agents.agents.base - INFO - Loaded prompt template: appeal_prompt_v1_ja.yaml
+2025-10-04 07:00:47,076 - app.features.resume_analysis.service - INFO - AnalysisService initialized successfully
+2025-10-04 07:00:47,077 - sqlalchemy.engine.Engine - INFO - SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:00:47,077 INFO sqlalchemy.engine.Engine SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:00:47,077 - sqlalchemy.engine.Engine - INFO - [cached since 105s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:47,077 INFO sqlalchemy.engine.Engine [cached since 105s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:47,077 INFO sqlalchemy.engine.Engine SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:00:47,077 - sqlalchemy.engine.Engine - INFO - SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:00:47,077 INFO sqlalchemy.engine.Engine [cached since 105s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:47,077 - sqlalchemy.engine.Engine - INFO - [cached since 105s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+INFO:     172.66.0.243:45734 - "GET /api/v1/analysis/analysis/2359be37-29bd-40d2-bbb1-75513674090c/status HTTP/1.1" 200 OK
+2025-10-04 07:00:47,078 INFO sqlalchemy.engine.Engine COMMIT
+2025-10-04 07:00:47,078 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-10-04 07:00:51,035 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-04 07:00:51,035 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-10-04 07:00:51,036 INFO sqlalchemy.engine.Engine SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:00:51,036 INFO sqlalchemy.engine.Engine [cached since 109s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:00:51,036 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:00:51,036 - sqlalchemy.engine.Engine - INFO - [cached since 109s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:00:51,051 - ai_agents.agents.base - INFO - Loaded prompt template: structure_prompt_v1_ja.yaml
+2025-10-04 07:00:51,062 - ai_agents.agents.base - INFO - Loaded prompt template: appeal_prompt_v1_ja.yaml
+2025-10-04 07:00:51,105 - app.features.resume_analysis.service - INFO - AnalysisService initialized successfully
+2025-10-04 07:00:51,106 INFO sqlalchemy.engine.Engine SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+2025-10-04 07:00:51,106 - sqlalchemy.engine.Engine - INFO - SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:00:51,106 INFO sqlalchemy.engine.Engine [cached since 109s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:51,106 - sqlalchemy.engine.Engine - INFO - [cached since 109s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:51,106 INFO sqlalchemy.engine.Engine SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:00:51,106 INFO sqlalchemy.engine.Engine [cached since 109s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:51,106 - sqlalchemy.engine.Engine - INFO - SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:00:51,106 - sqlalchemy.engine.Engine - INFO - [cached since 109s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+INFO:     172.66.0.243:45734 - "GET /api/v1/analysis/analysis/2359be37-29bd-40d2-bbb1-75513674090c/status HTTP/1.1" 200 OK
+2025-10-04 07:00:51,107 INFO sqlalchemy.engine.Engine COMMIT
+2025-10-04 07:00:51,107 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-10-04 07:00:55,035 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-04 07:00:55,035 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-10-04 07:00:55,036 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:00:55,036 INFO sqlalchemy.engine.Engine SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:00:55,036 INFO sqlalchemy.engine.Engine [cached since 113s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:00:55,036 - sqlalchemy.engine.Engine - INFO - [cached since 113s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:00:55,044 - ai_agents.agents.base - INFO - Loaded prompt template: structure_prompt_v1_ja.yaml
+2025-10-04 07:00:55,050 - ai_agents.agents.base - INFO - Loaded prompt template: appeal_prompt_v1_ja.yaml
+2025-10-04 07:00:55,054 - app.features.resume_analysis.service - INFO - AnalysisService initialized successfully
+2025-10-04 07:00:55,054 INFO sqlalchemy.engine.Engine SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+2025-10-04 07:00:55,054 - sqlalchemy.engine.Engine - INFO - SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:00:55,054 - sqlalchemy.engine.Engine - INFO - [cached since 113s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:00:55,054 INFO sqlalchemy.engine.Engine [cached since 113s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:55,054 INFO sqlalchemy.engine.Engine SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:00:55,054 INFO sqlalchemy.engine.Engine [cached since 113s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:55,054 - sqlalchemy.engine.Engine - INFO - SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:00:55,054 - sqlalchemy.engine.Engine - INFO - [cached since 113s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+INFO:     172.66.0.243:45734 - "GET /api/v1/analysis/analysis/2359be37-29bd-40d2-bbb1-75513674090c/status HTTP/1.1" 200 OK
+2025-10-04 07:00:55,055 INFO sqlalchemy.engine.Engine COMMIT
+2025-10-04 07:00:55,055 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-10-04 07:00:59,035 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-04 07:00:59,035 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-10-04 07:00:59,036 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:00:59,036 - sqlalchemy.engine.Engine - INFO - [cached since 117s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:00:59,036 INFO sqlalchemy.engine.Engine SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:00:59,036 INFO sqlalchemy.engine.Engine [cached since 117s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:00:59,050 - ai_agents.agents.base - INFO - Loaded prompt template: structure_prompt_v1_ja.yaml
+2025-10-04 07:00:59,059 - ai_agents.agents.base - INFO - Loaded prompt template: appeal_prompt_v1_ja.yaml
+2025-10-04 07:00:59,064 - app.features.resume_analysis.service - INFO - AnalysisService initialized successfully
+2025-10-04 07:00:59,065 INFO sqlalchemy.engine.Engine SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+2025-10-04 07:00:59,065 - sqlalchemy.engine.Engine - INFO - SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:00:59,065 INFO sqlalchemy.engine.Engine [cached since 117s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:59,065 - sqlalchemy.engine.Engine - INFO - [cached since 117s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:59,065 INFO sqlalchemy.engine.Engine SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:00:59,065 INFO sqlalchemy.engine.Engine [cached since 117s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:00:59,065 - sqlalchemy.engine.Engine - INFO - SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:00:59,065 - sqlalchemy.engine.Engine - INFO - [cached since 117s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+INFO:     172.66.0.243:45734 - "GET /api/v1/analysis/analysis/2359be37-29bd-40d2-bbb1-75513674090c/status HTTP/1.1" 200 OK
+2025-10-04 07:00:59,066 INFO sqlalchemy.engine.Engine COMMIT
+2025-10-04 07:00:59,066 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-10-04 07:01:03,037 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-04 07:01:03,037 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-10-04 07:01:03,037 INFO sqlalchemy.engine.Engine SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:01:03,037 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:01:03,037 - sqlalchemy.engine.Engine - INFO - [cached since 121s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:01:03,037 INFO sqlalchemy.engine.Engine [cached since 121s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:01:03,055 - ai_agents.agents.base - INFO - Loaded prompt template: structure_prompt_v1_ja.yaml
+2025-10-04 07:01:03,066 - ai_agents.agents.base - INFO - Loaded prompt template: appeal_prompt_v1_ja.yaml
+2025-10-04 07:01:03,071 - app.features.resume_analysis.service - INFO - AnalysisService initialized successfully
+2025-10-04 07:01:03,072 - sqlalchemy.engine.Engine - INFO - SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:01:03,072 INFO sqlalchemy.engine.Engine SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:01:03,072 INFO sqlalchemy.engine.Engine [cached since 121s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:01:03,072 - sqlalchemy.engine.Engine - INFO - [cached since 121s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:01:03,073 INFO sqlalchemy.engine.Engine SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+2025-10-04 07:01:03,073 - sqlalchemy.engine.Engine - INFO - SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:01:03,073 - sqlalchemy.engine.Engine - INFO - [cached since 121s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:01:03,073 INFO sqlalchemy.engine.Engine [cached since 121s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+INFO:     172.66.0.243:45734 - "GET /api/v1/analysis/analysis/2359be37-29bd-40d2-bbb1-75513674090c/status HTTP/1.1" 200 OK
+2025-10-04 07:01:03,074 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-10-04 07:01:03,074 INFO sqlalchemy.engine.Engine COMMIT
+2025-10-04 07:01:06,039 - database.connection - ERROR - Database health check error: 'QueuePool' object has no attribute 'invalid'
+INFO:     127.0.0.1:43478 - "GET /health HTTP/1.1" 200 OK
+2025-10-04 07:01:07,034 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-10-04 07:01:07,034 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-04 07:01:07,034 INFO sqlalchemy.engine.Engine SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:01:07,034 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:01:07,034 - sqlalchemy.engine.Engine - INFO - [cached since 125s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:01:07,034 INFO sqlalchemy.engine.Engine [cached since 125s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:01:07,047 - ai_agents.agents.base - INFO - Loaded prompt template: structure_prompt_v1_ja.yaml
+2025-10-04 07:01:07,056 - ai_agents.agents.base - INFO - Loaded prompt template: appeal_prompt_v1_ja.yaml
+2025-10-04 07:01:07,061 - app.features.resume_analysis.service - INFO - AnalysisService initialized successfully
+2025-10-04 07:01:07,061 INFO sqlalchemy.engine.Engine SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:01:07,061 - sqlalchemy.engine.Engine - INFO - SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:01:07,061 - sqlalchemy.engine.Engine - INFO - [cached since 125s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:01:07,061 INFO sqlalchemy.engine.Engine [cached since 125s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:01:07,061 INFO sqlalchemy.engine.Engine SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:01:07,062 INFO sqlalchemy.engine.Engine [cached since 125s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:01:07,061 - sqlalchemy.engine.Engine - INFO - SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:01:07,062 - sqlalchemy.engine.Engine - INFO - [cached since 125s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+INFO:     172.66.0.243:45734 - "GET /api/v1/analysis/analysis/2359be37-29bd-40d2-bbb1-75513674090c/status HTTP/1.1" 200 OK
+2025-10-04 07:01:07,062 INFO sqlalchemy.engine.Engine COMMIT
+2025-10-04 07:01:07,062 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-10-04 07:01:10,093 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-04 07:01:10,093 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-10-04 07:01:10,094 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:01:10,094 - sqlalchemy.engine.Engine - INFO - [cached since 128s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:01:10,094 INFO sqlalchemy.engine.Engine SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:01:10,094 INFO sqlalchemy.engine.Engine [cached since 128s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:01:10,109 - ai_agents.agents.base - INFO - Loaded prompt template: structure_prompt_v1_ja.yaml
+2025-10-04 07:01:10,124 - ai_agents.agents.base - INFO - Loaded prompt template: appeal_prompt_v1_ja.yaml
+2025-10-04 07:01:10,135 - app.features.resume_analysis.service - INFO - AnalysisService initialized successfully
+2025-10-04 07:01:10,136 - sqlalchemy.engine.Engine - INFO - SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:01:10,136 INFO sqlalchemy.engine.Engine SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:01:10,136 INFO sqlalchemy.engine.Engine [cached since 128s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:01:10,136 - sqlalchemy.engine.Engine - INFO - [cached since 128s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:01:10,138 - sqlalchemy.engine.Engine - INFO - SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:01:10,138 - sqlalchemy.engine.Engine - INFO - [cached since 128s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:01:10,138 INFO sqlalchemy.engine.Engine SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:01:10,138 INFO sqlalchemy.engine.Engine [cached since 128s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+INFO:     172.66.0.243:45734 - "GET /api/v1/analysis/analysis/2359be37-29bd-40d2-bbb1-75513674090c/status HTTP/1.1" 200 OK
+2025-10-04 07:01:10,139 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-10-04 07:01:10,139 INFO sqlalchemy.engine.Engine COMMIT
+2025-10-04 07:01:14,037 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-04 07:01:14,037 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-10-04 07:01:14,038 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:01:14,038 INFO sqlalchemy.engine.Engine SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:01:14,038 - sqlalchemy.engine.Engine - INFO - [cached since 132s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:01:14,038 INFO sqlalchemy.engine.Engine [cached since 132s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:01:14,055 - ai_agents.agents.base - INFO - Loaded prompt template: structure_prompt_v1_ja.yaml
+2025-10-04 07:01:14,067 - ai_agents.agents.base - INFO - Loaded prompt template: appeal_prompt_v1_ja.yaml
+2025-10-04 07:01:14,072 - app.features.resume_analysis.service - INFO - AnalysisService initialized successfully
+2025-10-04 07:01:14,072 INFO sqlalchemy.engine.Engine SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:01:14,072 - sqlalchemy.engine.Engine - INFO - SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:01:14,072 - sqlalchemy.engine.Engine - INFO - [cached since 132s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:01:14,072 INFO sqlalchemy.engine.Engine [cached since 132s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:01:14,073 INFO sqlalchemy.engine.Engine SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:01:14,073 INFO sqlalchemy.engine.Engine [cached since 132s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:01:14,073 - sqlalchemy.engine.Engine - INFO - SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:01:14,073 - sqlalchemy.engine.Engine - INFO - [cached since 132s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+INFO:     172.66.0.243:45734 - "GET /api/v1/analysis/analysis/2359be37-29bd-40d2-bbb1-75513674090c/status HTTP/1.1" 200 OK
+2025-10-04 07:01:14,074 INFO sqlalchemy.engine.Engine COMMIT
+2025-10-04 07:01:14,074 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-10-04 07:01:18,035 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-04 07:01:18,035 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-10-04 07:01:18,036 INFO sqlalchemy.engine.Engine SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:01:18,036 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+2025-10-04 07:01:18,036 INFO sqlalchemy.engine.Engine [cached since 136s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:01:18,036 - sqlalchemy.engine.Engine - INFO - [cached since 136s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:01:18,052 - ai_agents.agents.base - INFO - Loaded prompt template: structure_prompt_v1_ja.yaml
+2025-10-04 07:01:18,062 - ai_agents.agents.base - INFO - Loaded prompt template: appeal_prompt_v1_ja.yaml
+2025-10-04 07:01:18,068 - app.features.resume_analysis.service - INFO - AnalysisService initialized successfully
+2025-10-04 07:01:18,068 INFO sqlalchemy.engine.Engine SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+2025-10-04 07:01:18,068 - sqlalchemy.engine.Engine - INFO - SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:01:18,068 - sqlalchemy.engine.Engine - INFO - [cached since 136s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:01:18,068 INFO sqlalchemy.engine.Engine [cached since 136s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:01:18,069 INFO sqlalchemy.engine.Engine SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:01:18,069 INFO sqlalchemy.engine.Engine [cached since 136s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:01:18,069 - sqlalchemy.engine.Engine - INFO - SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:01:18,069 - sqlalchemy.engine.Engine - INFO - [cached since 136s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+INFO:     172.66.0.243:45734 - "GET /api/v1/analysis/analysis/2359be37-29bd-40d2-bbb1-75513674090c/status HTTP/1.1" 200 OK
+2025-10-04 07:01:18,070 INFO sqlalchemy.engine.Engine COMMIT
+2025-10-04 07:01:18,070 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-10-04 07:01:22,034 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-04 07:01:22,034 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-10-04 07:01:22,034 INFO sqlalchemy.engine.Engine SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:01:22,034 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:01:22,035 INFO sqlalchemy.engine.Engine [cached since 140s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:01:22,035 - sqlalchemy.engine.Engine - INFO - [cached since 140s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:01:22,045 - ai_agents.agents.base - INFO - Loaded prompt template: structure_prompt_v1_ja.yaml
+2025-10-04 07:01:22,053 - ai_agents.agents.base - INFO - Loaded prompt template: appeal_prompt_v1_ja.yaml
+2025-10-04 07:01:22,056 - app.features.resume_analysis.service - INFO - AnalysisService initialized successfully
+2025-10-04 07:01:22,056 INFO sqlalchemy.engine.Engine SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:01:22,057 INFO sqlalchemy.engine.Engine [cached since 140s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:01:22,056 - sqlalchemy.engine.Engine - INFO - SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:01:22,057 - sqlalchemy.engine.Engine - INFO - [cached since 140s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:01:22,057 INFO sqlalchemy.engine.Engine SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:01:22,057 INFO sqlalchemy.engine.Engine [cached since 140s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:01:22,057 - sqlalchemy.engine.Engine - INFO - SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:01:22,057 - sqlalchemy.engine.Engine - INFO - [cached since 140s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+INFO:     172.66.0.243:45734 - "GET /api/v1/analysis/analysis/2359be37-29bd-40d2-bbb1-75513674090c/status HTTP/1.1" 200 OK
+2025-10-04 07:01:22,058 INFO sqlalchemy.engine.Engine COMMIT
+2025-10-04 07:01:22,058 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-10-04 07:01:26,036 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-10-04 07:01:26,036 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-04 07:01:26,036 INFO sqlalchemy.engine.Engine SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:01:26,036 INFO sqlalchemy.engine.Engine [cached since 144s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:01:26,036 - sqlalchemy.engine.Engine - INFO - SELECT users.id, users.email, users.password_hash, users.first_name, users.last_name, users.role, users.is_active, users.email_verified, users.created_at, users.updated_at, users.last_login_at, users.password_changed_at, users.failed_login_attempts, users.locked_until 
+FROM users 
+WHERE users.id = $1::UUID
+2025-10-04 07:01:26,036 - sqlalchemy.engine.Engine - INFO - [cached since 144s ago] (UUID('1e5b18db-3392-4783-ab7e-e7327d79958b'),)
+2025-10-04 07:01:26,049 - ai_agents.agents.base - INFO - Loaded prompt template: structure_prompt_v1_ja.yaml
+2025-10-04 07:01:26,057 - ai_agents.agents.base - INFO - Loaded prompt template: appeal_prompt_v1_ja.yaml
+2025-10-04 07:01:26,061 - app.features.resume_analysis.service - INFO - AnalysisService initialized successfully
+2025-10-04 07:01:26,061 INFO sqlalchemy.engine.Engine SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:01:26,061 - sqlalchemy.engine.Engine - INFO - SELECT review_requests.id, review_requests.resume_id, review_requests.requested_by_user_id, review_requests.target_role, review_requests.target_industry, review_requests.experience_level, review_requests.review_type, review_requests.status, review_requests.requested_at, review_requests.completed_at 
+FROM review_requests 
+WHERE review_requests.id = $1::UUID
+2025-10-04 07:01:26,061 - sqlalchemy.engine.Engine - INFO - [cached since 144s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:01:26,061 INFO sqlalchemy.engine.Engine [cached since 144s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:01:26,062 INFO sqlalchemy.engine.Engine SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:01:26,062 INFO sqlalchemy.engine.Engine [cached since 144s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+2025-10-04 07:01:26,062 - sqlalchemy.engine.Engine - INFO - SELECT review_results.id, review_results.review_request_id, review_results.overall_score, review_results.ats_score, review_results.content_score, review_results.formatting_score, review_results.executive_summary, review_results.detailed_scores, review_results.raw_ai_response, review_results.ai_model_used, review_results.processing_time_ms, review_results.created_at 
+FROM review_results 
+WHERE review_results.review_request_id = $1::UUID
+2025-10-04 07:01:26,062 - sqlalchemy.engine.Engine - INFO - [cached since 144s ago] (UUID('2359be37-29bd-40d2-bbb1-75513674090c'),)
+INFO:     172.66.0.243:45734 - "GET /api/v1/analysis/analysis/2359be37-29bd-40d2-bbb1-75513674090c/status HTTP/1.1" 200 OK
+2025-10-04 07:01:26,062 INFO sqlalchemy.engine.Engine COMMIT
+2025-10-04 07:01:26,062 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-10-04 07:01:26,330 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-04 07:01:26,334 - ai_agents.agents.base - INFO - OpenAI API response - agent: appeal, actual model used: gpt-5-mini-2025-08-07, tokens: prompt=4907, completion=3940, total=8847
+2025-10-04 07:01:26,334 - ai_agents.agents.base - INFO - === RAW OPENAI RESPONSE for appeal ===
+2025-10-04 07:01:26,335 - ai_agents.agents.base - INFO - スコア:
+- 実績関連性スコア: 80
+- スキル適合性スコア: 75
+- 経験適合度スコア: 90
+- 競争的ポジショニングスコア: 78
+
+総評（要点）
+福元さんの履歴書は「エンドツーエンドのIT・デジタル実務経験」と「CIO／部長レイヤーとの論点整理・推進経験」を両立している点で、Strategy Consulting（特にテクノロジー戦略・DX領域）に対して非常に魅力的です。マッキンゼーでのチームマネージャー経験や、デロイト・IBMでの上流〜下流までの経験、さらに日野自動車での事業部門常駐経験が、実務実行力と説得力（“実行できる戦略家”）を示しています。一方で、履歴書の表現・構成と「戦略系コンサルで重視されるキーワード／定量性（P&L、ROI、金額換算）」の不足が、初見の選考者に十分に刺さらないリスクがあります。
+
+詳細な業界分析
+
+関連する実績（最もStrategy Consultingに関連性が高い3-5件）
+- 金融機関の全社アーキテクチャ策定（200以上の現状課題→25施策）
+  - なぜ関連性高いか：CIOレベルの全社改革、課題発見→施策立案のスコアリングと合意形成ができる点は戦略案件のコア。経営目線での説得設計も示唆。
+- 大手電力企業のITコスト削減: ITコスト10%削減
+  - なぜ関連性高いか：コスト最適化（構造改革）を実行し、運用・ベンダー評価・ビジネス要求の抑制を横断的に実施した点は、戦略的コストリダクション案件で即戦力。
+- 海外営業部門の業務改革：業務工数15%削減（契約書簡素化含む）
+  - なぜ関連性高いか：業務プロセス見直しからIT・非IT施策を混ぜて効果を出している点は、実行重視のStrategy -> Implementation案件で評価される。
+
+不足している、または表現が弱い実績（改善余地）
+- 金額換算でのインパクト（¥いくらのコスト削減／売上向上）を明示していない点。戦略面でのインパクトは金額・ROIで示すと説得力が飛躍的に上がる。
+- 案件のスコープ（クライアントの規模、プロジェクト予算、P&L影響、人員規模の増減等）が不十分。スケール感をもっと明確に。
+
+不足しているスキル（優先度順）
+1. Financial / Business Case Modeling（P&L影響・ROIの明示） — 高
+   - 戦略提案での意思決定を支える必須スキル。履歴書に具体的なモデリングやベネフィット算出経験の記載を。
+2. Market / Competitive Analysis、Go-to-Market戦略設計 — 高
+   - 現状はIT/DX寄り。事業戦略（成長・市場選定・競合優位性）の経験記載が弱い。
+3. Hypothesis-driven problem solving / MECEフレームワークの明示 — 中〜高
+   - マッキンゼー在籍だが、履歴書上の構造化アプローチ（仮説→検証→実行）の記述が薄い。
+4. Advanced Excel / Financial modeling、PowerPointでのストーリーテリング（成果物サンプルの言及） — 中
+   - ツール表記がないため、実務的スキルが見えづらい。
+5. Data & Analytics（実データを使った意思決定、KPI設計） — 中
+   - DX案件でデータ活用が重要。データ分析で意思決定に繋げた事例の明示があると良い。
+6. M&A / Due Diligence / Growth Strategy経験 — 低〜中（補完すれば更に上位ポジションへ有利）
+
+転用可能な経験（戦略コンサルで強みにできる点）
+- CxO（特にCIO）との共同作業や経営陣合意形成経験：戦略案件での説得力と実行推進力に直結。
+- エンジニア出身の技術理解力とベンダー評価能力：技術ロードマップやクラウド移行、ITベンダー最適化提案で差別化可。
+- 海外・グローバルチーム（複数国・海外オフィス）の協働経験：グローバルプロジェクトや海外展開案件で有利。
+- 事業側常駐（日野自動車）とコンサルでの営業経験（年間ノルマ達成）：クライアント側の実務感覚を持ち、商談や提案のリアリティを担保できる。
+
+業界キーワード（履歴書に含まれているもの）
+- DX / Digital, ITコスト削減, ITアーキテクチャ, CIO, API, クラウド, セキュリティ, S&OP, SCM, DMS, アーキテクチャ刷新, 業務改革, ベンダー管理, Global Template
+
+欠けている重要キーワード（戦略系で期待される）
+- ROI / Business Case / P&L / TAM / Go-to-Market / 競合分析 / 市場セグメンテーション / Synergy / Due Diligence / KPI設計 / Hypothesis-driven / MECE / Storyline
+
+競争力評価
+
+市場ティア: Senior（チームマネージャーレベル。大手戦略系ファームのシニアケース担当〜上級コンサル寄り）
+
+競争上の優位性
+- 実行力のある「戦略→実装」経験（エンジニア経験＋コンサル経験）の組合せは希少で、特にテック寄りの戦略案件（CIOアドバイザリー、デジタル戦略、ITコスト最適化）で強い。
+- マッキンゼーというブランドと、複数大手クライアントでのC-suite接触経験が示す信頼性。
+- 事業サイドでの実務経験（日野）と収益責任（デロイトでの営業ノルマ達成）が、コンサル提案の実現可能性（実行性）を担保。
+
+改善領域（優先度順・具体策）
+
+短期（即対応：履歴書提出前に必ず直す）
+1. ヘッダーを必須化：氏名＋電話番号＋メール＋現所在地（都道府県）＋LinkedIn URL（プロフィールを最新化）＋現在の在職ステータス（例：在職中）を明記。
+2. ファーストページに「Selected achievements / 職務要約（1行でのポジショニング）」を簡潔に（例：“IT/デジタル分野の戦略策定と実行をリードするマッキンゼー チームマネージャー。CIO向けアーキテクチャ改革、ITコスト削減、事業側業務改革で計XX億円相当の効果を創出。”） — 金額が出せなければ「推定インパクト（例：コスト削減10%＝年間X億円相当）」と定量換算を検討。
+3. 「職務詳細」は各案件ごとに1) 課題 2) アプローチ（あなたの役割）3) 成果（定量） のProblem→Approach→Impactで3行〜5行に集約。現状の長文記述を箇条化して読みやすく。
+
+中期（選考で差をつける）
+4. 金額・スコープを明示：ITコスト10%が「年間¥X億の削減」に相当するなら必ず換算。工数15%も「年間X人日/¥」で表現。
+5. スキル欄を追加：Excel（financial modeling）、PowerPoint（storyline作成）、SQL/Python（データ分析：有れば）、TOGAF/AWS/GCP/Certified Scrum Master等の資格を明記。無ければ中期的に1〜2件取得を推奨（例：TOGAF、AWS）。
+6. 戦略系キーワードの挿入：Hypothesis-driven approach、MECE、Business case、ROI、TAM、Go-to-Market、Competitive analysis 等を、実績説明に沿って自然に差し込む。
+
+長期（キャリア上の差別化）
+7. 事業戦略や市場戦略の実績を増やす：可能なら案件での売上拡大/新規事業立上げ/価格戦略/事業性評価などの経験を取得し、P&L責任を担った例を作る。
+8. Thought leadershipの発信：社外セミナー・ホワイトペーパー・LinkedIn発信で「CIO向けDXとビジネス価値創出」などのテーマで露出を増やす。
+9. M&Aや事業再編の経験（デューデリやPMI）を補完すると、より上位（パートナー）ポジションの幅が広がる。
+
+具体的な表現改善サンプル（履歴書の書き換え例）
+現在（原文のまま）
+- 「電力会社のITコスト削減 10%達成」
+改善案（Problem → Action → Impact）
+- 「課題：政府規制下での収益圧迫に対し、ITコスト構造が競争力低下の要因。アクション：ベンダー契約見直し、工数見積り精度向上、要求抑制を組合せた施策を策定・実行（プロジェクトリード、体制15名）。成果：ITコスト10%削減（年間約¥X億相当）、ベンダー見積もり精度向上により開発案件の平均リードタイムをY%短縮。」
+（※X、Yは実数を入れてください）
+
+面接／ケースで強く語るべきポイント（準備）
+- 「なぜ10%削減が可能だったのか」：意思決定軸、関係者巻き込み手順、KPI設定、短中長期施策の分類。
+- 「アーキテクチャ案件で経営陣をどう説得したか」：コスト・リスク・時間のトレードオフをどのように数値化したか。
+- 「現場エンジニアとの橋渡し事例」：技術的な妥当性判断でどのような具体知見を提供したか（例：見積りの何をチェックしたか）。
+
+結論と推奨アクション（優先度高→低）
+1. （即日）履歴書ヘッダーとコンタクト情報の追加、職務要約を1行で明確化。フォーマット統一（見出し、フォント、行間）。
+2. （48時間〜1週間）主要実績をProblem→Approach→Impactで書き換え、金額換算・スコープ（人数/期間/予算）を追加。
+3. （2週間）スキル欄とキーワードの追加。面接で聞かれるであろう財務的インパクトの説明を準備。
+4. （1〜3ヶ月）不足スキル（Financial modeling、TOGAF/AWS等）を補完。社外発信を開始してThought leadershipを作る。
+
+最後に一言
+福元さんのバックグラウンドは「戦略系の上位ポジションで高く評価される典型的な構成」です。書き方を「戦略的インパクト（＝意思決定者が使える定量的情報）」に寄せるだけで、現状よりさらに上位のポジションや幅広い戦略案件に強くアピールできます。必要なら、職務要約や主要実績の「書き換え草案（Problem→Approach→Impact形式で3件）」を作成します。ご希望があれば出します。
+2025-10-04 07:01:26,335 - ai_agents.agents.base - INFO - === END RAW RESPONSE (length: 4312 chars, ~239 words) ===
