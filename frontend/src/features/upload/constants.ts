@@ -19,11 +19,10 @@ export const ACCEPTED_TYPE_LABELS = ['PDF', 'DOC', 'DOCX'] as const
 
 // Industry options
 export const INDUSTRY_OPTIONS = [
-  { value: 'strategy_tech', label: 'Strategy/Tech' },
-  { value: 'ma_financial', label: 'M&A/Financial Advisory' },
-  { value: 'consulting', label: 'Full Service Consulting' },
-  { value: 'system_integrator', label: 'System Integrator' },
-  { value: 'general', label: 'General' }
+  { value: 'strategy_tech', label: '戦略コンサルティングファーム' },
+  { value: 'ma_financial', label: 'M&A/ファイナンシャルアドバイザリーファーム' },
+  { value: 'consulting', label: '総合コンサルティングファーム' },
+  { value: 'system_integrator', label: 'システムインテグレーター/ITコンサル' }
 ] as const
 
 // Polling configuration
