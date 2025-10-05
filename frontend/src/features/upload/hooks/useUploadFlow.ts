@@ -24,7 +24,7 @@ export function useUploadFlow() {
 
   // Delegate to specialized hooks
   const fileUpload = useFileUpload(selectedCandidate, toastHelpers)
-  const analysisPoll = useAnalysisPoll(toastHelpers)
+  const analysisPoll = useAnalysisPoll()
 
   // Coordinated analysis actions
   const handleStartAnalysis = useCallback(async () => {
@@ -71,7 +71,8 @@ export function useUploadFlow() {
     isAnalyzing: analysisPoll.state.isAnalyzing,
     analysisId: analysisPoll.state.analysisId,
     analysisResult: analysisPoll.state.analysisResult,
-    analysisStatus: analysisPoll.state.analysisStatus
+    analysisStatus: analysisPoll.state.analysisStatus,
+    elapsedTime: analysisPoll.state.elapsedTime
   }
 
   // Create handler objects for backward compatibility

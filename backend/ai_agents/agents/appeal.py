@@ -88,17 +88,17 @@ class AppealAgent(BaseAgent):
             state["market_tier"] = parsed_results.get("market_tier", "mid")
 
             # === DATA SIZE CHECKPOINT 4: APPEAL AGENT STATE ===
-            logger.info(f"=== CHECKPOINT 4: APPEAL AGENT STATE ===")
-            logger.info(f"Scores: {parsed_results['scores']}")
-            logger.info(f"Market tier: {state['market_tier']}")
+            logger.debug(f"=== CHECKPOINT 4: APPEAL AGENT STATE ===")
+            logger.debug(f"Scores: {parsed_results['scores']}")
+            logger.debug(f"Market tier: {state['market_tier']}")
             total_feedback_items = sum(len(v) if isinstance(v, list) else 0 for v in parsed_results['feedback'].values())
-            logger.info(f"Total feedback items: {total_feedback_items}")
+            logger.debug(f"Total feedback items: {total_feedback_items}")
             for key, value in parsed_results['feedback'].items():
                 if isinstance(value, list):
-                    logger.info(f"  - {key}: {len(value)} items")
+                    logger.debug(f"  - {key}: {len(value)} items")
                     for idx, item in enumerate(value[:3], 1):  # Show first 3 items
-                        logger.info(f"    [{idx}] {item[:100]}..." if len(item) > 100 else f"    [{idx}] {item}")
-            logger.info(f"=== END CHECKPOINT 4 ===")
+                        logger.debug(f"    [{idx}] {item[:100]}..." if len(item) > 100 else f"    [{idx}] {item}")
+            logger.debug(f"=== END CHECKPOINT 4 ===")
 
             # Calculate overall score using ScoreCalculator service
             state["overall_score"] = self.score_calculator.calculate_overall_score(state)

@@ -3,6 +3,7 @@
 import React from 'react'
 import { Button } from '@/components/ui'
 import { IndustryOption } from '../types'
+import AnalysisTimer from './AnalysisTimer'
 
 export interface IndustrySelectorProps {
   selectedIndustry: string
@@ -12,6 +13,7 @@ export interface IndustrySelectorProps {
   analysisStatus: string
   industryOptions: IndustryOption[]
   disabled?: boolean
+  elapsedTime?: number
 }
 
 /**
@@ -25,7 +27,8 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
   isAnalyzing,
   analysisStatus,
   industryOptions,
-  disabled = false
+  disabled = false,
+  elapsedTime = 0
 }) => {
   return (
     <div className="space-y-4">
@@ -59,10 +62,14 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
           )}
         </Button>
       </div>
+
+      {/* Timer display when analyzing */}
       {isAnalyzing && (
-        <div className="text-center text-sm text-neutral-600">
-          Status: {analysisStatus}
-        </div>
+        <AnalysisTimer
+          elapsedTime={elapsedTime}
+          isAnalyzing={isAnalyzing}
+          status={analysisStatus}
+        />
       )}
     </div>
   )

@@ -58,17 +58,17 @@ class StructureAgent(BaseAgent):
             state["structure_metadata"] = parsed_results.get("metadata", {})
 
             # === DATA SIZE CHECKPOINT 3: STRUCTURE AGENT STATE ===
-            logger.info(f"=== CHECKPOINT 3: STRUCTURE AGENT STATE ===")
-            logger.info(f"Scores: {parsed_results['scores']}")
-            logger.info(f"Metadata: {parsed_results['metadata']}")
+            logger.debug(f"=== CHECKPOINT 3: STRUCTURE AGENT STATE ===")
+            logger.debug(f"Scores: {parsed_results['scores']}")
+            logger.debug(f"Metadata: {parsed_results['metadata']}")
             total_feedback_items = sum(len(v) if isinstance(v, list) else 0 for v in parsed_results['feedback'].values())
-            logger.info(f"Total feedback items: {total_feedback_items}")
+            logger.debug(f"Total feedback items: {total_feedback_items}")
             for key, value in parsed_results['feedback'].items():
                 if isinstance(value, list):
-                    logger.info(f"  - {key}: {len(value)} items")
+                    logger.debug(f"  - {key}: {len(value)} items")
                     for idx, item in enumerate(value[:3], 1):  # Show first 3 items
-                        logger.info(f"    [{idx}] {item[:100]}..." if len(item) > 100 else f"    [{idx}] {item}")
-            logger.info(f"=== END CHECKPOINT 3 ===")
+                        logger.debug(f"    [{idx}] {item[:100]}..." if len(item) > 100 else f"    [{idx}] {item}")
+            logger.debug(f"=== END CHECKPOINT 3 ===")
 
             # Calculate average score and log completion
             scores = parsed_results["scores"]

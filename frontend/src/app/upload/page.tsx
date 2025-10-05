@@ -176,6 +176,7 @@ const UploadPage: React.FC = () => {
                       isAnalyzing={state.isAnalyzing}
                       analysisStatus={state.analysisStatus}
                       industryOptions={INDUSTRY_OPTIONS}
+                      elapsedTime={state.elapsedTime}
                     />
                   )}
                 </CardContent>
@@ -188,6 +189,7 @@ const UploadPage: React.FC = () => {
                   industryOptions={INDUSTRY_OPTIONS}
                   onAnalyzeAgain={analysisHandlers.onAnalyzeAgain}
                   onUploadNew={analysisHandlers.onUploadNew}
+                  elapsedTime={state.elapsedTime}
                 />
               )}
 

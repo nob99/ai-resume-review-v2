@@ -11,6 +11,9 @@ export interface AnalysisPollState {
   analysisResult: AnalysisStatusResponse | null
   analysisStatus: string
   isAnalyzing: boolean
+  analysisStartTime: number | null
+  analysisEndTime: number | null
+  elapsedTime: number
 }
 
 /**
@@ -22,20 +25,10 @@ export interface AnalysisPollActions {
 }
 
 /**
- * Toast notification functions
- */
-interface ToastFunctions {
-  success: (title: string, message: string) => void
-  error: (title: string, message: string) => void
-}
-
-/**
  * Custom hook for managing resume analysis polling
  * Handles analysis request, status polling, and completion
  */
-export function useAnalysisPoll(
-  toast: ToastFunctions
-): {
+export function useAnalysisPoll(): {
   state: AnalysisPollState
   actions: AnalysisPollActions
 } {
@@ -43,8 +36,25 @@ export function useAnalysisPoll(
     analysisId: null,
     analysisResult: null,
     analysisStatus: '',
-    isAnalyzing: false
+    isAnalyzing: false,
+    analysisStartTime: null,
+    analysisEndTime: null,
+    elapsedTime: 0
   })
+
+  // Timer effect - updates elapsed time every second
+  useEffect(() => {
+    if (!state.isAnalyzing || !state.analysisStartTime || state.analysisEndTime) return
+
+    const timerInterval = setInterval(() => {
+      const elapsed = Date.now() - state.analysisStartTime!
+      setState(prev => ({ ...prev, elapsedTime: elapsed }))
+    }, 1000)
+
+    return () => {
+      clearInterval(timerInterval)
+    }
+  }, [state.isAnalyzing, state.analysisStartTime, state.analysisEndTime])
 
   // Analysis polling effect
   useEffect(() => {
@@ -64,21 +74,24 @@ export function useAnalysisPoll(
           setState(prev => ({ ...prev, analysisStatus: result.data!.status }))
 
           if (result.data.status === AnalysisStatus.COMPLETED) {
+            const endTime = Date.now()
+            const totalDuration = endTime - (state.analysisStartTime || endTime)
+
             setState(prev => ({
               ...prev,
               analysisResult: result.data!,
-              isAnalyzing: false
+              isAnalyzing: false,
+              analysisEndTime: endTime,
+              elapsedTime: totalDuration
             }))
             clearInterval(pollInterval)
-            toast.success(
-              'Analysis Complete',
-              'Your resume analysis is ready!'
-            )
           } else if (result.data.status === AnalysisStatus.ERROR) {
-            setState(prev => ({ ...prev, isAnalyzing: false }))
+            setState(prev => ({
+              ...prev,
+              isAnalyzing: false,
+              analysisEndTime: Date.now()
+            }))
             clearInterval(pollInterval)
-            const errorMsg = (result.data as any).error || 'Analysis failed'
-            toast.error('Analysis Failed', errorMsg)
           }
         }
       } catch (error) {
@@ -92,15 +105,20 @@ export function useAnalysisPoll(
       isActive = false
       clearInterval(pollInterval)
     }
-  }, [state.analysisId, state.analysisResult, toast])
+  }, [state.analysisId, state.analysisResult, state.analysisStartTime])
 
   // Start analysis
   const startAnalysis = async (resumeId: string, industry: string) => {
+    const startTime = Date.now()
+
     setState(prev => ({
       ...prev,
       isAnalyzing: true,
       analysisResult: null,
-      analysisStatus: AnalysisStatus.REQUESTING
+      analysisStatus: AnalysisStatus.REQUESTING,
+      analysisStartTime: startTime,
+      analysisEndTime: null,
+      elapsedTime: 0
     }))
 
     try {
@@ -112,17 +130,16 @@ export function useAnalysisPoll(
           analysisId: result.data!.analysis_id,
           analysisStatus: result.data!.status
         }))
-        toast.success(
-          'Analysis Started',
-          'Your resume is being analyzed...'
-        )
       } else {
         throw result.error || new Error('Failed to start analysis')
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to start analysis'
-      setState(prev => ({ ...prev, isAnalyzing: false }))
-      toast.error('Analysis Failed', errorMessage)
+      console.error('Failed to start analysis:', error)
+      setState(prev => ({
+        ...prev,
+        isAnalyzing: false,
+        analysisEndTime: Date.now()
+      }))
     }
   }
 
@@ -132,7 +149,10 @@ export function useAnalysisPoll(
       analysisResult: null,
       analysisId: null,
       analysisStatus: '',
-      isAnalyzing: false
+      isAnalyzing: false,
+      analysisStartTime: null,
+      analysisEndTime: null,
+      elapsedTime: 0
     })
   }
 

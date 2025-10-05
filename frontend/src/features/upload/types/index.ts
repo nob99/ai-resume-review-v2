@@ -15,6 +15,7 @@ export interface UploadPageState {
   analysisId: string | null
   analysisResult: AnalysisStatusResponse | null
   analysisStatus: string
+  elapsedTime: number
 }
 
 export interface FileUploadHandlers {

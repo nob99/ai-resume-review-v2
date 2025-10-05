@@ -13,6 +13,21 @@ interface AnalysisResultsProps {
   onAnalyzeAgain: () => void
   onUploadNew: () => void
   className?: string
+  elapsedTime?: number
+}
+
+/**
+ * Format milliseconds to human-readable time
+ */
+function formatElapsedTime(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000)
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+
+  if (minutes > 0) {
+    return `${minutes}分${seconds}秒 / ${minutes}m ${seconds}s`
+  }
+  return `${seconds}秒 / ${seconds}s`
 }
 
 export default function AnalysisResults({
@@ -20,7 +35,8 @@ export default function AnalysisResults({
   industryOptions,
   onAnalyzeAgain,
   onUploadNew,
-  className = ''
+  className = '',
+  elapsedTime = 0
 }: AnalysisResultsProps) {
   const result = analysis.result
   const feedback = parseAIFeedback(analysis)
@@ -98,8 +114,8 @@ export default function AnalysisResults({
             </div>
           </div>
 
-          {/* Industry and Market Tier */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-200">
+          {/* Industry, Market Tier, and Processing Time */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-gray-200">
             <div className="text-center">
               <div className="text-lg font-semibold text-neutral-900">
                 {industryOptions.find(i => i.value === result.industry)?.label || result.industry}
@@ -112,6 +128,27 @@ export default function AnalysisResults({
               </div>
               <div className="text-sm text-neutral-600">マーケットにおける位置づけ / Market Tier</div>
             </div>
+            {elapsedTime > 0 && (
+              <div className="text-center">
+                <div className="text-lg font-semibold text-green-600 flex items-center justify-center">
+                  <svg
+                    className="w-5 h-5 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  {formatElapsedTime(elapsedTime)}
+                </div>
+                <div className="text-sm text-neutral-600">処理時間 / Processing Time</div>
+              </div>
+            )}
           </div>
 
           {/* Executive Summary */}

@@ -132,29 +132,29 @@ class ResumeAnalysisOrchestrator:
         }
 
         # === DATA SIZE CHECKPOINT 5: ORCHESTRATOR FORMATTED RESPONSE ===
-        logger.info(f"=== CHECKPOINT 5: ORCHESTRATOR FORMATTED RESPONSE ===")
-        logger.info(f"Analysis ID: {analysis_id}")
-        logger.info(f"Overall score: {response['overall_score']}")
-        logger.info(f"Market tier: {response['market_tier']}")
+        logger.debug(f"=== CHECKPOINT 5: ORCHESTRATOR FORMATTED RESPONSE ===")
+        logger.debug(f"Analysis ID: {analysis_id}")
+        logger.debug(f"Overall score: {response['overall_score']}")
+        logger.debug(f"Market tier: {response['market_tier']}")
 
         # Count structure feedback items
         structure_feedback = response['structure']['feedback']
         structure_total = sum(len(v) if isinstance(v, list) else 0 for v in structure_feedback.values())
-        logger.info(f"Structure feedback total items: {structure_total}")
+        logger.debug(f"Structure feedback total items: {structure_total}")
         for key, value in structure_feedback.items():
             if isinstance(value, list):
-                logger.info(f"  - structure.{key}: {len(value)} items")
+                logger.debug(f"  - structure.{key}: {len(value)} items")
 
         # Count appeal feedback items
         appeal_feedback = response['appeal']['feedback']
         appeal_total = sum(len(v) if isinstance(v, list) else 0 for v in appeal_feedback.values())
-        logger.info(f"Appeal feedback total items: {appeal_total}")
+        logger.debug(f"Appeal feedback total items: {appeal_total}")
         for key, value in appeal_feedback.items():
             if isinstance(value, list):
-                logger.info(f"  - appeal.{key}: {len(value)} items")
+                logger.debug(f"  - appeal.{key}: {len(value)} items")
 
-        logger.info(f"Total feedback items in response: {structure_total + appeal_total}")
-        logger.info(f"=== END CHECKPOINT 5 ===")
+        logger.debug(f"Total feedback items in response: {structure_total + appeal_total}")
+        logger.debug(f"=== END CHECKPOINT 5 ===")
 
         return response
     

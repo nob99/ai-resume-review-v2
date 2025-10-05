@@ -146,18 +146,18 @@ class BaseAgent:
                     raise ValueError("Empty content from OpenAI API")
 
                 # Log the raw response for debugging
-                logger.info(f"=== RAW OPENAI RESPONSE for {agent_name} ===")
-                logger.info(content)
-                logger.info(f"=== END RAW RESPONSE (length: {len(content)} chars, ~{len(content.split())} words) ===")
+                logger.debug(f"=== RAW OPENAI RESPONSE for {agent_name} ===")
+                logger.debug(content)
+                logger.debug(f"=== END RAW RESPONSE (length: {len(content)} chars, ~{len(content.split())} words) ===")
 
                 # === DATA SIZE CHECKPOINT 1: RAW OPENAI RESPONSE ===
-                logger.info(f"=== CHECKPOINT 1: RAW OPENAI RESPONSE ({agent_name}) ===")
-                logger.info(f"Total characters: {len(content)}")
-                logger.info(f"Total words: {len(content.split())}")
-                logger.info(f"Total lines: {len(content.splitlines())}")
-                logger.info(f"First 200 chars: {content[:200]}")
-                logger.info(f"Last 200 chars: {content[-200:]}")
-                logger.info(f"=== END CHECKPOINT 1 ===")
+                logger.debug(f"=== CHECKPOINT 1: RAW OPENAI RESPONSE ({agent_name}) ===")
+                logger.debug(f"Total characters: {len(content)}")
+                logger.debug(f"Total words: {len(content.split())}")
+                logger.debug(f"Total lines: {len(content.splitlines())}")
+                logger.debug(f"First 200 chars: {content[:200]}")
+                logger.debug(f"Last 200 chars: {content[-200:]}")
+                logger.debug(f"=== END CHECKPOINT 1 ===")
 
                 return content
 
@@ -228,21 +228,21 @@ class BaseAgent:
             raise ValueError(f"Invalid JSON from OpenAI: {e}")
 
         # === DATA SIZE CHECKPOINT 2: PARSED JSON RESPONSE ===
-        logger.info(f"=== CHECKPOINT 2: PARSED JSON RESPONSE ===")
-        logger.info(f"Top-level keys: {list(results.keys())}")
+        logger.debug(f"=== CHECKPOINT 2: PARSED JSON RESPONSE ===")
+        logger.debug(f"Top-level keys: {list(results.keys())}")
 
         if "scores" in results:
-            logger.info(f"Score fields: {list(results['scores'].keys())}")
+            logger.debug(f"Score fields: {list(results['scores'].keys())}")
 
         if "feedback" in results:
             feedback = results.get('feedback', {})
             total_feedback_items = sum(len(v) if isinstance(v, list) else 0 for v in feedback.values())
-            logger.info(f"Total feedback items: {total_feedback_items}")
+            logger.debug(f"Total feedback items: {total_feedback_items}")
             for key, value in feedback.items():
                 if isinstance(value, list):
-                    logger.info(f"  - {key}: {len(value)} items")
+                    logger.debug(f"  - {key}: {len(value)} items")
 
-        logger.info(f"=== END CHECKPOINT 2 ===")
+        logger.debug(f"=== END CHECKPOINT 2 ===")
 
         return results
 
