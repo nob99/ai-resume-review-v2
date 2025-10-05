@@ -20,7 +20,7 @@ export default function FeedbackSection({
   className = '',
   maxInitialItems = 3
 }: FeedbackSectionProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(true)
 
   if (!items || items.length === 0) {
     return (
