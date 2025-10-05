@@ -96,8 +96,8 @@ const UploadPage: React.FC = () => {
                     onFilesSelected={fileHandlers.onFilesSelected}
                     onError={fileHandlers.onUploadError}
                     disabled={state.isUploading || !state.selectedCandidate}
-                    multiple={true}
-                    maxFiles={5}
+                    multiple={false}
+                    maxFiles={1}
                   />
                   {!state.selectedCandidate && (
                     <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
