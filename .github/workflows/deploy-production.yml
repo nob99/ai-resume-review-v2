@@ -1,0 +1,75 @@
+# ============================================================================
+# GitHub Actions Workflow: Deploy to GCP Production Environment
+# ============================================================================
+#
+# PURPOSE:
+#   Deploy the application to GCP Cloud Run production environment with
+#   manual approval step for safety.
+#
+# TRIGGER:
+#   - Manual trigger only (workflow_dispatch)
+#   - Requires approval from designated approvers
+#
+# WORKFLOW STEPS:
+#   1. Checkout code from 'main' branch only
+#   2. Verify staging deployment is healthy
+#   3. Wait for manual approval (GitHub Environments feature)
+#   4. Authenticate with GCP using Workload Identity
+#   5. Pull Docker images from Artifact Registry (built in staging)
+#   6. Deploy frontend to Cloud Run (production)
+#   7. Deploy backend to Cloud Run (production)
+#   8. Run smoke tests against production
+#   9. Monitor for 30 minutes (automated health checks)
+#   10. Send notification to Slack
+#   11. If issues detected: Trigger rollback workflow
+#
+# REQUIRED SECRETS:
+#   - GCP_PROJECT_ID: Google Cloud project ID
+#   - GCP_WORKLOAD_IDENTITY_PROVIDER: Workload Identity provider
+#   - GCP_SERVICE_ACCOUNT: Service account email
+#   - SLACK_WEBHOOK_URL: Slack webhook for notifications
+#   - PAGERDUTY_API_KEY: PagerDuty API key (for critical alerts)
+#
+# ENVIRONMENT VARIABLES:
+#   - REGION: us-central1
+#   - PROD_FRONTEND_SERVICE: ai-resume-review-frontend-prod
+#   - PROD_BACKEND_SERVICE: ai-resume-review-backend-prod
+#
+# SAFETY FEATURES:
+#   - Manual approval required (GitHub Environments)
+#   - Production branch protection (main branch only)
+#   - Smoke tests before marking deployment complete
+#   - Automated rollback on failure
+#   - Notifications to team on deployment status
+#
+# DESIGN PRINCIPLES:
+#   - Safety first: Multiple approval gates
+#   - Reuse artifacts: Use images built in staging
+#   - Smoke test everything: Verify before marking complete
+#   - Monitor actively: Watch metrics for 30 minutes
+#   - Fast rollback: One-click rollback to previous version
+#
+# APPROVAL PROCESS:
+#   1. Developer triggers workflow
+#   2. GitHub notifies designated approvers
+#   3. Approver reviews staging environment
+#   4. Approver approves or rejects deployment
+#   5. If approved, deployment proceeds
+#   6. If rejected, workflow stops
+#
+# ROLLBACK STRATEGY:
+#   - Cloud Run maintains previous revisions
+#   - Rollback = redirect traffic to previous revision
+#   - Rollback time: < 2 minutes
+#   - Zero downtime during rollback
+#
+# NEXT STEPS FOR IMPLEMENTATION:
+#   1. Set up GitHub Environments (staging, production)
+#   2. Configure required reviewers for production
+#   3. Implement smoke test scripts
+#   4. Set up monitoring alerts
+#   5. Document rollback procedures
+#
+# ============================================================================
+
+# TODO: Implement workflow steps here

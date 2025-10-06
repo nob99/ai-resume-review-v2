@@ -1,0 +1,68 @@
+# ============================================================================
+# GitHub Actions Workflow: Run Tests on Pull Requests
+# ============================================================================
+#
+# PURPOSE:
+#   Run automated tests on every pull request to ensure code quality
+#   before merging to main or staging branches.
+#
+# TRIGGER:
+#   - Pull request opened, synchronized, or reopened
+#   - Push to any branch (except main, staging)
+#
+# WORKFLOW STEPS:
+#   1. Checkout code
+#   2. Set up Node.js environment (for frontend)
+#   3. Set up Python environment (for backend)
+#   4. Install frontend dependencies (npm ci)
+#   5. Install backend dependencies (pip install -r requirements.txt)
+#   6. Run frontend linting (ESLint)
+#   7. Run backend linting (Flake8, Black --check)
+#   8. Run frontend type checking (TypeScript)
+#   9. Run backend type checking (mypy)
+#   10. Run frontend unit tests (Jest)
+#   11. Run backend unit tests (pytest)
+#   12. Run frontend coverage report (minimum 80%)
+#   13. Run backend coverage report (minimum 80%)
+#   14. Upload test results to GitHub
+#   15. Comment on PR with test results
+#
+# REQUIRED SECRETS:
+#   None (tests run without external dependencies)
+#
+# TEST STRATEGY:
+#   Frontend:
+#     - Jest + React Testing Library
+#     - MSW for API mocking
+#     - Coverage minimum: 80%
+#     - Fast tests only (no integration tests)
+#
+#   Backend:
+#     - pytest with markers
+#     - Unit tests only (not integration)
+#     - Coverage minimum: 80%
+#     - fakeredis for Redis mocking
+#
+# DESIGN PRINCIPLES:
+#   - Fast feedback: Complete in < 5 minutes
+#   - Parallel execution: Frontend and backend tests run simultaneously
+#   - Clear reporting: Show exactly which tests failed
+#   - Block merging: PR cannot merge if tests fail
+#   - Cache dependencies: Speed up runs
+#
+# QUALITY GATES:
+#   ✅ All linting rules pass
+#   ✅ All type checks pass
+#   ✅ All unit tests pass
+#   ✅ Code coverage ≥ 80%
+#   ✅ No security vulnerabilities (npm audit, safety check)
+#
+# NEXT STEPS FOR IMPLEMENTATION:
+#   1. Configure test runners (Jest, pytest)
+#   2. Set up coverage reporting
+#   3. Configure branch protection rules
+#   4. Add status checks to PR requirements
+#
+# ============================================================================
+
+# TODO: Implement workflow steps here

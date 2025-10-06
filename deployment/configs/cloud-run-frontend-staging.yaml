@@ -1,0 +1,69 @@
+# ============================================================================
+# Cloud Run Service Configuration: Frontend Staging
+# ============================================================================
+#
+# PURPOSE:
+#   Define Cloud Run service configuration for the frontend staging environment.
+#
+# USAGE:
+#   gcloud run services replace deployment/configs/cloud-run-frontend-staging.yaml
+#
+# WHAT THIS FILE DEFINES:
+#   - Service name: ai-resume-review-frontend-staging
+#   - Container image: Next.js production build
+#   - Resource limits
+#   - Scaling configuration
+#   - Environment variables
+#
+# DESIGN DECISIONS:
+#   Memory: 512MB
+#     - Reason: Next.js SSR needs moderate memory
+#     - Sufficient for rendering pages
+#
+#   CPU: 1 vCPU
+#     - Reason: Frontend is less CPU-intensive than backend
+#     - Handles static page serving and SSR
+#
+#   Min Instances: 0
+#     - Reason: Scale to zero for cost savings
+#     - Cold start acceptable for staging (~2-3 seconds)
+#
+#   Max Instances: 5
+#     - Reason: Lower than production (testing only)
+#     - Prevents excessive costs in staging
+#
+#   Concurrency: 80
+#     - Reason: Frontend can handle many concurrent requests
+#     - Standard for web servers
+#
+#   Timeout: 300 seconds (5 minutes)
+#     - Reason: SSR pages, API calls to backend
+#
+# ENVIRONMENT VARIABLES:
+#   NEXT_PUBLIC_API_URL:
+#     - Points to backend staging service
+#     - Format: https://ai-resume-review-backend-staging-xxx.run.app
+#
+#   NODE_ENV=production:
+#     - Next.js runs in production mode
+#     - Optimized builds, no hot reload
+#
+# SPECIAL CONSIDERATIONS:
+#   - Next.js uses standalone output mode
+#   - Static assets served from .next/static
+#   - No CDN in staging (cost optimization)
+#   - Health check: /api/health endpoint
+#
+# IAM PERMISSIONS:
+#   - Allow unauthenticated access (public web app)
+#   - Backend handles authentication (JWT tokens)
+#
+# NEXT STEPS FOR IMPLEMENTATION:
+#   1. Build Next.js with standalone output
+#   2. Create Docker image
+#   3. Configure environment variables
+#   4. Deploy to Cloud Run
+#
+# ============================================================================
+
+# TODO: Implement Cloud Run service configuration in YAML format
