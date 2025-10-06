@@ -22,11 +22,12 @@ This document explains the centralized configuration system for the AI Resume Re
 
 3. **Start development:**
    ```bash
-   # Start database and Redis
-   ./database/scripts/setup-dev-db.sh
-   
-   # Run tests
-   python -m pytest tests/auth/AUTH-001_user_login/ -v
+   # Start all services (database, Redis, backend)
+   ./scripts/docker-dev.sh up
+
+   # Run tests inside backend container
+   ./scripts/docker-dev.sh shell backend
+   pytest
    ```
 
 ## Configuration Structure
@@ -135,9 +136,10 @@ The configuration system automatically loads from `.env` files and provides cons
 - Set your database password in `.env`
 
 **Tests failing with database connection errors:**
-- Ensure PostgreSQL is running: `./database/scripts/setup-dev-db.sh`
+- Ensure all services are running: `./scripts/docker-dev.sh status`
+- Start services if needed: `./scripts/docker-dev.sh up`
 - Check your `.env` file has correct database credentials
-- Verify database exists: `psql -h localhost -U postgres -d ai_resume_review_dev`
+- Verify database is accessible: `./scripts/docker-dev.sh shell postgres`
 
 **"Using default SECRET_KEY" warning:**
 - Normal in development 

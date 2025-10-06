@@ -85,9 +85,9 @@ backend/
 ## 📚 Documentation
 
 ### Core Documentation
-- **[Docker Setup & Development](README-DOCKER.md)** - Complete Docker workflow and troubleshooting
 - **[Configuration Management](README-CONFIG.md)** - Environment variables, security, and setup
-- **[Docker Containerization Status](DOCKER-SETUP-COMPLETE.md)** - Current Docker implementation status
+- **[Root README](../README.md)** - Project overview and quick start guide
+- **[CLAUDE.md](../CLAUDE.md)** - AI coding assistant instructions
 
 ### Specialized Documentation  
 - **[AI Agents](app/agents/README.md)** - AI/ML integration and LangChain setup
