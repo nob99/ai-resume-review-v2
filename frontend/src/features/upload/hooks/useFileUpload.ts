@@ -73,9 +73,10 @@ export function useFileUpload(
       progress: 0
     }))
 
+    // Replace existing files (for single file upload)
     setState(prev => ({
       ...prev,
-      files: [...prev.files, ...newFiles]
+      files: newFiles
     }))
 
     // File selection feedback provided by FileList component rendering

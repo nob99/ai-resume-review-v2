@@ -86,7 +86,7 @@ const FileList: React.FC<FileListProps> = ({
               {file.status === FileUploadStatus.UPLOADING && (
                 <Button
                   size="sm"
-                  variant="secondary"
+                  variant="outline"
                   onClick={() => onCancelFile(file.id)}
                   onKeyDown={(e) => handleKeyDown(e, file.id, 'cancel')}
                   aria-label={`Cancel upload of ${file.file.name}`}
@@ -111,7 +111,7 @@ const FileList: React.FC<FileListProps> = ({
               {[FileUploadStatus.PENDING, FileUploadStatus.ERROR, FileUploadStatus.CANCELLED].includes(file.status) && (
                 <Button
                   size="sm"
-                  variant="secondary"
+                  variant="outline"
                   onClick={() => onRemoveFile(file.id)}
                   onKeyDown={(e) => handleKeyDown(e, file.id, 'remove')}
                   aria-label={`Remove ${file.file.name} from list`}
