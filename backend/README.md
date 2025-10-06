@@ -42,44 +42,41 @@ docker-compose up --build
 ```
 backend/
 ├── app/                          # Main application code
-│   ├── ai_agents/               # AI agents system (LangChain/LangGraph)
-│   │   ├── interface.py         # Agent interface definitions
-│   │   ├── legacy_adapter.py    # Legacy compatibility
-│   │   ├── prompts/             # Database-driven prompt management
-│   │   │   ├── loader.py        # Prompt loading system
-│   │   │   ├── versioning.py    # Prompt version management
-│   │   │   └── templates/       # Prompt templates
-│   │   └── tests/               # AI agent tests
-│   ├── features/                # Feature-based architecture
-│   │   └── auth/                # Authentication feature
-│   │       ├── api.py           # Auth API endpoints
-│   │       ├── models.py        # Auth database models
-│   │       ├── repository.py    # Data access layer
-│   │       ├── schemas.py       # Pydantic schemas
-│   │       ├── service.py       # Business logic
-│   │       └── tests/           # Feature-specific tests
-│   ├── infrastructure/          # Infrastructure layer
-│   │   ├── persistence/         # Database abstractions
-│   │   │   ├── postgres/        # PostgreSQL implementation
-│   │   │   └── redis/           # Redis cache implementation
-│   │   └── storage/             # File storage abstractions
-│   ├── services/                # Application services
-│   │   └── analysis_service.py  # Resume analysis service
-│   ├── core/                    # Core utilities
+│   ├── features/                # Feature-based architecture (vertical slices)
+│   │   ├── auth/                # Authentication feature
+│   │   │   ├── api.py           # HTTP endpoints
+│   │   │   ├── repository.py    # Data access layer
+│   │   │   ├── schemas.py       # Pydantic request/response models
+│   │   │   ├── service.py       # Business logic
+│   │   │   └── tests/           # Feature-specific tests
+│   │   ├── admin/               # Admin management feature
+│   │   ├── candidate/           # Candidate management feature
+│   │   ├── profile/             # User profile feature
+│   │   ├── resume_upload/       # Resume upload feature
+│   │   └── resume_analysis/     # Resume analysis feature
+│   ├── core/                    # Shared infrastructure utilities
+│   │   ├── database/            # Database connection & base repository
+│   │   ├── cache/               # Redis connection & cache service
 │   │   ├── config.py            # Configuration management
 │   │   ├── datetime_utils.py    # UTC datetime handling
 │   │   ├── rate_limiter.py      # Distributed rate limiting
-│   │   └── security.py          # Security utilities
-│   ├── database/                # Legacy database connections
-│   ├── archive/                 # Archived legacy code
+│   │   ├── security.py          # Security utilities
+│   │   └── dependencies.py      # FastAPI dependencies
 │   └── main.py                  # FastAPI application entry point
+├── ai_agents/                   # AI agents system (LangChain/LangGraph)
+│   ├── agents/                  # Agent implementations
+│   ├── config/                  # Industry configurations
+│   ├── prompts/                 # Prompt templates & management
+│   ├── services/                # Agent orchestration services
+│   ├── workflows/               # LangGraph workflows
+│   └── tests/                   # AI agent tests
 ├── scripts/                     # Utility scripts
-├── requirements.txt             # Python dependencies (51 packages)
-├── pytest.ini                  # Test configuration
+├── requirements.txt             # Python dependencies
+├── pytest.ini                   # Test configuration
 ├── Dockerfile                   # Container definition
 ├── docker-entrypoint.sh         # Container startup script
 ├── .env.example                 # Environment template
-└── run_tests.py                 # Test runner script
+└── README-CONFIG.md             # Configuration documentation
 ```
 
 ## 📚 Documentation
