@@ -30,26 +30,19 @@ export function useUploadFlow() {
   const handleStartAnalysis = useCallback(async () => {
     const resumeId = fileUpload.computed.successFiles[0]?.result?.id
 
+    // Defensive checks - UI should prevent these, but guard against edge cases
     if (!resumeId) {
-      addToast({
-        variant: 'error',
-        title: 'No Resume',
-        message: 'Please upload a resume first'
-      })
+      console.error('Analysis attempted without resume upload')
       return
     }
 
     if (!selectedIndustry) {
-      addToast({
-        variant: 'error',
-        title: 'Industry Required',
-        message: 'Please select an industry for analysis'
-      })
+      console.error('Analysis attempted without industry selection')
       return
     }
 
     await analysisPoll.actions.startAnalysis(resumeId, selectedIndustry)
-  }, [fileUpload.computed.successFiles, selectedIndustry, analysisPoll.actions, addToast])
+  }, [fileUpload.computed.successFiles, selectedIndustry, analysisPoll.actions])
 
   const handleAnalyzeAgain = useCallback(() => {
     analysisPoll.actions.resetAnalysis()
