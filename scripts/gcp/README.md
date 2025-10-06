@@ -36,10 +36,10 @@ Create fresh v2 infrastructure:
 ```
 
 **What it creates:**
-- ✅ Service Accounts:
-  - `ai-resume-review-v2-backend-prod@ytgrs-464303.iam.gserviceaccount.com`
-  - `ai-resume-review-v2-frontend-prod@ytgrs-464303.iam.gserviceaccount.com`
-  - `ai-resume-review-v2-github-actions@ytgrs-464303.iam.gserviceaccount.com`
+- ✅ Service Accounts (shortened due to GCP 30-char limit):
+  - `arr-v2-backend-prod@ytgrs-464303.iam.gserviceaccount.com`
+  - `arr-v2-frontend-prod@ytgrs-464303.iam.gserviceaccount.com`
+  - `arr-v2-github-actions@ytgrs-464303.iam.gserviceaccount.com`
 
 - ✅ IAM Roles:
   - Backend: Cloud SQL Client, Secret Accessor, Log Writer
@@ -114,13 +114,16 @@ After setup completes:
 
 ### Resource Naming Convention (v2)
 
-All resources follow the pattern: `ai-resume-review-v2-{component}-{env}`
+**Service Accounts** (shortened to "arr-v2-*" due to GCP 30-char limit):
+- `arr-v2-backend-prod`
+- `arr-v2-frontend-prod`
+- `arr-v2-github-actions`
 
-**Examples**:
-- Service Account: `ai-resume-review-v2-backend-prod`
+**Other Resources** (full naming):
 - Cloud Run: `ai-resume-review-v2-backend-prod` (to be created later)
 - Cloud SQL: `ai-resume-review-v2-db-prod` (to be created later)
 - Artifact Registry: `ai-resume-review-v2`
+- VPC: `ai-resume-review-v2-vpc`
 
 ### Project Configuration
 
@@ -145,15 +148,15 @@ All resources follow the pattern: `ai-resume-review-v2-{component}-{env}`
 
 ### Service Account Permissions
 
-**Backend Service Account** (`ai-resume-review-v2-backend-prod`):
+**Backend Service Account** (`arr-v2-backend-prod`):
 - `roles/cloudsql.client` - Connect to Cloud SQL
 - `roles/secretmanager.secretAccessor` - Read secrets
 - `roles/logging.logWriter` - Write logs
 
-**Frontend Service Account** (`ai-resume-review-v2-frontend-prod`):
+**Frontend Service Account** (`arr-v2-frontend-prod`):
 - `roles/logging.logWriter` - Write logs
 
-**GitHub Actions Service Account** (`ai-resume-review-v2-github-actions`):
+**GitHub Actions Service Account** (`arr-v2-github-actions`):
 - `roles/run.admin` - Deploy Cloud Run services
 - `roles/iam.serviceAccountUser` - Use service accounts
 - `roles/artifactregistry.writer` - Push Docker images
@@ -208,7 +211,7 @@ After running setup, validate manually:
 
 ```bash
 # Check service accounts
-gcloud iam service-accounts list | grep "ai-resume-review-v2"
+gcloud iam service-accounts list | grep "arr-v2"
 
 # Check Artifact Registry
 gcloud artifacts repositories list --location=us-central1
@@ -220,7 +223,7 @@ gcloud compute networks subnets list --network=ai-resume-review-v2-vpc
 # Check IAM roles (example for backend SA)
 gcloud projects get-iam-policy ytgrs-464303 \
   --flatten="bindings[].members" \
-  --filter="bindings.members:ai-resume-review-v2-backend-prod@ytgrs-464303.iam.gserviceaccount.com"
+  --filter="bindings.members:arr-v2-backend-prod@ytgrs-464303.iam.gserviceaccount.com"
 ```
 
 ---

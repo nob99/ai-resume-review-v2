@@ -39,9 +39,10 @@ REGION="us-central1"
 VPC_SUBNET_CIDR="10.0.0.0/24"
 
 # Resource naming (v2 convention)
-BACKEND_SA="ai-resume-review-v2-backend-prod"
-FRONTEND_SA="ai-resume-review-v2-frontend-prod"
-GITHUB_SA="ai-resume-review-v2-github-actions"
+# Note: Service account names must be 6-30 chars (GCP limitation)
+BACKEND_SA="arr-v2-backend-prod"
+FRONTEND_SA="arr-v2-frontend-prod"
+GITHUB_SA="arr-v2-github-actions"
 ARTIFACT_REPO="ai-resume-review-v2"
 VPC_NETWORK="ai-resume-review-v2-vpc"
 VPC_SUBNET="ai-resume-review-v2-subnet"
