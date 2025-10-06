@@ -56,8 +56,8 @@ export default function AnalysisTimer({
   }
 
   // Show warning if taking too long
-  const isSlowWarning = isAnalyzing && timeInSeconds > 120 // 2 minutes
-  const isCriticalWarning = isAnalyzing && timeInSeconds > 180 // 3 minutes
+  const isSlowWarning = isAnalyzing && timeInSeconds > 300 // 5 minutes
+  const isCriticalWarning = isAnalyzing && timeInSeconds > 420 // 7 minutes
 
   if (isSlowWarning) {
     statusMessage = '通常より時間がかかっています... / Taking longer than usual...'
@@ -67,7 +67,7 @@ export default function AnalysisTimer({
   }
 
   if (isCriticalWarning) {
-    statusMessage = 'エラーの可能性があります / Something might be wrong'
+    statusMessage = 'エラーの可能性があります。システム管理者にお問い合わせください / Something might be wrong. Please contact system administrator'
     statusColor = 'text-red-600'
     bgColor = 'bg-red-50'
     borderColor = 'border-red-200'
@@ -89,9 +89,14 @@ export default function AnalysisTimer({
           <span className={`text-sm font-medium ${statusColor}`}>
             {statusMessage}
           </span>
-          {isSlowWarning && (
+          {isSlowWarning && !isCriticalWarning && (
             <span className="text-xs text-neutral-500 mt-1">
-              通常は1-2分で完了します / Usually completes in 1-2 minutes
+              通常は3-5分で完了します / Usually completes in 3-5 minutes
+            </span>
+          )}
+          {isCriticalWarning && (
+            <span className="text-xs text-neutral-500 mt-1">
+              7分以上経過しています / Over 7 minutes elapsed
             </span>
           )}
         </div>
