@@ -81,30 +81,44 @@ mypy app           # Type checking
 
 ```
 /
-├── frontend/       # Next.js TypeScript app
+├── frontend/           # Next.js TypeScript app
 │   ├── src/
-│   │   ├── app/    # App router pages
-│   │   ├── components/  # React components
-│   │   ├── contexts/    # React contexts
-│   │   ├── hooks/       # Custom hooks
-│   │   └── lib/         # Utilities and API
-│   └── tests/      # Jest tests mirroring src structure
-├── backend/        # FastAPI Python API
+│   │   ├── app/        # App router pages
+│   │   ├── components/ # Shared React components
+│   │   ├── contexts/   # React contexts (Auth, etc.)
+│   │   ├── features/   # Feature-specific components
+│   │   ├── lib/        # Utilities and API client
+│   │   └── types/      # TypeScript type definitions
+│   └── __tests__/      # Jest tests mirroring src structure
+├── backend/            # FastAPI Python API
 │   ├── app/
-│   │   ├── core/   # Core utilities (config, security, database, cache)
+│   │   ├── core/       # Core utilities (config, security, database, cache)
 │   │   │   ├── database/  # Database connection & BaseRepository
 │   │   │   └── cache/     # Redis connection & cache service
-│   │   └── features/  # Feature modules (auth, candidate, resume_upload, etc.)
+│   │   └── features/   # Feature modules
 │   │       └── feature_name/
 │   │           ├── api.py         # HTTP endpoints
 │   │           ├── service.py     # Business logic (optional)
 │   │           ├── repository.py  # Database operations
 │   │           ├── schemas.py     # Pydantic models
 │   │           └── tests/         # Feature tests
-│   └── ai_agents/  # LangChain/LangGraph AI agents
-├── database/       # Migrations and scripts
-├── infrastructure/ # Terraform GCP setup
-└── scripts/        # Development utilities
+│   └── ai_agents/      # LangChain/LangGraph AI agents
+│       ├── agents/     # Agent implementations (base, structure, appeal)
+│       ├── config/     # Industry configurations
+│       ├── prompts/    # Prompt templates
+│       ├── services/   # Agent orchestration services
+│       ├── utils/      # Utilities for agents
+│       ├── workflows/  # LangGraph workflows
+│       └── tests/      # Agent tests
+├── database/           # Database layer
+│   ├── models/         # SQLAlchemy models
+│   ├── migrations/     # Alembic migrations
+│   ├── docs/           # Schema documentation
+│   ├── scripts/        # Database scripts
+│   └── tests/          # Database tests
+├── scripts/            # Development utilities (docker-dev.sh, etc.)
+├── knowledge/          # Product management docs and backlogs
+└── archive/            # Archived documents and old implementations
 ```
 
 ## AI Agent System
@@ -118,11 +132,7 @@ Prompts are database-driven for easy updates without code changes.
 
 ## Current Sprint Status
 
-**Sprint 003** (Sep 2-15, 2025): File Upload Pipeline
-- UPLOAD-001: File upload interface ✅
-- UPLOAD-002: File validation 🔄
-- UPLOAD-003: Text extraction 🔄
-- UPLOAD-004: Progress feedback 🔄
+See `knowledge/backlog/` for current sprint status, user stories, and sprint backlogs.
 
 ## Testing Standards
 
