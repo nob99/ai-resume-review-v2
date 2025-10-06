@@ -659,11 +659,11 @@ class AnalysisService:
             AnalysisValidationException: If industry mapping not found
         """
         industry_mapping = {
-            Industry.STRATEGY_TECH: "tech_consulting",
-            Industry.MA_FINANCIAL: "finance_banking",
-            Industry.CONSULTING: "strategy_consulting",
-            Industry.SYSTEM_INTEGRATOR: "system_integrator",
-            Industry.GENERAL: "general_business"
+            Industry.STRATEGY_CONSULTING: "strategy_consulting",
+            Industry.MA_FINANCE: "ma_finance",
+            Industry.TECH_CONSULTING: "tech_consulting",
+            Industry.FULL_SERVICE_CONSULTING: "full_service_consulting",
+            Industry.SYSTEM_INTEGRATOR: "system_integrator"
         }
 
         ai_industry = industry_mapping.get(db_industry)
@@ -686,11 +686,11 @@ class AnalysisService:
             AnalysisValidationException: If industry mapping not found
         """
         reverse_mapping = {
-            "tech_consulting": Industry.STRATEGY_TECH,
-            "finance_banking": Industry.MA_FINANCIAL,
-            "strategy_consulting": Industry.CONSULTING,
-            "system_integrator": Industry.SYSTEM_INTEGRATOR,
-            "general_business": Industry.GENERAL
+            "strategy_consulting": Industry.STRATEGY_CONSULTING,
+            "ma_finance": Industry.MA_FINANCE,
+            "tech_consulting": Industry.TECH_CONSULTING,
+            "full_service_consulting": Industry.FULL_SERVICE_CONSULTING,
+            "system_integrator": Industry.SYSTEM_INTEGRATOR
         }
 
         db_industry = reverse_mapping.get(ai_industry)
@@ -717,9 +717,9 @@ class AnalysisService:
     def get_supported_industries(self) -> list[Industry]:
         """Get list of supported industries."""
         return [
-            Industry.STRATEGY_TECH,
-            Industry.MA_FINANCIAL,
-            Industry.CONSULTING,
-            Industry.SYSTEM_INTEGRATOR,
-            Industry.GENERAL
+            Industry.STRATEGY_CONSULTING,
+            Industry.MA_FINANCE,
+            Industry.TECH_CONSULTING,
+            Industry.FULL_SERVICE_CONSULTING,
+            Industry.SYSTEM_INTEGRATOR
         ]

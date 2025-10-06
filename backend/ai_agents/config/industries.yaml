@@ -3,6 +3,52 @@
 # V1.1: Added appeal_points for industry-specific analysis
 
 industries:
+  strategy_consulting:
+    display_name: "Strategy Consulting"
+    key_skills:
+      - Strategic Analysis
+      - Market Research
+      - Business Modeling
+      - PowerPoint
+      - Excel
+      - Client Management
+    appeal_points:
+      - name: "CXO Communication"
+        description: "Experience communicating with C-level executives"
+        keywords: ["CXO", "CEO", "CFO", "COO", "経営層", "役員", "executive", "board"]
+      - name: "Big Transformation Lead"
+        description: "Led large-scale organizational transformations"
+        keywords: ["transformation", "変革", "組織改革", "large-scale", "大規模", "restructuring"]
+      - name: "Problem-Solving Framework"
+        description: "Applied structured problem-solving frameworks"
+        keywords: ["framework", "フレームワーク", "MECE", "ロジックツリー", "hypothesis", "issue tree"]
+      - name: "Quantitative Impact"
+        description: "Demonstrated measurable business impact with metrics"
+        keywords: ["revenue", "profit", "market share", "売上", "利益", "シェア", "billion", "億円", "%"]
+
+  ma_finance:
+    display_name: "M&A & Financial Advisory"
+    key_skills:
+      - Financial Modeling
+      - M&A Analysis
+      - Due Diligence
+      - Valuation
+      - Deal Execution
+      - Excel
+    appeal_points:
+      - name: "Deal Execution"
+        description: "Experience executing financial transactions or deals"
+        keywords: ["M&A", "IPO", "deal", "transaction", "案件", "ディール"]
+      - name: "Quantitative Analysis"
+        description: "Strong quantitative modeling and analysis skills"
+        keywords: ["modeling", "valuation", "DCF", "モデリング", "評価", "分析"]
+      - name: "Regulatory Expertise"
+        description: "Knowledge of financial regulations and compliance"
+        keywords: ["regulation", "compliance", "規制", "コンプライアンス", "Basel", "IFRS"]
+      - name: "Quantitative Impact"
+        description: "Demonstrated measurable business impact with metrics"
+        keywords: ["revenue", "AUM", "cost reduction", "売上", "削減", "billion", "億円", "%"]
+
   tech_consulting:
     display_name: "Technology Consulting"
     key_skills:
@@ -26,52 +72,6 @@ industries:
         description: "Demonstrated measurable technical impact with metrics"
         keywords: ["performance", "cost reduction", "パフォーマンス", "コスト削減", "%", "improvement"]
 
-  finance_banking:
-    display_name: "Finance & Banking"
-    key_skills:
-      - Financial Modeling
-      - Risk Management
-      - Regulatory Compliance
-      - Bloomberg
-      - Excel
-      - VBA
-    appeal_points:
-      - name: "Deal Execution"
-        description: "Experience executing financial transactions or deals"
-        keywords: ["M&A", "IPO", "deal", "transaction", "案件", "ディール"]
-      - name: "Quantitative Analysis"
-        description: "Strong quantitative modeling and analysis skills"
-        keywords: ["modeling", "valuation", "DCF", "モデリング", "評価", "分析"]
-      - name: "Regulatory Expertise"
-        description: "Knowledge of financial regulations and compliance"
-        keywords: ["regulation", "compliance", "規制", "コンプライアンス", "Basel", "IFRS"]
-      - name: "Quantitative Impact"
-        description: "Demonstrated measurable business impact with metrics"
-        keywords: ["revenue", "AUM", "cost reduction", "売上", "削減", "billion", "億円", "%"]
-
-  general_business:
-    display_name: "General Business"
-    key_skills:
-      - Project Management
-      - Strategic Planning
-      - Data Analysis
-      - Leadership
-      - Communication
-      - Problem Solving
-    appeal_points:
-      - name: "Leadership Experience"
-        description: "Led teams or managed people"
-        keywords: ["team lead", "manager", "チームリード", "マネージャー", "supervised", "managed"]
-      - name: "Cross-functional Collaboration"
-        description: "Worked across departments or functions"
-        keywords: ["cross-functional", "collaboration", "部門横断", "連携", "stakeholder"]
-      - name: "Process Improvement"
-        description: "Improved business processes or operations"
-        keywords: ["process improvement", "optimization", "efficiency", "プロセス改善", "効率化", "最適化"]
-      - name: "Quantitative Impact"
-        description: "Demonstrated measurable business results"
-        keywords: ["revenue", "cost", "productivity", "売上", "コスト", "生産性", "%", "improvement"]
-
   system_integrator:
     display_name: "Systems Integration"
     key_skills:
@@ -94,29 +94,6 @@ industries:
       - name: "Quantitative Impact"
         description: "Demonstrated measurable project outcomes"
         keywords: ["performance", "uptime", "cost reduction", "パフォーマンス", "稼働率", "削減", "%"]
-
-  strategy_consulting:
-    display_name: "Strategy Consulting"
-    key_skills:
-      - Strategic Analysis
-      - Market Research
-      - Business Modeling
-      - PowerPoint
-      - Excel
-      - Client Management
-    appeal_points:
-      - name: "CXO Communication"
-        description: "Experience communicating with C-level executives"
-        keywords: ["CXO", "CEO", "CFO", "COO", "経営層", "役員", "executive", "board"]
-      - name: "Big Transformation Lead"
-        description: "Led large-scale organizational transformations"
-        keywords: ["transformation", "変革", "組織改革", "large-scale", "大規模", "restructuring"]
-      - name: "Problem-Solving Framework"
-        description: "Applied structured problem-solving frameworks"
-        keywords: ["framework", "フレームワーク", "MECE", "ロジックツリー", "hypothesis", "issue tree"]
-      - name: "Quantitative Impact"
-        description: "Demonstrated measurable business impact with metrics"
-        keywords: ["revenue", "profit", "market share", "売上", "利益", "シェア", "billion", "億円", "%"]
 
   full_service_consulting:
     display_name: "Full Service Consulting"
