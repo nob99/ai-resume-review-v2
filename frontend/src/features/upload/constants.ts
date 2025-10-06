@@ -4,7 +4,7 @@
  */
 
 // File validation constants
-export const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+export const MAX_FILE_SIZE = 30 * 1024 * 1024 // 30MB
 export const MIN_FILE_SIZE = 1024 // 1KB
 export const MAX_FILES_PER_UPLOAD = 5
 

@@ -41,7 +41,7 @@ const UploadPage: React.FC = () => {
               レジュメのアップロード&AI分析
             </h1>
             <p className="text-lg text-neutral-600">
-              レジュメファイルをアップロードして、AI分析を開始しましょう。PDF及びWordドキュメント（各10MBまで）に対応しています
+              レジュメファイルをアップロードして、AI分析を開始しましょう。PDF及びWordドキュメント（各30MBまで）に対応しています
             </p>
           </div>
 
