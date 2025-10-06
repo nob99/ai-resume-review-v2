@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react'
-import { useToast } from '@/components/ui'
 import { UploadPageState, FileUploadHandlers, AnalysisHandlers } from '../types'
 import useFileUpload from './useFileUpload'
 import useAnalysisPoll from './useAnalysisPoll'
@@ -7,23 +6,17 @@ import useAnalysisPoll from './useAnalysisPoll'
 /**
  * Custom hook for managing complete upload and analysis flow
  * Orchestrates file upload and analysis polling
+ *
+ * Note: Toast notifications removed from upload workflow.
+ * UI feedback provided by file status badges, progress bars, and inline errors.
  */
 export function useUploadFlow() {
-  const { addToast } = useToast()
-
   // Page-level state
   const [selectedCandidate, setSelectedCandidate] = useState<string>('')
   const [selectedIndustry, setSelectedIndustry] = useState<string>('')
 
-  // Toast helper functions
-  const toastHelpers = {
-    success: (title: string, message: string) => addToast({ variant: 'success', title, message }),
-    error: (title: string, message: string) => addToast({ variant: 'error', title, message }),
-    warning: (title: string, message: string) => addToast({ variant: 'warning', title, message })
-  }
-
   // Delegate to specialized hooks
-  const fileUpload = useFileUpload(selectedCandidate, toastHelpers)
+  const fileUpload = useFileUpload(selectedCandidate)
   const analysisPoll = useAnalysisPoll()
 
   // Coordinated analysis actions

@@ -35,21 +35,16 @@ export interface ComputedFileArrays {
 }
 
 /**
- * Toast notification functions
- */
-interface ToastFunctions {
-  success: (title: string, message: string) => void
-  error: (title: string, message: string) => void
-  warning: (title: string, message: string) => void
-}
-
-/**
  * Custom hook for managing file upload operations
  * Handles file selection, upload progress, cancellation, and retry
+ *
+ * Note: Toast notifications removed - UI feedback provided by:
+ * - FileList component (file selection, inline errors)
+ * - FileStatusBadge component (upload status)
+ * - Progress bars (upload completion)
  */
 export function useFileUpload(
-  candidateId: string,
-  toast: ToastFunctions
+  candidateId: string
 ): {
   state: FileUploadState
   actions: FileUploadActions
