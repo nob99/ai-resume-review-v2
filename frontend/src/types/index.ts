@@ -178,6 +178,15 @@ export interface UploadStatusResponse {
 }
 
 // AI Analysis Types
+
+// V1.1: Specific feedback item with detailed context
+export interface SpecificFeedbackItem {
+  category: 'grammar' | 'structure' | 'scr_framework' | 'quantitative_impact' | 'appeal_point'
+  target_text: string | null
+  issue: string
+  suggestion: string
+}
+
 export interface StructureScores {
   format: number
   organization: number
@@ -193,18 +202,29 @@ export interface AppealScores {
 }
 
 export interface StructureFeedback {
-  issues: string[]
-  recommendations: string[]
-  missing_sections: string[]
+  // V1.1: Two-level feedback
   strengths: string[]
+  improvement_areas: string[]
+  specific_feedback: SpecificFeedbackItem[]
+
+  // V1.0: Deprecated but kept for backward compatibility
+  issues?: string[]
+  recommendations?: string[]
+  missing_sections?: string[]
+  tone_problems?: string[]
 }
 
 export interface AppealFeedback {
-  relevant_achievements: string[]
-  missing_skills: string[]
-  competitive_advantages: string[]
+  // V1.1: Two-level feedback
+  strengths: string[]
   improvement_areas: string[]
-  transferable_experience: string[]
+  specific_feedback: SpecificFeedbackItem[]
+
+  // V1.0: Deprecated but kept for backward compatibility
+  relevant_achievements?: string[]
+  missing_skills?: string[]
+  competitive_advantages?: string[]
+  transferable_experience?: string[]
 }
 
 export interface StructureAnalysis {

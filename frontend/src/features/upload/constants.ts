@@ -4,7 +4,7 @@
  */
 
 // File validation constants
-export const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+export const MAX_FILE_SIZE = 30 * 1024 * 1024 // 30MB
 export const MIN_FILE_SIZE = 1024 // 1KB
 export const MAX_FILES_PER_UPLOAD = 5
 
@@ -19,11 +19,11 @@ export const ACCEPTED_TYPE_LABELS = ['PDF', 'DOC', 'DOCX'] as const
 
 // Industry options
 export const INDUSTRY_OPTIONS = [
-  { value: 'strategy_tech', label: 'Strategy/Tech' },
-  { value: 'ma_financial', label: 'M&A/Financial Advisory' },
-  { value: 'consulting', label: 'Full Service Consulting' },
-  { value: 'system_integrator', label: 'System Integrator' },
-  { value: 'general', label: 'General' }
+  { value: 'strategy_consulting', label: '戦略コンサルティング' },
+  { value: 'ma_finance', label: 'M&A/ファイナンシャルアドバイザリー' },
+  { value: 'tech_consulting', label: 'テクノロジーコンサルティング' },
+  { value: 'full_service_consulting', label: '総合コンサルティング' },
+  { value: 'system_integrator', label: 'システムインテグレーター' }
 ] as const
 
 // Polling configuration

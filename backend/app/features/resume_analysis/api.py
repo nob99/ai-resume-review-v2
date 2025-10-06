@@ -117,7 +117,15 @@ async def get_analysis_status(
     Frontend should poll this every 2-3 seconds until status is 'completed'.
     """
 
-    status_result = await service.get_analysis_status(analysis_id, current_user.id)
+    try:
+        status_result = await service.get_analysis_status(
+            request_id=analysis_id,
+            user_id=current_user.id,
+            user_role=current_user.role
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
     if not status_result:
         raise HTTPException(status_code=404, detail="Analysis not found or not accessible")
 
@@ -166,7 +174,15 @@ async def get_analysis_result(
 ) -> AnalysisResult:
     """Get detailed analysis results by ID (only for completed analyses)."""
 
-    result = await service.get_analysis_result(analysis_id, current_user.id)
+    try:
+        result = await service.get_analysis_result(
+            request_id=analysis_id,
+            user_id=current_user.id,
+            user_role=current_user.role
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
     if not result:
         raise HTTPException(status_code=404, detail="Analysis not found or not accessible")
 
@@ -236,12 +252,13 @@ async def list_analyses(
     current_user: User = Depends(get_current_user),
     service: AnalysisService = Depends(get_analysis_service)
 ) -> AnalysisListResponse:
-    """List user's analyses with optional filtering and pagination."""
+    """List user's analyses with role-based filtering and pagination."""
 
     offset = (page - 1) * page_size
 
     result = await service.list_user_analyses(
         user_id=current_user.id,
+        user_role=current_user.role,
         limit=page_size,
         offset=offset,
         status=status,

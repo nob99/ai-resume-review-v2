@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react'
-import { useToast } from '@/components/ui'
 import { UploadPageState, FileUploadHandlers, AnalysisHandlers } from '../types'
 import useFileUpload from './useFileUpload'
 import useAnalysisPoll from './useAnalysisPoll'
@@ -7,49 +6,36 @@ import useAnalysisPoll from './useAnalysisPoll'
 /**
  * Custom hook for managing complete upload and analysis flow
  * Orchestrates file upload and analysis polling
+ *
+ * Note: Toast notifications removed from upload workflow.
+ * UI feedback provided by file status badges, progress bars, and inline errors.
  */
 export function useUploadFlow() {
-  const { addToast } = useToast()
-
   // Page-level state
   const [selectedCandidate, setSelectedCandidate] = useState<string>('')
   const [selectedIndustry, setSelectedIndustry] = useState<string>('')
 
-  // Toast helper functions
-  const toastHelpers = {
-    success: (title: string, message: string) => addToast({ variant: 'success', title, message }),
-    error: (title: string, message: string) => addToast({ variant: 'error', title, message }),
-    warning: (title: string, message: string) => addToast({ variant: 'warning', title, message })
-  }
-
   // Delegate to specialized hooks
-  const fileUpload = useFileUpload(selectedCandidate, toastHelpers)
+  const fileUpload = useFileUpload(selectedCandidate)
   const analysisPoll = useAnalysisPoll()
 
   // Coordinated analysis actions
   const handleStartAnalysis = useCallback(async () => {
     const resumeId = fileUpload.computed.successFiles[0]?.result?.id
 
+    // Defensive checks - UI should prevent these, but guard against edge cases
     if (!resumeId) {
-      addToast({
-        variant: 'error',
-        title: 'No Resume',
-        message: 'Please upload a resume first'
-      })
+      console.error('Analysis attempted without resume upload')
       return
     }
 
     if (!selectedIndustry) {
-      addToast({
-        variant: 'error',
-        title: 'Industry Required',
-        message: 'Please select an industry for analysis'
-      })
+      console.error('Analysis attempted without industry selection')
       return
     }
 
     await analysisPoll.actions.startAnalysis(resumeId, selectedIndustry)
-  }, [fileUpload.computed.successFiles, selectedIndustry, analysisPoll.actions, addToast])
+  }, [fileUpload.computed.successFiles, selectedIndustry, analysisPoll.actions])
 
   const handleAnalyzeAgain = useCallback(() => {
     analysisPoll.actions.resetAnalysis()

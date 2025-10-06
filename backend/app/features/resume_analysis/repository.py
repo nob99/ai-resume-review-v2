@@ -308,13 +308,52 @@ class AnalysisRepository:
         return result
 
     async def get_analysis_with_results(self, request_id: uuid.UUID) -> Optional[Tuple[ReviewRequest, Optional[ReviewResult]]]:
-        """Get complete analysis data"""
+        """Get complete analysis data (internal use only - no access control)"""
         request = await self.request_repo.get_by_id(request_id)
         if not request:
             return None
 
         result = await self.result_repo.get_by_request_id(request_id)
         return (request, result)
+
+    async def get_analysis_for_user(
+        self,
+        analysis_id: uuid.UUID,
+        user_id: uuid.UUID,
+        user_role: str
+    ) -> Optional[Tuple[ReviewRequest, Optional[ReviewResult]]]:
+        """
+        Get analysis with role-based access control.
+
+        Access Rules (MVP - Approach 1):
+        - Admin: All analyses
+        - Senior: All analyses
+        - Junior: Own analyses only
+
+        Args:
+            analysis_id: Analysis request ID
+            user_id: Current user ID
+            user_role: User role ('admin', 'senior_recruiter', 'junior_recruiter')
+
+        Returns:
+            Tuple of (ReviewRequest, ReviewResult) or None if access denied
+        """
+        # Get the analysis
+        analysis_data = await self.get_analysis_with_results(analysis_id)
+        if not analysis_data:
+            return None
+
+        request, result = analysis_data
+
+        # Admin and Senior see everything (MVP approach)
+        if user_role in ['admin', 'senior_recruiter']:
+            return analysis_data
+
+        # Junior sees only own analyses
+        if request.requested_by_user_id == user_id:
+            return analysis_data
+
+        return None  # Access denied
 
     async def update_request_status(
         self,
@@ -342,7 +381,7 @@ class AnalysisRepository:
         limit: int = 10,
         offset: int = 0
     ) -> List[ReviewRequest]:
-        """Get user's analysis requests"""
+        """Get user's analysis requests (deprecated - use list_analyses_for_user)"""
         return await self.request_repo.get_by_user(
             user_id=user_id,
             status=status,
@@ -359,13 +398,120 @@ class AnalysisRepository:
         industry: Optional[str] = None,
         candidate_id: Optional[uuid.UUID] = None
     ) -> int:
-        """Count user's analysis requests"""
+        """Count user's analysis requests (deprecated - use count_analyses_for_user)"""
         return await self.request_repo.count_by_user(
             user_id=user_id,
             status=status,
             industry=industry,
             candidate_id=candidate_id
         )
+
+    async def list_analyses_for_user(
+        self,
+        user_id: uuid.UUID,
+        user_role: str,
+        limit: int = 10,
+        offset: int = 0,
+        status: Optional[str] = None,
+        industry: Optional[str] = None,
+        candidate_id: Optional[uuid.UUID] = None
+    ) -> List[ReviewRequest]:
+        """
+        List analyses with role-based filtering.
+
+        Access Rules (MVP - Approach 1):
+        - Admin: All analyses
+        - Senior: All analyses
+        - Junior: Own analyses only
+
+        Args:
+            user_id: Current user ID
+            user_role: User role
+            limit: Max results
+            offset: Pagination offset
+            status: Optional status filter
+            industry: Optional industry filter
+            candidate_id: Optional candidate filter
+
+        Returns:
+            List of ReviewRequest objects
+        """
+        from database.models import Resume
+
+        # Build base query based on role
+        if user_role in ['admin', 'senior_recruiter']:
+            # Admin and Senior see all analyses
+            query = select(ReviewRequest)
+        else:
+            # Junior sees only own analyses
+            query = select(ReviewRequest).where(
+                ReviewRequest.requested_by_user_id == user_id
+            )
+
+        # Apply optional filters
+        if status:
+            query = query.where(ReviewRequest.status == status)
+
+        if industry:
+            query = query.where(ReviewRequest.target_industry == industry)
+
+        if candidate_id:
+            query = query.join(Resume, ReviewRequest.resume_id == Resume.id)
+            query = query.where(Resume.candidate_id == candidate_id)
+
+        # Apply pagination and ordering
+        query = query.order_by(desc(ReviewRequest.requested_at))
+        query = query.offset(offset).limit(limit)
+
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
+
+    async def count_analyses_for_user(
+        self,
+        user_id: uuid.UUID,
+        user_role: str,
+        status: Optional[str] = None,
+        industry: Optional[str] = None,
+        candidate_id: Optional[uuid.UUID] = None
+    ) -> int:
+        """
+        Count analyses accessible to user.
+
+        Same access rules as list_analyses_for_user.
+
+        Args:
+            user_id: Current user ID
+            user_role: User role
+            status: Optional status filter
+            industry: Optional industry filter
+            candidate_id: Optional candidate filter
+
+        Returns:
+            Count of accessible analyses
+        """
+        from database.models import Resume
+
+        # Build base query based on role
+        if user_role in ['admin', 'senior_recruiter']:
+            query = select(func.count(ReviewRequest.id))
+        else:
+            query = select(func.count(ReviewRequest.id)).where(
+                ReviewRequest.requested_by_user_id == user_id
+            )
+
+        # Apply optional filters
+        if status:
+            query = query.where(ReviewRequest.status == status)
+
+        if industry:
+            query = query.where(ReviewRequest.target_industry == industry)
+
+        if candidate_id:
+            query = query.join(Resume, ReviewRequest.resume_id == Resume.id)
+            query = query.where(Resume.candidate_id == candidate_id)
+
+        result = await self.session.execute(query)
+        return result.scalar() or 0
 
     async def get_recent_analyses(
         self,

@@ -7,7 +7,6 @@ import { Card, CardHeader, CardContent, Button, CandidateSelector } from '@/comp
 import FileUpload from '@/features/upload/components/FileUpload'
 import FileList from '@/features/upload/components/FileList'
 import IndustrySelector from '@/features/upload/components/IndustrySelector'
-import UploadStats from '@/features/upload/components/UploadStats'
 import AnalysisResults from '@/features/upload/components/AnalysisResults'
 import useUploadFlow from '@/features/upload/hooks/useUploadFlow'
 import { INDUSTRY_OPTIONS } from '@/features/upload/types'
@@ -42,7 +41,7 @@ const UploadPage: React.FC = () => {
               レジュメのアップロード&AI分析
             </h1>
             <p className="text-lg text-neutral-600">
-              レジュメファイルをアップロードして、AI分析を開始しましょう。PDF及びWordドキュメント（各10MBまで）に対応しています
+              レジュメファイルをアップロードして、AI分析を開始しましょう。PDF及びWordドキュメント（各30MBまで）に対応しています
             </p>
           </div>
 
@@ -96,8 +95,8 @@ const UploadPage: React.FC = () => {
                     onFilesSelected={fileHandlers.onFilesSelected}
                     onError={fileHandlers.onUploadError}
                     disabled={state.isUploading || !state.selectedCandidate}
-                    multiple={true}
-                    maxFiles={5}
+                    multiple={false}
+                    maxFiles={1}
                   />
                   {!state.selectedCandidate && (
                     <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
@@ -192,14 +191,6 @@ const UploadPage: React.FC = () => {
                   elapsedTime={state.elapsedTime}
                 />
               )}
-
-            {/* Summary Stats */}
-            <UploadStats
-              files={state.files}
-              uploadingFiles={uploadingFiles}
-              successFiles={successFiles}
-              errorFiles={errorFiles}
-            />
           </div>
         </Container>
       </main>

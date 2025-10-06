@@ -13,50 +13,6 @@ class IndustryConfig(BaseModel):
 
 # Single source of truth for industry configurations
 INDUSTRY_CONFIGS: Dict[str, Dict[str, any]] = {
-    "tech_consulting": {
-        "display_name": "Technology Consulting",
-        "key_skills": [
-            "Python",
-            "JavaScript",
-            "Cloud Architecture",
-            "System Design",
-            "Agile",
-            "DevOps"
-        ]
-    },
-    "finance_banking": {
-        "display_name": "Finance & Banking",
-        "key_skills": [
-            "Financial Modeling",
-            "Risk Management",
-            "Regulatory Compliance",
-            "Bloomberg",
-            "Excel",
-            "VBA"
-        ]
-    },
-    "general_business": {
-        "display_name": "General Business",
-        "key_skills": [
-            "Project Management",
-            "Strategic Planning",
-            "Data Analysis",
-            "Leadership",
-            "Communication",
-            "Problem Solving"
-        ]
-    },
-    "system_integrator": {
-        "display_name": "Systems Integration",
-        "key_skills": [
-            "Systems Integration",
-            "Enterprise Architecture",
-            "API Development",
-            "Database Management",
-            "Testing",
-            "Implementation"
-        ]
-    },
     "strategy_consulting": {
         "display_name": "Strategy Consulting",
         "key_skills": [
@@ -68,6 +24,28 @@ INDUSTRY_CONFIGS: Dict[str, Dict[str, any]] = {
             "Client Management"
         ]
     },
+    "ma_finance": {
+        "display_name": "M&A & Financial Advisory",
+        "key_skills": [
+            "Financial Modeling",
+            "M&A Analysis",
+            "Due Diligence",
+            "Valuation",
+            "Deal Execution",
+            "Excel"
+        ]
+    },
+    "tech_consulting": {
+        "display_name": "Technology Consulting",
+        "key_skills": [
+            "Python",
+            "JavaScript",
+            "Cloud Architecture",
+            "System Design",
+            "Agile",
+            "DevOps"
+        ]
+    },
     "full_service_consulting": {
         "display_name": "Full Service Consulting",
         "key_skills": [
@@ -77,6 +55,17 @@ INDUSTRY_CONFIGS: Dict[str, Dict[str, any]] = {
             "Stakeholder Management",
             "Presentation",
             "Analytics"
+        ]
+    },
+    "system_integrator": {
+        "display_name": "Systems Integration",
+        "key_skills": [
+            "Systems Integration",
+            "Enterprise Architecture",
+            "API Development",
+            "Database Management",
+            "Testing",
+            "Implementation"
         ]
     }
 }
@@ -94,7 +83,9 @@ def get_industry_config(industry_code: str) -> Dict[str, any]:
     Raises:
         KeyError: If industry code is not found
     """
-    return INDUSTRY_CONFIGS.get(industry_code, INDUSTRY_CONFIGS["general_business"])
+    if industry_code not in INDUSTRY_CONFIGS:
+        raise KeyError(f"Industry code '{industry_code}' not found")
+    return INDUSTRY_CONFIGS[industry_code]
 
 
 def get_supported_industries() -> List[IndustryConfig]:

@@ -21,7 +21,7 @@ class StructureAgent(BaseAgent):
             agent_config: Optional AgentBehaviorConfig instance
         """
         super().__init__(api_key, agent_config)
-        self.prompt_template = self._load_prompt_template("structure_prompt_v1")
+        self.prompt_template = self._load_prompt_template("structure_prompt")
         self.parsing_config = self.prompt_template.get("parsing", {})
     
     async def analyze(self, state: Dict[str, Any]) -> Dict[str, Any]:

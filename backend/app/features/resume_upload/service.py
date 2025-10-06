@@ -29,7 +29,7 @@ class ResumeUploadService:
     """Service for handling resume uploads with candidate association and version management."""
     
     # Configuration
-    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+    MAX_FILE_SIZE = 30 * 1024 * 1024  # 30MB
     MIN_FILE_SIZE = 100  # 100 bytes
     ALLOWED_EXTENSIONS = {'.pdf', '.doc', '.docx', '.txt'}
     ALLOWED_MIME_TYPES = {

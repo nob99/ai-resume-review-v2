@@ -35,21 +35,16 @@ export interface ComputedFileArrays {
 }
 
 /**
- * Toast notification functions
- */
-interface ToastFunctions {
-  success: (title: string, message: string) => void
-  error: (title: string, message: string) => void
-  warning: (title: string, message: string) => void
-}
-
-/**
  * Custom hook for managing file upload operations
  * Handles file selection, upload progress, cancellation, and retry
+ *
+ * Note: Toast notifications removed - UI feedback provided by:
+ * - FileList component (file selection, inline errors)
+ * - FileStatusBadge component (upload status)
+ * - Progress bars (upload completion)
  */
 export function useFileUpload(
-  candidateId: string,
-  toast: ToastFunctions
+  candidateId: string
 ): {
   state: FileUploadState
   actions: FileUploadActions
@@ -78,21 +73,21 @@ export function useFileUpload(
       progress: 0
     }))
 
+    // Replace existing files (for single file upload)
     setState(prev => ({
       ...prev,
-      files: [...prev.files, ...newFiles]
+      files: newFiles
     }))
 
-    toast.success(
-      'Files Selected',
-      `${selectedFiles.length} file${selectedFiles.length !== 1 ? 's' : ''} added`
-    )
-  }, [generateFileId, toast])
+    // File selection feedback provided by FileList component rendering
+    // toast.success('Files Selected', `${selectedFiles.length} file${selectedFiles.length !== 1 ? 's' : ''} added`)
+  }, [generateFileId])
 
   // Handle upload errors
   const handleUploadError = useCallback((error: FileUploadError) => {
-    toast.error('Upload Error', error.message)
-  }, [toast])
+    // Error handling - UI feedback provided by FileUpload component
+    console.error('Upload error:', error.message)
+  }, [])
 
   // Upload a single file
   const uploadSingleFile = useCallback(async (uploadFile: UploadFile): Promise<void> => {
@@ -155,10 +150,8 @@ export function useFileUpload(
           )
         }))
 
-        toast.success(
-          'Upload Complete',
-          `${uploadFile.file.name} uploaded successfully`
-        )
+        // Upload success feedback provided by FileStatusBadge and progress bar
+        // toast.success('Upload Complete', `${uploadFile.file.name} uploaded successfully`)
       } else {
         throw result.error || new Error('Upload failed')
       }
@@ -196,21 +189,17 @@ export function useFileUpload(
           )
         }))
 
-        toast.error(
-          'Upload Failed',
-          `Failed to upload ${uploadFile.file.name}: ${errorMessage}`
-        )
+        // Upload error feedback provided by inline error message in FileList component
+        // toast.error('Upload Failed', `Failed to upload ${uploadFile.file.name}: ${errorMessage}`)
       }
     }
-  }, [candidateId, toast])
+  }, [candidateId])
 
   // Start uploading all pending files
   const handleStartUpload = useCallback(async () => {
+    // Defensive check - UI should prevent this, but guard against edge cases
     if (!candidateId) {
-      toast.error(
-        'Candidate Required',
-        'Please select a candidate before uploading files'
-      )
+      console.error('Upload attempted without candidate selection')
       return
     }
 
@@ -227,6 +216,11 @@ export function useFileUpload(
     } catch (error) {
       console.error('Batch upload error:', error)
     } finally {
+      // Simplified: Just update isUploading state
+      // File status badges and inline errors provide all necessary feedback
+      setState(prev => ({ ...prev, isUploading: false }))
+
+      /* OLD BATCH SUMMARY LOGIC (commented out - kept for reference):
       // Use ref object to capture counts from functional setState
       const countsRef = { successCount: 0, errorCount: 0 }
 
@@ -256,8 +250,9 @@ export function useFileUpload(
           `${errorCount} file${errorCount !== 1 ? 's' : ''} failed to upload. Please retry.`
         )
       }
+      */
     }
-  }, [candidateId, state.files, uploadSingleFile, toast])
+  }, [candidateId, state.files, uploadSingleFile])
 
   // File management handlers
   const handleRemoveFile = useCallback((fileId: string) => {

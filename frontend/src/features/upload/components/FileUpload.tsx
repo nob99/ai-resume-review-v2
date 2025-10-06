@@ -15,8 +15,8 @@ const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
     onError,
     acceptedTypes = ['pdf', 'doc', 'docx'],
     maxFileSize = MAX_FILE_SIZE,
-    maxFiles = 5,
-    multiple = true,
+    maxFiles = 1,
+    multiple = false,
     disabled = false,
     ...props
   }, ref) => {

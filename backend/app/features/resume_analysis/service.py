@@ -427,14 +427,22 @@ class AnalysisService:
             logger.error(f"Error requesting analysis: {str(e)}")
             raise AnalysisException(f"Failed to request analysis: {str(e)}")
 
-    async def get_analysis_status(self, request_id: uuid.UUID, user_id: uuid.UUID) -> AnalysisStatusResponse:
-        """Get analysis status with access control"""
-        # TODO: Implement access control - verify user owns this analysis request
-        # Should check: request.requested_by_user_id == user_id
+    async def get_analysis_status(
+        self,
+        request_id: uuid.UUID,
+        user_id: uuid.UUID,
+        user_role: str
+    ) -> AnalysisStatusResponse:
+        """Get analysis status with role-based access control"""
+        # Use new role-aware method
+        analysis_data = await self.repository.get_analysis_for_user(
+            analysis_id=request_id,
+            user_id=user_id,
+            user_role=user_role
+        )
 
-        analysis_data = await self.repository.get_analysis_with_results(request_id)
         if not analysis_data:
-            raise ValueError("Analysis not found")
+            raise ValueError("Analysis not found or access denied")
 
         request, result = analysis_data
 
@@ -462,21 +470,27 @@ class AnalysisService:
             "completed_at": request.completed_at
         }
 
-    async def get_analysis_result(self, request_id: uuid.UUID, user_id: uuid.UUID) -> AnalysisResult:
-        """Get detailed analysis results by ID (only for completed analyses)."""
-        logger.info(f"Getting analysis result for request {request_id}, user {user_id}")
+    async def get_analysis_result(
+        self,
+        request_id: uuid.UUID,
+        user_id: uuid.UUID,
+        user_role: str
+    ) -> AnalysisResult:
+        """Get detailed analysis results by ID with role-based access control."""
+        logger.info(f"Getting analysis result for request {request_id}, user {user_id}, role {user_role}")
 
         try:
-            # Get analysis data with access control
-            analysis_data = await self.repository.get_analysis_with_results(request_id)
+            # Use new role-aware method
+            analysis_data = await self.repository.get_analysis_for_user(
+                analysis_id=request_id,
+                user_id=user_id,
+                user_role=user_role
+            )
+
             if not analysis_data:
-                raise ValueError("Analysis not found")
+                raise ValueError("Analysis not found or access denied")
 
             request, result = analysis_data
-
-            # TODO: Add proper access control - verify user owns this analysis
-            # if request.requested_by_user_id != user_id:
-            #     raise ValueError("Access denied")
 
             if not result:
                 raise ValueError("Analysis results not available yet")
@@ -496,6 +510,8 @@ class AnalysisService:
                 completed_at=request.completed_at
             )
 
+        except ValueError:
+            raise
         except Exception as e:
             logger.error(f"Error getting analysis result: {str(e)}")
             raise AnalysisException(f"Failed to get analysis result: {str(e)}")
@@ -503,23 +519,25 @@ class AnalysisService:
     async def list_user_analyses(
         self,
         user_id: uuid.UUID,
+        user_role: str,
         limit: int = 10,
         offset: int = 0,
         status: Optional[AnalysisStatus] = None,
         industry: Optional[Industry] = None,
         candidate_id: Optional[uuid.UUID] = None
     ) -> dict:
-        """List user's analyses with optional filtering and pagination."""
-        logger.info(f"Listing analyses for user {user_id}, limit {limit}, offset {offset}")
+        """List user's analyses with role-based filtering and pagination."""
+        logger.info(f"Listing analyses for user {user_id}, role {user_role}, limit {limit}, offset {offset}")
 
         try:
             # Convert enums to strings for repository
             status_str = status.value if status else None
             industry_str = industry.value if industry else None
 
-            # Get analysis requests with filters
-            requests = await self.repository.get_user_analyses(
+            # Use new role-aware method
+            requests = await self.repository.list_analyses_for_user(
                 user_id=user_id,
+                user_role=user_role,
                 status=status_str,
                 industry=industry_str,
                 candidate_id=candidate_id,
@@ -528,8 +546,9 @@ class AnalysisService:
             )
 
             # Get total count for pagination
-            total_count = await self.repository.count_user_analyses(
+            total_count = await self.repository.count_analyses_for_user(
                 user_id=user_id,
+                user_role=user_role,
                 status=status_str,
                 industry=industry_str,
                 candidate_id=candidate_id
@@ -541,9 +560,9 @@ class AnalysisService:
                 # Get resume with candidate relationship loaded
                 resume = await self.resume_repository.get_by_id_with_candidate(request.resume_id)
 
-                # Skip if resume not found or user doesn't have access
-                if not resume or resume.uploaded_by_user_id != user_id:
-                    logger.warning(f"Resume {request.resume_id} not found or access denied for user {user_id}")
+                # Skip if resume not found
+                if not resume:
+                    logger.warning(f"Resume {request.resume_id} not found for analysis {request.id}")
                     continue
 
                 # Get result if completed
@@ -640,11 +659,11 @@ class AnalysisService:
             AnalysisValidationException: If industry mapping not found
         """
         industry_mapping = {
-            Industry.STRATEGY_TECH: "tech_consulting",
-            Industry.MA_FINANCIAL: "finance_banking",
-            Industry.CONSULTING: "strategy_consulting",
-            Industry.SYSTEM_INTEGRATOR: "system_integrator",
-            Industry.GENERAL: "general_business"
+            Industry.STRATEGY_CONSULTING: "strategy_consulting",
+            Industry.MA_FINANCE: "ma_finance",
+            Industry.TECH_CONSULTING: "tech_consulting",
+            Industry.FULL_SERVICE_CONSULTING: "full_service_consulting",
+            Industry.SYSTEM_INTEGRATOR: "system_integrator"
         }
 
         ai_industry = industry_mapping.get(db_industry)
@@ -667,11 +686,11 @@ class AnalysisService:
             AnalysisValidationException: If industry mapping not found
         """
         reverse_mapping = {
-            "tech_consulting": Industry.STRATEGY_TECH,
-            "finance_banking": Industry.MA_FINANCIAL,
-            "strategy_consulting": Industry.CONSULTING,
-            "system_integrator": Industry.SYSTEM_INTEGRATOR,
-            "general_business": Industry.GENERAL
+            "strategy_consulting": Industry.STRATEGY_CONSULTING,
+            "ma_finance": Industry.MA_FINANCE,
+            "tech_consulting": Industry.TECH_CONSULTING,
+            "full_service_consulting": Industry.FULL_SERVICE_CONSULTING,
+            "system_integrator": Industry.SYSTEM_INTEGRATOR
         }
 
         db_industry = reverse_mapping.get(ai_industry)
@@ -698,9 +717,9 @@ class AnalysisService:
     def get_supported_industries(self) -> list[Industry]:
         """Get list of supported industries."""
         return [
-            Industry.STRATEGY_TECH,
-            Industry.MA_FINANCIAL,
-            Industry.CONSULTING,
-            Industry.SYSTEM_INTEGRATOR,
-            Industry.GENERAL
+            Industry.STRATEGY_CONSULTING,
+            Industry.MA_FINANCE,
+            Industry.TECH_CONSULTING,
+            Industry.FULL_SERVICE_CONSULTING,
+            Industry.SYSTEM_INTEGRATOR
         ]

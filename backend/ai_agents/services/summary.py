@@ -33,10 +33,13 @@ class SummaryGenerator:
         Returns:
             Dictionary of template strings
         """
-        template_name = f"summary_templates_v1_{language}.yaml"
+        settings = get_settings()
+        version = settings.prompt_version
+        template_name = f"summary_templates_{version}_{language}.yaml"
         template_path = (
             Path(__file__).parent.parent
             / "prompts"
+            / "summary"
             / template_name
         )
 

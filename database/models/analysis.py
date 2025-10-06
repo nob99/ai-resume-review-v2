@@ -21,11 +21,11 @@ from app.core.datetime_utils import utc_now
 
 class Industry(str, Enum):
     """Supported industries for analysis."""
-    STRATEGY_TECH = "strategy_tech"
-    MA_FINANCIAL = "ma_financial"
-    CONSULTING = "consulting"
+    STRATEGY_CONSULTING = "strategy_consulting"
+    MA_FINANCE = "ma_finance"
+    TECH_CONSULTING = "tech_consulting"
+    FULL_SERVICE_CONSULTING = "full_service_consulting"
     SYSTEM_INTEGRATOR = "system_integrator"
-    GENERAL = "general"
 
 
 class AnalysisStatus(str, Enum):
