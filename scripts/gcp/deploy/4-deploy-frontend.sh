@@ -78,8 +78,10 @@ build_frontend() {
     # Using direct docker command to avoid quoting issues
     log_info "Building Docker image: $FRONTEND_IMAGE_LOCAL"
     log_info "From directory: ./frontend"
+    log_info "Note: Building without cache to ensure fresh deployment"
 
     docker build \
+        --no-cache \
         --platform linux/amd64 \
         --build-arg "NEXT_PUBLIC_API_URL=$backend_url" \
         -t "$FRONTEND_IMAGE_LOCAL" \
