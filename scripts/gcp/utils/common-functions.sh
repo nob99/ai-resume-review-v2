@@ -260,8 +260,9 @@ build_docker_image() {
     log_info "Building Docker image: $image_name"
     log_info "From directory: $dockerfile_dir"
 
+    # Build command with proper argument handling
     if [ -n "$build_args" ]; then
-        docker build --platform linux/amd64 $build_args -t "$image_name" "$dockerfile_dir"
+        eval "docker build --platform linux/amd64 $build_args -t \"$image_name\" \"$dockerfile_dir\""
     else
         docker build --platform linux/amd64 -t "$image_name" "$dockerfile_dir"
     fi

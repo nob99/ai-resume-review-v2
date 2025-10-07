@@ -28,31 +28,35 @@ FRONTEND_IMAGE_REMOTE="$ARTIFACT_REGISTRY/frontend:latest"
 # ============================================================================
 
 get_backend_url() {
-    log_section "Getting Backend URL"
+    # Redirect all output to stderr except the final return value
+    {
+        log_section "Getting Backend URL"
 
-    log_info "Retrieving backend service URL..."
+        log_info "Retrieving backend service URL..."
 
-    local backend_url=$(get_service_url "$BACKEND_SERVICE_NAME")
+        local backend_url=$(get_service_url "$BACKEND_SERVICE_NAME")
 
-    if [ -z "$backend_url" ]; then
-        die "Backend service not found. Deploy backend first: ./3-deploy-backend.sh"
-    fi
-
-    log_success "Backend URL: $backend_url"
-
-    # Verify backend is healthy
-    log_info "Verifying backend health..."
-
-    if curl -f -s "$backend_url/health" > /dev/null 2>&1; then
-        log_success "Backend is healthy"
-    else
-        log_warning "Backend health check failed"
-        if ! confirm "Continue anyway?" "n"; then
-            die "Deploy backend successfully first"
+        if [ -z "$backend_url" ]; then
+            die "Backend service not found. Deploy backend first: ./3-deploy-backend.sh"
         fi
-    fi
 
-    echo "$backend_url"
+        log_success "Backend URL: $backend_url"
+
+        # Verify backend is healthy
+        log_info "Verifying backend health..."
+
+        if curl -f -s "$backend_url/health" > /dev/null 2>&1; then
+            log_success "Backend is healthy"
+        else
+            log_warning "Backend health check failed"
+            if ! confirm "Continue anyway?" "n"; then
+                die "Deploy backend successfully first"
+            fi
+        fi
+    } >&2
+
+    # Return ONLY the URL to stdout
+    get_service_url "$BACKEND_SERVICE_NAME"
 }
 
 # ============================================================================
@@ -60,7 +64,7 @@ get_backend_url() {
 # ============================================================================
 
 build_frontend() {
-    local backend_url=$1
+    local backend_url="$1"
 
     log_section "Building Frontend Docker Image"
 
@@ -71,8 +75,17 @@ build_frontend() {
     log_info "Platform: linux/amd64 (required for Cloud Run)"
 
     # Build with backend URL as build arg
-    build_docker_image "./frontend" "$FRONTEND_IMAGE_LOCAL" "--build-arg NEXT_PUBLIC_API_URL=$backend_url"
+    # Using direct docker command to avoid quoting issues
+    log_info "Building Docker image: $FRONTEND_IMAGE_LOCAL"
+    log_info "From directory: ./frontend"
 
+    docker build \
+        --platform linux/amd64 \
+        --build-arg "NEXT_PUBLIC_API_URL=$backend_url" \
+        -t "$FRONTEND_IMAGE_LOCAL" \
+        "./frontend"
+
+    check_status "Docker build failed"
     log_success "Frontend image built successfully"
 }
 
@@ -100,8 +113,6 @@ push_frontend() {
 # ============================================================================
 
 deploy_frontend() {
-    local backend_url=$1
-
     log_section "Deploying Frontend to Cloud Run"
 
     log_info "Service: $FRONTEND_SERVICE_NAME"
@@ -111,13 +122,14 @@ deploy_frontend() {
 
     # Build Cloud Run deployment command
     log_info "Deploying to Cloud Run..."
+    log_info "Note: NEXT_PUBLIC_API_URL is baked into the Docker image at build time"
 
     gcloud run deploy "$FRONTEND_SERVICE_NAME" \
         --image="$FRONTEND_IMAGE_REMOTE" \
         --region="$REGION" \
         --platform=managed \
         --service-account="$FRONTEND_SERVICE_ACCOUNT" \
-        --set-env-vars="NEXT_PUBLIC_API_URL=$backend_url,NODE_ENV=production,NEXT_TELEMETRY_DISABLED=1" \
+        --set-env-vars="NODE_ENV=production,NEXT_TELEMETRY_DISABLED=1" \
         --memory=512Mi \
         --cpu=1 \
         --min-instances=0 \
@@ -242,14 +254,14 @@ main() {
     # Get backend URL
     local backend_url=$(get_backend_url)
 
-    # Build frontend
+    # Build frontend with backend URL baked in
     build_frontend "$backend_url"
 
     # Push to registry
     push_frontend
 
-    # Deploy to Cloud Run
-    deploy_frontend "$backend_url"
+    # Deploy to Cloud Run (no need to pass backend_url, it's in the image)
+    deploy_frontend
 
     # Test deployment
     if test_frontend; then

@@ -141,9 +141,11 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",  # React dev server
         "http://localhost:8000",  # Local development
-        "https://airesumereview.com",  # Production domain
-        "https://www.airesumereview.com",  # Production www domain
-        "https://api.airesumereview.com",  # Production API domain
+        "https://ai-resume-review-v2-frontend-prod-864523342928.us-central1.run.app",  # Cloud Run frontend
+        "https://ai-resume-review-v2-backend-prod-wnjxxf534a-uc.a.run.app",  # Cloud Run backend
+        "https://airesumereview.com",  # Future production domain
+        "https://www.airesumereview.com",  # Future production www domain
+        "https://api.airesumereview.com",  # Future production API domain
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
