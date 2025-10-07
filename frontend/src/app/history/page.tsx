@@ -74,7 +74,7 @@ const HistoryPage: React.FC = () => {
                         候補者をフィルタリング / Filter by Candidate
                       </label>
                       <CandidateSelector
-                        value={selectedCandidate}
+                        value={selectedCandidate || undefined}
                         onSelect={handleCandidateChange}
                         placeholder="All candidates"
                         required={false}
