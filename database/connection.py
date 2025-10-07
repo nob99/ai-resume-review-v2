@@ -36,9 +36,12 @@ class DatabaseConfig:
         self.pool_timeout = int(os.getenv("DB_POOL_TIMEOUT", "30"))
         self.pool_recycle = int(os.getenv("DB_POOL_RECYCLE", "3600"))  # 1 hour
         self.pool_pre_ping = os.getenv("DB_POOL_PRE_PING", "true").lower() == "true"
-        
-        # Add SSL configuration for production
-        if app_config.ENVIRONMENT in ["staging", "prod"]:
+
+        # Add SSL configuration for production (but not for Unix sockets)
+        # Unix sockets (Cloud SQL) are already secure and don't need SSL
+        db_host = os.getenv("DB_HOST", "localhost")
+        if app_config.ENVIRONMENT in ["staging", "prod"] and not db_host.startswith("/cloudsql/"):
+            # Only add SSL for TCP connections, not Unix sockets
             self.database_url += "?sslmode=require"
     
     def get_engine_kwargs(self) -> dict:

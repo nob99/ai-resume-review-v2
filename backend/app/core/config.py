@@ -7,6 +7,11 @@ import os
 from typing import Optional
 from pathlib import Path
 
+try:
+    from google.cloud import secretmanager
+except ImportError:
+    secretmanager = None  # Will be None in local dev if not installed yet
+
 # Load environment variables from .env file if it exists
 def load_env_file():
     """Load environment variables from .env file if it exists."""
@@ -25,6 +30,37 @@ def load_env_file():
 load_env_file()
 
 
+def get_secret_from_gcp(secret_name: str) -> Optional[str]:
+    """
+    Get secret from Google Secret Manager (production only).
+
+    Args:
+        secret_name: Name of the secret in Secret Manager
+
+    Returns:
+        Secret value or None if not in production/error
+    """
+    # Only use Secret Manager in production
+    if os.getenv("ENVIRONMENT") != "production":
+        return None
+
+    # Check if Secret Manager client is available
+    if secretmanager is None:
+        print(f"Warning: google-cloud-secret-manager not installed, cannot fetch {secret_name}")
+        return None
+
+    try:
+        client = secretmanager.SecretManagerServiceClient()
+        project_id = os.getenv("PROJECT_ID", "ytgrs-464303")
+        name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
+        response = client.access_secret_version(request={"name": name})
+        return response.payload.data.decode("UTF-8")
+    except Exception as e:
+        # Log but don't crash - will fall back to env vars
+        print(f"Warning: Could not fetch secret {secret_name} from Secret Manager: {e}")
+        return None
+
+
 class DatabaseConfig:
     """Database configuration settings."""
     
@@ -32,35 +68,53 @@ class DatabaseConfig:
     PORT: int = int(os.getenv("DB_PORT", "5432"))
     NAME: str = os.getenv("DB_NAME", "ai_resume_review_dev")
     USER: str = os.getenv("DB_USER", "postgres")
-    PASSWORD: str = os.getenv("DB_PASSWORD", "dev_password_123")
+    PASSWORD: str = (
+        get_secret_from_gcp("db-password-prod")
+        or os.getenv("DB_PASSWORD", "dev_password_123")
+    )
     
     @classmethod
     def get_url(cls, database_name: Optional[str] = None) -> str:
         """
         Get database URL for SQLAlchemy.
-        
+
         Args:
             database_name: Optional database name override
-            
+
         Returns:
             PostgreSQL connection URL
         """
         db_name = database_name or cls.NAME
-        return f"postgresql://{cls.USER}:{cls.PASSWORD}@{cls.HOST}:{cls.PORT}/{db_name}"
+
+        # Check if using Cloud SQL Unix socket (starts with /cloudsql/)
+        if cls.HOST.startswith("/cloudsql/"):
+            # Unix socket format for Cloud SQL
+            # Format: postgresql://user:password@/dbname?host=/cloudsql/instance
+            return f"postgresql://{cls.USER}:{cls.PASSWORD}@/{db_name}?host={cls.HOST}"
+        else:
+            # Standard TCP connection (local development)
+            return f"postgresql://{cls.USER}:{cls.PASSWORD}@{cls.HOST}:{cls.PORT}/{db_name}"
     
     @classmethod
     def get_async_url(cls, database_name: Optional[str] = None) -> str:
         """
         Get async database URL for SQLAlchemy async operations.
-        
+
         Args:
             database_name: Optional database name override
-            
+
         Returns:
             PostgreSQL async connection URL using asyncpg driver
         """
         db_name = database_name or cls.NAME
-        return f"postgresql+asyncpg://{cls.USER}:{cls.PASSWORD}@{cls.HOST}:{cls.PORT}/{db_name}"
+
+        # Check if using Cloud SQL Unix socket (starts with /cloudsql/)
+        if cls.HOST.startswith("/cloudsql/"):
+            # Unix socket format for Cloud SQL with asyncpg
+            return f"postgresql+asyncpg://{cls.USER}:{cls.PASSWORD}@/{db_name}?host={cls.HOST}"
+        else:
+            # Standard TCP connection (local development)
+            return f"postgresql+asyncpg://{cls.USER}:{cls.PASSWORD}@{cls.HOST}:{cls.PORT}/{db_name}"
 
 
 class RedisConfig:
@@ -85,8 +139,11 @@ class RedisConfig:
 
 class SecurityConfig:
     """Security configuration settings."""
-    
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
+
+    SECRET_KEY: str = (
+        get_secret_from_gcp("jwt-secret-key-prod")
+        or os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
+    )
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
     REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
@@ -112,9 +169,12 @@ class AppConfig:
 
 class AIConfig:
     """AI and LLM configuration settings."""
-    
+
     # OpenAI Configuration
-    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+    OPENAI_API_KEY: str = (
+        get_secret_from_gcp("openai-api-key-prod")
+        or os.getenv("OPENAI_API_KEY", "")
+    )
     OPENAI_MODEL_NAME: str = os.getenv("OPENAI_MODEL_NAME", "gpt-4")
     OPENAI_MAX_TOKENS: int = int(os.getenv("OPENAI_MAX_TOKENS", "4000"))
     OPENAI_TEMPERATURE: float = float(os.getenv("OPENAI_TEMPERATURE", "0.3"))

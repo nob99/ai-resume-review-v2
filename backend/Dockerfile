@@ -15,7 +15,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Copy requirements first for better caching
-COPY requirements.txt .
+# When building from project root, requirements is in backend/
+COPY backend/requirements.txt .
 
 # Create wheels for all dependencies
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
@@ -40,11 +41,13 @@ WORKDIR /app
 COPY --from=builder /app/wheels /wheels
 RUN pip install --no-cache /wheels/*
 
-# Copy application code
-COPY --chown=appuser:appuser . .
+# Copy application code from backend directory
+COPY --chown=appuser:appuser backend/ /app/
 
-# Copy and set permissions for entrypoint script
-COPY --chown=appuser:appuser docker-entrypoint.sh /app/
+# Copy database directory (when building from project root)
+COPY --chown=appuser:appuser database/ /app/database/
+
+# Set permissions for entrypoint script
 RUN chmod +x /app/docker-entrypoint.sh
 
 # Create directory for logs with proper permissions
@@ -69,4 +72,6 @@ ENV PYTHONPATH=/app:/app/database
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
 # Default command
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Use shell form to allow PORT environment variable substitution
+# Cloud Run sets PORT=8080, local dev defaults to 8000
+CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"

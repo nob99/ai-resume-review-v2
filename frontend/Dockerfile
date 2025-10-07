@@ -42,7 +42,7 @@ RUN adduser -S nextjs -u 1001
 # Set environment variables
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=3000
+# Note: PORT is not set here - let Cloud Run set it (8080) or docker-compose (3000)
 
 # Copy necessary files from builder
 COPY --from=builder /app/public ./public

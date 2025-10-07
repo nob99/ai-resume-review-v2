@@ -40,11 +40,18 @@ async def lifespan(app: FastAPI):
         # Initialize database
         init_database()
         logger.info("Database initialized")
-        
-        # Initialize rate limiter
-        await rate_limiter.connect()
-        logger.info("Rate limiter initialized")
-        
+
+        # Initialize rate limiter (optional - graceful degradation)
+        try:
+            await rate_limiter.connect()
+            if rate_limiter.redis_client:
+                logger.info("✓ Rate limiter initialized with Redis")
+            else:
+                logger.warning("⚠ Rate limiter running without Redis (rate limiting disabled)")
+        except Exception as e:
+            logger.warning(f"⚠ Rate limiter initialization failed: {e}")
+            logger.warning("  Continuing without rate limiting (acceptable for MVP)")
+
         # Initialize async infrastructure
         from app.core.database import init_postgres
         await init_postgres()
@@ -60,16 +67,19 @@ async def lifespan(app: FastAPI):
     
     # Shutdown
     logger.info("Shutting down AI Resume Review Platform Backend")
-    
+
     try:
-        # Close rate limiter
-        await rate_limiter.disconnect()
-        logger.info("Rate limiter disconnected")
-        
+        # Close rate limiter (if connected)
+        try:
+            await rate_limiter.disconnect()
+            logger.info("Rate limiter disconnected")
+        except Exception as e:
+            logger.warning(f"Error disconnecting rate limiter: {e}")
+
         # Close database
         close_database()
         logger.info("Database connections closed")
-        
+
     except Exception as e:
         logger.error(f"Error during shutdown: {e}")
     

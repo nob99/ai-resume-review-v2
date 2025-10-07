@@ -27,7 +27,7 @@ export FRONTEND_SERVICE_ACCOUNT="arr-v2-frontend-prod@${PROJECT_ID}.iam.gservice
 
 # Infrastructure
 export VPC_NAME="ai-resume-review-v2-vpc"
-export VPC_CONNECTOR="arr-v2-connector"
+export VPC_CONNECTOR="ai-resume-connector-v2"
 export SQL_INSTANCE_NAME="ai-resume-review-v2-db-prod"
 export SQL_INSTANCE_CONNECTION="$PROJECT_ID:$REGION:$SQL_INSTANCE_NAME"
 export ARTIFACT_REGISTRY="us-central1-docker.pkg.dev/$PROJECT_ID/ai-resume-review-v2"

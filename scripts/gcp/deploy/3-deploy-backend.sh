@@ -32,11 +32,13 @@ build_backend() {
 
     cd "$PROJECT_ROOT"
 
-    log_info "Building image from: ./backend"
+    log_info "Building image from project root with backend/Dockerfile"
     log_info "Platform: linux/amd64 (required for Cloud Run)"
 
-    build_docker_image "./backend" "$BACKEND_IMAGE_LOCAL"
+    # Build from project root so we can access both backend/ and database/
+    docker build --platform linux/amd64 -f backend/Dockerfile -t "$BACKEND_IMAGE_LOCAL" .
 
+    check_status "Docker build failed"
     log_success "Backend image built successfully"
 }
 
@@ -147,7 +149,7 @@ deploy_backend() {
         --vpc-egress=private-ranges-only \
         --add-cloudsql-instances="$SQL_INSTANCE_CONNECTION" \
         --set-secrets="DB_PASSWORD=$SECRET_DB_PASSWORD:latest,SECRET_KEY=$SECRET_JWT_KEY:latest,OPENAI_API_KEY=$SECRET_OPENAI_KEY:latest" \
-        --set-env-vars="DB_HOST=/cloudsql/$SQL_INSTANCE_CONNECTION,DB_PORT=5432,DB_NAME=$DB_NAME,DB_USER=$DB_USER,PROJECT_ID=$PROJECT_ID,ENVIRONMENT=production" \
+        --set-env-vars="DB_HOST=/cloudsql/$SQL_INSTANCE_CONNECTION,DB_PORT=5432,DB_NAME=$DB_NAME,DB_USER=$DB_USER,PROJECT_ID=$PROJECT_ID,ENVIRONMENT=production,REDIS_HOST=none" \
         --memory=2Gi \
         --cpu=2 \
         --min-instances=0 \

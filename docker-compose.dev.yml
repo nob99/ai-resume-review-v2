@@ -119,6 +119,8 @@ services:
       # Note: .next directory mount removed to prevent build cache corruption
       # Container will manage its own .next cache internally for stability
     environment:
+      # Port configuration for local development
+      PORT: 3000
       # API configuration - using localhost for browser requests (not internal Docker hostname)
       NEXT_PUBLIC_API_URL: http://localhost:8000
       # Development settings
