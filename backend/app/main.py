@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.base import BaseHTTPMiddleware
 
 import sys
 from pathlib import Path
@@ -151,6 +152,43 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# Proxy headers middleware for Cloud Run
+class ProxyHeadersMiddleware(BaseHTTPMiddleware):
+    """
+    Middleware to handle X-Forwarded-* headers from Cloud Run reverse proxy.
+    This ensures FastAPI generates HTTPS URLs in redirects instead of HTTP.
+
+    Cloud Run terminates TLS and forwards requests to containers over HTTP,
+    but includes X-Forwarded-Proto and X-Forwarded-Host headers to indicate
+    the original protocol and host. This middleware updates the request scope
+    so FastAPI knows the request came via HTTPS.
+    """
+    async def dispatch(self, request: Request, call_next):
+        # Trust X-Forwarded-Proto header from Cloud Run
+        forwarded_proto = request.headers.get("x-forwarded-proto")
+        if forwarded_proto:
+            request.scope["scheme"] = forwarded_proto
+            logger.debug(f"Updated request scheme to: {forwarded_proto}")
+
+        # Trust X-Forwarded-Host header from Cloud Run
+        forwarded_host = request.headers.get("x-forwarded-host")
+        if forwarded_host:
+            # Parse host and port if present
+            if ":" in forwarded_host:
+                host, port = forwarded_host.rsplit(":", 1)
+                request.scope["server"] = (host, int(port))
+            else:
+                # Use default port based on scheme
+                port = 443 if request.scope.get("scheme") == "https" else 80
+                request.scope["server"] = (forwarded_host, port)
+            logger.debug(f"Updated request server to: {request.scope['server']}")
+
+        response = await call_next(request)
+        return response
+
+# Add proxy headers middleware
+app.add_middleware(ProxyHeadersMiddleware)
 
 # Include API routers
 from app.features.auth.api import router as auth_router
