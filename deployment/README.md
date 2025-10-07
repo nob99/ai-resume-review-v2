@@ -48,19 +48,20 @@ Before deploying, ensure you have:
 ### Deployment Steps (High-Level)
 
 ```bash
-# Phase 1: Initial GCP Setup (one-time)
-./scripts/gcp/setup-gcp-project.sh      # Set up GCP project
-./scripts/gcp/setup-cloud-sql.sh        # Create database
-./scripts/gcp/setup-secrets.sh          # Store secrets
+# Phase 1 & 2: Initial GCP Setup (one-time) - COMPLETED ✅
+./scripts/gcp/setup/setup-gcp-project.sh      # Set up GCP project
+./scripts/gcp/setup/setup-cloud-sql.sh        # Create database
+./scripts/gcp/setup/setup-secrets.sh          # Store secrets
 
-# Phase 2: Deploy to Staging
-./scripts/gcp/deploy-to-staging.sh      # Deploy to staging
+# Phase 3: Deploy Application
+cd scripts/gcp/deploy/
+./1-verify-prerequisites.sh   # Verify everything is ready
+./2-run-migrations.sh         # Initialize database schema
+./3-deploy-backend.sh         # Deploy backend to Cloud Run
+./4-deploy-frontend.sh        # Deploy frontend to Cloud Run
 
-# Phase 3: Test Staging
-# Manually test all features in staging environment
-
-# Phase 4: Deploy to Production
-./scripts/gcp/deploy-to-production.sh   # Deploy to production (requires approval)
+# Or deploy all at once:
+./deploy-all.sh               # Runs all steps with confirmations
 ```
 
 ---
@@ -107,73 +108,125 @@ Before deploying, ensure you have:
 
 ## 🔧 Deployment Scripts Explained
 
-### Setup Scripts
+### Setup Scripts (Phase 1 & 2) - ✅ COMPLETED
 
-Located in `scripts/gcp/`:
+Located in `scripts/gcp/setup/`:
 
-1. **`setup-gcp-project.sh`**
+1. **`setup-gcp-project.sh`** ✅
    - **Purpose**: Initialize GCP project with required APIs and services
-   - **Run once**: Before first deployment
-   - **What it does**:
-     - Create GCP project
-     - Enable Cloud Run, Cloud SQL, Secret Manager APIs
-     - Create service accounts
-     - Set up Workload Identity (GitHub ↔ GCP)
-     - Create Artifact Registry
+   - **Status**: Completed (Phase 1)
+   - **What it created**:
+     - Service accounts (backend, frontend, GitHub Actions)
+     - Artifact Registry
+     - VPC network and subnet
+     - IAM roles
 
-2. **`setup-cloud-sql.sh`**
-   - **Purpose**: Create PostgreSQL database instances
-   - **Run once**: Before first deployment
-   - **What it does**:
-     - Create Cloud SQL instance (staging + production)
-     - Configure private IP
-     - Set up automated backups
-     - Create databases and users
+2. **`setup-cloud-sql.sh`** ✅
+   - **Purpose**: Create PostgreSQL database instance
+   - **Status**: Completed (Phase 2)
+   - **What it created**:
+     - Cloud SQL instance (production only, no staging for MVP)
+     - Private IP configuration
+     - Automated backups
+     - Production database
 
-3. **`setup-secrets.sh`**
+3. **`setup-secrets.sh`** ✅
    - **Purpose**: Store sensitive values in Secret Manager
-   - **Run once**: Before first deployment (and when rotating secrets)
-   - **What it does**:
-     - Create secrets (OpenAI API key, DB password, JWT secret)
-     - Set IAM permissions
-     - Store secret values securely
+   - **Status**: Completed (Phase 2)
+   - **What it created**:
+     - Secrets (OpenAI API key, DB password, JWT secret)
+     - IAM permissions for service accounts
+     - Secret values securely stored
 
-### Deployment Scripts
+### Deployment Scripts (Phase 3) - 🚀 READY TO USE
 
-4. **`deploy-to-staging.sh`**
-   - **Purpose**: Deploy to staging environment
-   - **Run**: Whenever you want to test changes
-   - **What it does**:
-     - Build Docker images
-     - Push to Artifact Registry
-     - Deploy to Cloud Run (staging)
-     - Run smoke tests
+Located in `scripts/gcp/deploy/`:
 
-5. **`deploy-to-production.sh`**
-   - **Purpose**: Deploy to production environment
-   - **Run**: After staging is tested and approved
-   - **What it does**:
-     - Verify staging is healthy
-     - Prompt for manual approval
-     - Deploy to Cloud Run (production)
-     - Run smoke tests
-     - Monitor for 5 minutes
+4. **`1-verify-prerequisites.sh`** 🆕
+   - **Purpose**: Verify all prerequisites before deployment
+   - **Run**: Before first deployment (and troubleshooting)
+   - **What it checks**:
+     - Development tools (gcloud, docker)
+     - GCP authentication and project
+     - Infrastructure (VPC, Cloud SQL, Secrets)
+     - Service accounts and IAM
+     - Application files (Dockerfiles, migrations)
 
-6. **`rollback.sh`**
-   - **Purpose**: Rollback to previous version
-   - **Run**: When production deployment has issues
+5. **`2-run-migrations.sh`** 🆕
+   - **Purpose**: Run database migrations via Cloud SQL Proxy
+   - **Run**: Before first deployment, or when database schema changes
    - **What it does**:
-     - List available revisions
-     - Route traffic to previous revision
-     - Verify rollback successful
+     - Downloads Cloud SQL Proxy
+     - Connects to Cloud SQL database
+     - Runs Alembic migrations
+     - Verifies migration status
 
-7. **`run-migrations.sh`**
-   - **Purpose**: Run database migrations
-   - **Run**: When database schema changes
+6. **`3-deploy-backend.sh`** 🆕
+   - **Purpose**: Deploy backend to Cloud Run
+   - **Run**: Every time backend code changes
    - **What it does**:
-     - Connect to Cloud SQL
-     - Run Alembic migrations
-     - Verify schema updated
+     - Builds Docker image
+     - Pushes to Artifact Registry
+     - Creates VPC Connector (if needed)
+     - Deploys to Cloud Run with secrets and database connection
+     - Tests health endpoint
+
+7. **`4-deploy-frontend.sh`** 🆕
+   - **Purpose**: Deploy frontend to Cloud Run
+   - **Run**: Every time frontend code changes
+   - **What it does**:
+     - Gets backend URL
+     - Builds Docker image with backend URL
+     - Pushes to Artifact Registry
+     - Deploys to Cloud Run
+     - Tests frontend accessibility
+
+8. **`deploy-all.sh`** 🆕
+   - **Purpose**: Run complete deployment pipeline
+   - **Run**: For quick redeployments
+   - **What it does**:
+     - Runs scripts 1-4 in sequence
+     - Asks for confirmation between steps
+     - Stops if any step fails
+
+### Utility Scripts
+
+Located in `scripts/gcp/utils/`:
+
+9. **`common-functions.sh`** 🆕
+   - **Purpose**: Shared bash functions for all scripts
+   - **Used by**: All deployment and verification scripts
+   - **Contains**: Configuration variables, logging functions, validation functions
+
+10. **`rollback.sh`**
+   - **Purpose**: Rollback to previous Cloud Run revision
+   - **Run**: When deployment has issues
+   - **What it does**:
+     - Lists available revisions
+     - Routes traffic to previous revision
+     - Verifies rollback successful
+
+### Verification Scripts
+
+Located in `scripts/gcp/verify/`:
+
+11. **`health-check.sh`** 🆕
+   - **Purpose**: Quick smoke test of deployed services
+   - **Run**: After every deployment
+   - **What it tests**:
+     - Backend health endpoint
+     - Frontend accessibility
+     - Database connectivity
+     - API documentation
+
+12. **`integration-test.sh`** 🆕
+   - **Purpose**: Full integration test of user flow
+   - **Run**: After first deployment, or major changes
+   - **What it tests**:
+     - User registration
+     - User login
+     - Authenticated requests
+     - Frontend loading
 
 ---
 
@@ -199,13 +252,13 @@ GCP Cloud:
 ### How to Add/Update Secrets
 
 ```bash
-# Run the setup-secrets script
-./scripts/gcp/setup-secrets.sh staging
+# Secrets are already created (Phase 2) ✅
+# To update a secret value:
+echo -n "NEW_SECRET_VALUE" | gcloud secrets versions add SECRET_NAME \
+  --data-file=-
 
-# Or manually:
-echo -n "YOUR_SECRET_VALUE" | gcloud secrets create SECRET_NAME \
-  --data-file=- \
-  --replication-policy="automatic"
+# Or run the setup-secrets script again (idempotent):
+./scripts/gcp/setup/setup-secrets.sh
 ```
 
 ### How Code Accesses Secrets

@@ -1,250 +1,297 @@
-# GCP Deployment Scripts - AI Resume Review v2
+# GCP Deployment Scripts
 
-This directory contains scripts for setting up and deploying the AI Resume Review v2 platform to Google Cloud Platform.
-
-## 🎯 Quick Start Guide
-
-### Step 1: Cleanup Old Resources (One-time)
-
-Delete old `ai-resume` and `resume` named resources:
-
-```bash
-# Preview what will be deleted (safe)
-./scripts/gcp/cleanup-old-resources.sh --dry-run
-
-# Actually delete old resources
-./scripts/gcp/cleanup-old-resources.sh
-```
-
-**What it deletes:**
-- Cloud Run services: `ai-resume-backend`, `ai-resume-frontend`
-- Cloud SQL instances: `ai-resume-db`, `resume-review-db`
-- Service accounts: `ai-resume-*`, `resume-*`
-- Artifact Registry: `ai-resume-review`
-- VPC Network: `ai-resume-vpc`
-
-### Step 2: Setup New Infrastructure
-
-Create fresh v2 infrastructure:
-
-```bash
-# Preview what will be created (safe)
-./scripts/gcp/setup-gcp-project.sh --dry-run
-
-# Actually create resources
-./scripts/gcp/setup-gcp-project.sh
-```
-
-**What it creates:**
-- ✅ Service Accounts (shortened due to GCP 30-char limit):
-  - `arr-v2-backend-prod@ytgrs-464303.iam.gserviceaccount.com`
-  - `arr-v2-frontend-prod@ytgrs-464303.iam.gserviceaccount.com`
-  - `arr-v2-github-actions@ytgrs-464303.iam.gserviceaccount.com`
-
-- ✅ IAM Roles:
-  - Backend: Cloud SQL Client, Secret Accessor, Log Writer
-  - Frontend: Log Writer
-  - GitHub Actions: Cloud Run Admin, Artifact Registry Writer, Service Account User
-
-- ✅ Artifact Registry:
-  - `us-central1-docker.pkg.dev/ytgrs-464303/ai-resume-review-v2`
-
-- ✅ VPC Network:
-  - Network: `ai-resume-review-v2-vpc`
-  - Subnet: `ai-resume-review-v2-subnet` (10.0.0.0/24, us-central1)
-
-### Step 3: Next Steps
-
-After setup completes:
-
-1. **Set up secrets**: Run `./scripts/gcp/setup-secrets.sh`
-2. **Create Cloud SQL database**: Run `./scripts/gcp/setup-cloud-sql.sh`
-3. **Deploy application**: Run `./scripts/gcp/deploy-to-production.sh`
-
-## 📋 Script Reference
-
-### cleanup-old-resources.sh
-
-**Purpose**: Delete old infrastructure from previous deployments
-
-**Usage**:
-```bash
-./scripts/gcp/cleanup-old-resources.sh [--dry-run]
-```
-
-**Options**:
-- `--dry-run`: Preview deletions without actually deleting
-
-**Features**:
-- ✅ Dry-run mode for safety
-- ✅ Confirmation prompts before each deletion
-- ✅ Colored output (red for deletions)
-- ✅ Safe error handling (continues even if resource already deleted)
+**Version**: 2.0
+**Last Updated**: 2025-10-07
+**Project**: AI Resume Review Platform v2
 
 ---
 
-### setup-gcp-project.sh
+## 📁 Directory Structure
 
-**Purpose**: Set up fresh GCP infrastructure for AI Resume Review v2
-
-**Usage**:
-```bash
-./scripts/gcp/setup-gcp-project.sh [--dry-run]
+```
+scripts/gcp/
+├── README.md              ← You are here (navigation guide)
+│
+├── setup/                 ← Phase 1 & 2: One-time infrastructure setup
+│   ├── README.md
+│   ├── cleanup-old-resources.sh
+│   ├── setup-gcp-project.sh
+│   ├── setup-cloud-sql.sh
+│   └── setup-secrets.sh
+│
+├── deploy/                ← Phase 3: Application deployment (repeatable)
+│   ├── README.md
+│   ├── 1-verify-prerequisites.sh
+│   ├── 2-run-migrations.sh
+│   ├── 3-deploy-backend.sh
+│   ├── 4-deploy-frontend.sh
+│   └── deploy-all.sh
+│
+├── verify/                ← Post-deployment testing
+│   ├── README.md
+│   ├── health-check.sh
+│   └── integration-test.sh
+│
+└── utils/                 ← Shared utilities
+    ├── common-functions.sh
+    └── rollback.sh
 ```
 
-**Options**:
-- `--dry-run`: Preview what will be created without actually creating
+---
 
-**Features**:
-- ✅ Idempotent (safe to run multiple times)
-- ✅ Dry-run mode for testing
-- ✅ Prerequisite checks (gcloud, billing, project)
-- ✅ Validation after creation
-- ✅ Detailed summary output
+## 🚀 Quick Start
 
-**Prerequisites**:
-- gcloud CLI installed and authenticated
-- Project: `ytgrs-464303`
-- Billing enabled
-- APIs already enabled (Cloud Run, Cloud SQL, Secret Manager, etc.)
+### **For First-Time Deployment**
+
+If this is your first time deploying the application:
+
+```bash
+# 1. Review what was already done (Phase 1 & 2)
+cat setup/README.md
+
+# 2. Start deployment (Phase 3)
+cd deploy/
+cat README.md                 # Read deployment guide
+./1-verify-prerequisites.sh   # Check everything is ready
+./2-run-migrations.sh         # Initialize database
+./3-deploy-backend.sh         # Deploy backend
+./4-deploy-frontend.sh        # Deploy frontend
+```
+
+### **For Subsequent Deployments**
+
+If infrastructure is already set up and you just want to redeploy:
+
+```bash
+# Quick redeploy
+cd deploy/
+./deploy-all.sh            # Runs all steps automatically
+```
 
 ---
 
-## 🏗️ Architecture
+## 📚 Folder Descriptions
 
-### Resource Naming Convention (v2)
+### **setup/** - Infrastructure Setup (One-Time)
 
-**Service Accounts** (shortened to "arr-v2-*" due to GCP 30-char limit):
-- `arr-v2-backend-prod`
-- `arr-v2-frontend-prod`
-- `arr-v2-github-actions`
+**Status**: ✅ **COMPLETED** (Phase 1 & 2)
 
-**Other Resources** (full naming):
-- Cloud Run: `ai-resume-review-v2-backend-prod` (to be created later)
-- Cloud SQL: `ai-resume-review-v2-db-prod` (to be created later)
-- Artifact Registry: `ai-resume-review-v2`
-- VPC: `ai-resume-review-v2-vpc`
+Contains scripts for setting up GCP infrastructure. These scripts are **run once** when first setting up the project.
 
-### Project Configuration
+**What's included**:
+- Service accounts and IAM roles
+- VPC network and subnets
+- Cloud SQL database
+- Secrets in Secret Manager
+- Artifact Registry
 
-- **Project ID**: `ytgrs-464303`
-- **Project Number**: `864523342928`
-- **Region**: `us-central1` (Iowa)
-- **VPC Subnet CIDR**: `10.0.0.0/24`
+**When to use**: Only when setting up a new GCP project or resetting infrastructure.
 
-### Budget & Billing
-
-- **Monthly Budget**: $180 USD
-- **Alert Thresholds**:
-  - 50% ($90) → Email warning
-  - 80% ($144) → Email urgent
-  - 100% ($180) → Email critical
-
-**Note**: Billing alerts must be set up manually via [GCP Console](https://console.cloud.google.com/billing/budgets)
+📖 [Read setup/README.md](setup/README.md) for details
 
 ---
 
-## 🔐 Security
+### **deploy/** - Application Deployment (Repeatable)
 
-### Service Account Permissions
+**Status**: 🚀 **READY TO USE** (Phase 3)
 
-**Backend Service Account** (`arr-v2-backend-prod`):
-- `roles/cloudsql.client` - Connect to Cloud SQL
-- `roles/secretmanager.secretAccessor` - Read secrets
-- `roles/logging.logWriter` - Write logs
+Contains scripts for deploying the application to Cloud Run. These scripts can be **run repeatedly** whenever you want to deploy updates.
 
-**Frontend Service Account** (`arr-v2-frontend-prod`):
-- `roles/logging.logWriter` - Write logs
+**What's included**:
+- Prerequisites verification
+- Database migrations
+- Backend deployment
+- Frontend deployment
+- All-in-one deployment script
 
-**GitHub Actions Service Account** (`arr-v2-github-actions`):
-- `roles/run.admin` - Deploy Cloud Run services
-- `roles/iam.serviceAccountUser` - Use service accounts
-- `roles/artifactregistry.writer` - Push Docker images
-- `roles/cloudbuild.builds.editor` - Create Cloud Build jobs
+**When to use**: Every time you want to deploy code changes.
 
-### VPC Network
-
-- **Network**: `ai-resume-review-v2-vpc` (custom mode)
-- **Subnet**: `ai-resume-review-v2-subnet`
-  - Region: `us-central1`
-  - CIDR: `10.0.0.0/24`
-  - Purpose: Private IP for Cloud SQL instances
+📖 [Read deploy/README.md](deploy/README.md) for step-by-step guide
 
 ---
 
-## 🛠️ Troubleshooting
+### **verify/** - Testing & Verification
+
+**Status**: ✅ **READY TO USE**
+
+Contains scripts for testing deployed services.
+
+**What's included**:
+- Health check (quick smoke test)
+- Integration test (full user flow)
+
+**When to use**: After deployment to verify everything works.
+
+📖 [Read verify/README.md](verify/README.md) for testing guide
+
+---
+
+### **utils/** - Shared Utilities
+
+**Status**: ✅ **READY TO USE**
+
+Contains shared utilities used by other scripts.
+
+**What's included**:
+- `common-functions.sh` - Shared bash functions (sourced by all scripts)
+- `rollback.sh` - Emergency rollback script
+
+**When to use**:
+- `common-functions.sh` is automatically sourced by other scripts
+- `rollback.sh` when you need to rollback a failed deployment
+
+---
+
+## 📖 Common Tasks
+
+### Deploy Application
+
+```bash
+cd deploy/
+./deploy-all.sh
+```
+
+### Check if Deployment is Healthy
+
+```bash
+cd verify/
+./health-check.sh
+```
+
+### Run Full Integration Test
+
+```bash
+cd verify/
+./integration-test.sh
+```
+
+### View Deployment Logs
+
+```bash
+# Backend logs
+gcloud logging read "resource.labels.service_name=ai-resume-review-v2-backend-prod" --limit=50
+
+# Frontend logs
+gcloud logging read "resource.labels.service_name=ai-resume-review-v2-frontend-prod" --limit=50
+```
+
+### Rollback Deployment
+
+```bash
+cd utils/
+./rollback.sh backend  # or 'frontend' or 'both'
+```
+
+---
+
+## 🔧 Configuration
+
+All scripts use configuration from `utils/common-functions.sh`:
+
+| Variable | Value | Description |
+|----------|-------|-------------|
+| `PROJECT_ID` | ytgrs-464303 | GCP project ID |
+| `REGION` | us-central1 | Deployment region |
+| `BACKEND_SERVICE_NAME` | ai-resume-review-v2-backend-prod | Backend Cloud Run service |
+| `FRONTEND_SERVICE_NAME` | ai-resume-review-v2-frontend-prod | Frontend Cloud Run service |
+| `SQL_INSTANCE_NAME` | ai-resume-review-v2-db-prod | Cloud SQL instance |
+| `VPC_CONNECTOR` | arr-v2-connector | VPC connector name |
+
+To change configuration, edit `utils/common-functions.sh`.
+
+---
+
+## 🆘 Troubleshooting
 
 ### Common Issues
 
-**1. "Billing not enabled" error**
+**1. "Permission Denied" errors**
 ```bash
-# Check billing status
-gcloud beta billing projects describe ytgrs-464303
+# Re-authenticate
+gcloud auth login
 
-# If disabled, enable billing via:
-# https://console.cloud.google.com/billing/enable?project=ytgrs-464303
+# Set correct project
+gcloud config set project ytgrs-464303
 ```
 
-**2. "Permission denied" error**
+**2. "Docker build failed"**
 ```bash
-# Check your permissions
-gcloud projects get-iam-policy ytgrs-464303 --filter="bindings.members:$(gcloud config get-value account)"
+# Check Docker is running
+docker ps
 
-# You need at least:
-# - roles/owner OR roles/editor
-# - roles/iam.securityAdmin
+# If not, start Docker Desktop
 ```
 
-**3. "Resource already exists" warning**
-- This is normal if running setup multiple times
-- Script will skip creating existing resources
-- Check validation output to confirm resources exist
-
-**4. Cleanup fails on resource deletion**
-- Check if resource is still in use
-- Check if you have permission to delete
-- Some resources may already be deleted (script continues)
-
-### Validation
-
-After running setup, validate manually:
-
+**3. "VPC connector not found"**
 ```bash
-# Check service accounts
-gcloud iam service-accounts list | grep "arr-v2"
+# VPC connector will be created automatically during backend deployment
+# Or create manually:
+cd setup/
+./setup-gcp-project.sh  # Includes VPC connector creation
+```
 
-# Check Artifact Registry
-gcloud artifacts repositories list --location=us-central1
+**4. "Cloud SQL connection failed"**
+```bash
+# Check SQL instance is running
+gcloud sql instances list
 
-# Check VPC
-gcloud compute networks list | grep "ai-resume-review-v2"
-gcloud compute networks subnets list --network=ai-resume-review-v2-vpc
+# Check VPC connector is READY
+gcloud compute networks vpc-access connectors describe arr-v2-connector --region=us-central1
+```
 
-# Check IAM roles (example for backend SA)
-gcloud projects get-iam-policy ytgrs-464303 \
-  --flatten="bindings[].members" \
-  --filter="bindings.members:arr-v2-backend-prod@ytgrs-464303.iam.gserviceaccount.com"
+**5. "Secrets not found"**
+```bash
+# Check secrets exist
+gcloud secrets list
+
+# If missing, run:
+cd setup/
+./setup-secrets.sh
 ```
 
 ---
 
-## 📚 Related Documentation
+## 📊 Cost Estimate
 
-- [GCP Cloud Architecture](../../GCP_CLOUD_ARCHITECTURE.md) - Complete architecture design
-- [Implementation Sequence](../../GCP_CLOUD_IMPLEMENTATION_SEQUENCE.md) - Step-by-step deployment guide
-- [Deployment Configs](../../deployment/configs/) - Cloud Run configuration files
+After deployment, ongoing costs are approximately:
+
+| Service | Monthly Cost |
+|---------|--------------|
+| Cloud Run (Backend) | $5-10 (min=0) |
+| Cloud Run (Frontend) | $5-10 (min=0) |
+| Cloud SQL | $25-35 |
+| VPC Connector | $10 |
+| **Total** | **~$45-65/month** |
+
+Plus variable costs:
+- OpenAI API: $50-200/month (usage-based)
+- Egress bandwidth: $1-5/month
 
 ---
 
-## 🎯 Design Principles
+## 🔗 Related Documentation
 
-1. **Simple is Best**: Minimal, focused scripts that do one thing well
-2. **Safety First**: Dry-run mode, confirmations, validation
-3. **Idempotent**: Safe to run multiple times
-4. **Best Practices**: Follow GCP recommendations for security and cost
-5. **Clear Output**: Colored, structured output for easy understanding
+- [../deployment/README.md](../../deployment/README.md) - High-level deployment guide
+- [../../GCP_CLOUD_ARCHITECTURE.md](../../GCP_CLOUD_ARCHITECTURE.md) - Architecture overview
+- [../../PHASE3_DEPLOYMENT_GUIDE.md](../../PHASE3_DEPLOYMENT_GUIDE.md) - Detailed Phase 3 guide
+- [../../CLAUDE.md](../../CLAUDE.md) - Development guidelines
 
 ---
 
-**Last Updated**: 2025-10-06
+## 📞 Support
+
+**For deployment issues**:
+1. Check the troubleshooting section above
+2. Review logs: `gcloud logging read ...`
+3. Check Cloud Console: https://console.cloud.google.com
+4. Refer to [PHASE3_DEPLOYMENT_GUIDE.md](../../PHASE3_DEPLOYMENT_GUIDE.md)
+
+**For code issues**:
+1. Refer to [CLAUDE.md](../../CLAUDE.md)
+2. Check local development setup: `./scripts/docker-dev.sh status`
+
+---
+
+**Version**: 2.0
+**Last Updated**: 2025-10-07
 **Maintained By**: Cloud Engineering Team

@@ -41,7 +41,7 @@ This file tracks manual deployment actions performed on the GCP infrastructure.
 
 #### 2. Created v2 Infrastructure
 **Date**: 2025-10-06
-**Script**: `scripts/gcp/setup-gcp-project.sh`
+**Script**: `scripts/gcp/setup/setup-gcp-project.sh`
 **Executed by**: Automated script
 
 **Created Service Accounts:**
@@ -100,10 +100,15 @@ This file tracks manual deployment actions performed on the GCP infrastructure.
   - Alert thresholds: 50%, 80%, 100%
   - URL: https://console.cloud.google.com/billing/budgets
 
-**Pending Implementation:**
-- [ ] `scripts/gcp/setup-secrets.sh` - Create fresh secrets
-- [ ] `scripts/gcp/setup-cloud-sql.sh` - Create v2 database
-- [ ] `scripts/gcp/deploy-to-production.sh` - Deploy application
+**Completed in Phase 2:**
+- [x] `scripts/gcp/setup/setup-secrets.sh` - Secrets created ✅
+- [x] `scripts/gcp/setup/setup-cloud-sql.sh` - Database created ✅
+
+**Ready for Phase 3:**
+- [ ] `scripts/gcp/deploy/1-verify-prerequisites.sh` - Verify prerequisites
+- [ ] `scripts/gcp/deploy/2-run-migrations.sh` - Run database migrations
+- [ ] `scripts/gcp/deploy/3-deploy-backend.sh` - Deploy backend to Cloud Run
+- [ ] `scripts/gcp/deploy/4-deploy-frontend.sh` - Deploy frontend to Cloud Run
 
 ---
 
