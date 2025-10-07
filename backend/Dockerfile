@@ -74,4 +74,5 @@ ENTRYPOINT ["/app/docker-entrypoint.sh"]
 # Default command
 # Use shell form to allow PORT environment variable substitution
 # Cloud Run sets PORT=8080, local dev defaults to 8000
-CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"
+# --proxy-headers: Trust X-Forwarded-* headers from Cloud Run for correct HTTPS redirects
+CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers"
