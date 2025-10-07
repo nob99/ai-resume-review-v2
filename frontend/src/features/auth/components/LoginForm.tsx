@@ -83,7 +83,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
           {/* Email field */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-1">
-              Email address
+              メールアドレス / Email address
             </label>
             <Input
               id="email"
@@ -113,7 +113,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
           {/* Password field */}
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-neutral-700 mb-1">
-              Password
+              パスワード / Password
             </label>
             <Input
               id="password"
@@ -168,7 +168,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             disabled={isFormLoading}
             className="w-full"
           >
-            {isFormLoading ? 'Signing in...' : 'Sign in'}
+            {isFormLoading ? 'Trying...' : 'Login'}
           </Button>
         </form>
 

@@ -60,10 +60,10 @@ const LoginPage: React.FC = () => {
               <span className="font-bold text-xl">AI</span>
             </div>
             <h1 className="text-3xl font-bold text-neutral-900">
-              AI Resume Review
+              Yatagarasu
             </h1>
             <p className="mt-2 text-neutral-600">
-              Intelligent resume analysis powered by AI
+              AI Resume Review
             </p>
           </div>
 

@@ -1,4 +1,6 @@
-import type { Metadata } from "next";
+'use client'
+
+import { useEffect } from "react";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -9,17 +11,28 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-export const metadata: Metadata = {
-  title: "AI Resume Review",
-  description: "Intelligent resume analysis powered by AI",
-  keywords: ["resume", "AI", "analysis", "feedback", "career"],
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  useEffect(() => {
+    console.log(`
+%c
+  ██╗  ██╗███████╗██╗     ██╗      ██████╗
+  ██║  ██║██╔════╝██║     ██║     ██╔═══██╗
+  ███████║█████╗  ██║     ██║     ██║   ██║
+  ██╔══██║██╔══╝  ██║     ██║     ██║   ██║
+  ██║  ██║███████╗███████╗███████╗╚██████╔╝
+  ╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝ ╚═════╝
+
+%cWELCOME TO YATAGARASU - AI Resume Review System
+`,
+      'color: #3B82F6; font-weight: bold;',
+      'color: #000000; font-size: 16px; font-weight: bold;'
+    );
+  }, []);
+
   return (
     <html lang="en">
       <body className={`${inter.variable} font-sans antialiased`}>
