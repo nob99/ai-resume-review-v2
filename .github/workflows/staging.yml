@@ -1,3 +1,18 @@
+# ============================================================================
+# CI/CD Pipeline: Staging Environment
+# ============================================================================
+#
+# Trigger: Automatically runs on push to 'main' branch and PRs to 'main'
+#
+# What it does:
+#   1. Runs tests and linting (non-blocking for MVP)
+#   2. Builds Docker images (backend + frontend with staging API URL)
+#   3. Deploys to Cloud Run staging environment
+#   4. Runs health checks
+#
+# Environment: https://ai-resume-review-v2-frontend-staging-wnjxxf534a-uc.a.run.app
+# ============================================================================
+
 name: CI and Deploy to Staging
 
 on:

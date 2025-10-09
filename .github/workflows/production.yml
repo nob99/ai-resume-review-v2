@@ -1,3 +1,20 @@
+# ============================================================================
+# Deployment: Production Environment
+# ============================================================================
+#
+# Trigger: Manual only (workflow_dispatch)
+#
+# What it does:
+#   1. Deploys backend using image tag from staging (or specific tag)
+#   2. Builds fresh frontend with production API URL
+#   3. Deploys to Cloud Run production environment
+#   4. Runs health checks
+#
+# Environment: https://ai-resume-review-v2-frontend-prod-wnjxxf534a-uc.a.run.app
+#
+# Note: Requires manual trigger for safety
+# ============================================================================
+
 name: Deploy to Production
 
 on:
