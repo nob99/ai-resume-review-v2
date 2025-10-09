@@ -323,3 +323,5 @@ For questions or issues:
 *Last Updated: October 2024*
 # CI/CD Test
 Trigger staging deployment
+# IAM Permissions Fix
+Granted proper permissions to GitHub Actions deployer
