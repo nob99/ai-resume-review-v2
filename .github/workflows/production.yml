@@ -59,7 +59,7 @@ jobs:
             --build-arg NEXT_PUBLIC_API_URL=https://ai-resume-review-v2-backend-prod-wnjxxf534a-uc.a.run.app \
             -t ${{ env.ARTIFACT_REGISTRY }}/frontend:${{ github.sha }}-production \
             -t ${{ env.ARTIFACT_REGISTRY }}/frontend:production-latest \
-            .
+            frontend
 
       - name: Push Frontend Image
         if: inputs.frontend_build_from_staging == true
