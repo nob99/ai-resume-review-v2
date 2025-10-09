@@ -1,0 +1,171 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      backend_image_tag:
+        description: 'Backend image tag to deploy (git SHA or "staging-latest")'
+        required: true
+        default: 'staging-latest'
+      frontend_build_from_staging:
+        description: 'Build new frontend image (required for production API URL)'
+        required: true
+        type: boolean
+        default: true
+
+env:
+  GCP_PROJECT_ID: ytgrs-464303
+  GCP_REGION: us-central1
+  ARTIFACT_REGISTRY: us-central1-docker.pkg.dev/ytgrs-464303/ai-resume-review-v2
+  BACKEND_SERVICE: ai-resume-review-v2-backend-prod
+  FRONTEND_SERVICE: ai-resume-review-v2-frontend-prod
+
+jobs:
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://ai-resume-review-v2-frontend-prod-wnjxxf534a-uc.a.run.app
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        if: inputs.frontend_build_from_staging == true
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/864523342928/locations/global/workloadIdentityPools/github-actions/providers/github'
+          service_account: 'github-actions-deployer@ytgrs-464303.iam.gserviceaccount.com'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        if: inputs.frontend_build_from_staging == true
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
+
+      # Build Frontend with Production API URL
+      - name: Build Frontend Docker Image (Production)
+        if: inputs.frontend_build_from_staging == true
+        run: |
+          docker build \
+            -f frontend/Dockerfile \
+            --build-arg NEXT_PUBLIC_API_URL=https://ai-resume-review-v2-backend-prod-wnjxxf534a-uc.a.run.app \
+            -t ${{ env.ARTIFACT_REGISTRY }}/frontend:${{ github.sha }}-production \
+            -t ${{ env.ARTIFACT_REGISTRY }}/frontend:production-latest \
+            .
+
+      - name: Push Frontend Image
+        if: inputs.frontend_build_from_staging == true
+        run: |
+          docker push ${{ env.ARTIFACT_REGISTRY }}/frontend:${{ github.sha }}-production
+          docker push ${{ env.ARTIFACT_REGISTRY }}/frontend:production-latest
+
+      # Verify images exist
+      - name: Verify Backend Image Exists
+        run: |
+          echo "Checking if backend image exists: ${{ env.ARTIFACT_REGISTRY }}/backend:${{ inputs.backend_image_tag }}"
+          gcloud artifacts docker images describe \
+            ${{ env.ARTIFACT_REGISTRY }}/backend:${{ inputs.backend_image_tag }} || \
+            (echo "::error::Backend image not found" && exit 1)
+
+      # Deploy Backend to Production
+      - name: Deploy Backend to Production
+        run: |
+          echo "Deploying backend image: ${{ env.ARTIFACT_REGISTRY }}/backend:${{ inputs.backend_image_tag }}"
+          gcloud run deploy ${{ env.BACKEND_SERVICE }} \
+            --image=${{ env.ARTIFACT_REGISTRY }}/backend:${{ inputs.backend_image_tag }} \
+            --region=${{ env.GCP_REGION }} \
+            --platform=managed \
+            --quiet
+
+      # Deploy Frontend to Production
+      - name: Deploy Frontend to Production
+        run: |
+          FRONTEND_TAG="${{ github.sha }}-production"
+          if [ "${{ inputs.frontend_build_from_staging }}" != "true" ]; then
+            FRONTEND_TAG="production-latest"
+          fi
+
+          echo "Deploying frontend image: ${{ env.ARTIFACT_REGISTRY }}/frontend:$FRONTEND_TAG"
+          gcloud run deploy ${{ env.FRONTEND_SERVICE }} \
+            --image=${{ env.ARTIFACT_REGISTRY }}/frontend:$FRONTEND_TAG \
+            --region=${{ env.GCP_REGION }} \
+            --platform=managed \
+            --quiet
+
+      # Health Checks
+      - name: Wait for services to be ready
+        run: sleep 30
+
+      - name: Check Backend Health
+        run: |
+          BACKEND_URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE }} \
+            --region=${{ env.GCP_REGION }} \
+            --format='value(status.url)')
+          echo "Backend URL: $BACKEND_URL"
+
+          for i in {1..5}; do
+            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$BACKEND_URL/health")
+            echo "Backend health check attempt $i: $RESPONSE"
+
+            if [ "$RESPONSE" = "200" ]; then
+              echo "✅ Backend is healthy!"
+              break
+            fi
+
+            if [ $i -eq 5 ]; then
+              echo "::error::Backend health check failed after 5 attempts"
+              exit 1
+            fi
+
+            sleep 10
+          done
+
+      - name: Check Frontend Health
+        run: |
+          FRONTEND_URL=$(gcloud run services describe ${{ env.FRONTEND_SERVICE }} \
+            --region=${{ env.GCP_REGION }} \
+            --format='value(status.url)')
+          echo "Frontend URL: $FRONTEND_URL"
+
+          for i in {1..5}; do
+            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$FRONTEND_URL")
+            echo "Frontend health check attempt $i: $RESPONSE"
+
+            if [ "$RESPONSE" = "200" ]; then
+              echo "✅ Frontend is healthy!"
+              break
+            fi
+
+            if [ $i -eq 5 ]; then
+              echo "::error::Frontend health check failed after 5 attempts"
+              exit 1
+            fi
+
+            sleep 10
+          done
+
+      - name: Deployment Summary
+        run: |
+          echo "### Production Deployment Successful! :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Backend URL:** https://ai-resume-review-v2-backend-prod-wnjxxf534a-uc.a.run.app" >> $GITHUB_STEP_SUMMARY
+          echo "**Frontend URL:** https://ai-resume-review-v2-frontend-prod-wnjxxf534a-uc.a.run.app" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Backend Image:** ${{ inputs.backend_image_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Git SHA:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Rollback Instructions" >> $GITHUB_STEP_SUMMARY
+          echo "If issues occur, rollback using:" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "gcloud run services update-traffic ${{ env.BACKEND_SERVICE }} --to-revisions=PREVIOUS_REVISION=100 --region=${{ env.GCP_REGION }}" >> $GITHUB_STEP_SUMMARY
+          echo "gcloud run services update-traffic ${{ env.FRONTEND_SERVICE }} --to-revisions=PREVIOUS_REVISION=100 --region=${{ env.GCP_REGION }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
