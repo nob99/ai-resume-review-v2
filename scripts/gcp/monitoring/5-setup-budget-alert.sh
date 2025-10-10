@@ -20,16 +20,19 @@
 
 set -e
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+# Source common functions to get PROJECT_ID and .env.scripts
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../utils/common-functions.sh"
 
-# Configuration
-PROJECT_ID="ytgrs-464303"
-BUDGET_AMOUNT=100
-EMAIL_ADDRESS="nobu.fukumoto.99@gmail.com"
+# Colors for output (use common-functions colors)
+RED="$COLOR_RED"
+GREEN="$COLOR_GREEN"
+YELLOW="$COLOR_YELLOW"
+NC="$COLOR_RESET"
+
+# Configuration (with .env.scripts override support)
+BUDGET_AMOUNT="${BUDGET_AMOUNT:-100}"
+EMAIL_ADDRESS="${ALERT_EMAIL:-nobu.fukumoto.99@gmail.com}"
 
 echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}Setting Up Budget Alert${NC}"

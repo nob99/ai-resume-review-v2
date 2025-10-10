@@ -4,6 +4,12 @@
 # Usage: source this file at the beginning of your scripts:
 #   source "$(dirname "$0")/../utils/common-functions.sh"
 
+# Detect project root and source .env.scripts if it exists
+SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+if [ -f "$SCRIPT_ROOT/.env.scripts" ]; then
+    source "$SCRIPT_ROOT/.env.scripts"
+fi
+
 # Color codes for output
 export COLOR_RED='\033[0;31m'
 export COLOR_GREEN='\033[0;32m'
@@ -12,10 +18,10 @@ export COLOR_BLUE='\033[0;34m'
 export COLOR_CYAN='\033[0;36m'
 export COLOR_RESET='\033[0m'
 
-# GCP Configuration
-export PROJECT_ID="ytgrs-464303"
-export REGION="us-central1"
-export ZONE="us-central1-c"
+# GCP Configuration (with .env.scripts override support)
+export PROJECT_ID="${GCP_PROJECT_ID:-ytgrs-464303}"
+export REGION="${GCP_REGION:-us-central1}"
+export ZONE="${GCP_ZONE:-us-central1-c}"
 
 # Service Names
 export BACKEND_SERVICE_NAME="ai-resume-review-v2-backend-prod"

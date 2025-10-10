@@ -288,7 +288,7 @@ Plus variable costs:
 
 **For code issues**:
 1. Refer to [CLAUDE.md](../../CLAUDE.md)
-2. Check local development setup: `./scripts/docker-dev.sh status`
+2. Check local development setup: `./scripts/docker/dev.sh status`
 
 ---
 

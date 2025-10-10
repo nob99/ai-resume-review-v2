@@ -13,19 +13,19 @@ This is an AI-powered resume review platform for recruitment consultants. The sy
 ### Local Development
 ```bash
 # Start all services (frontend, backend, postgres, redis, pgadmin)
-./scripts/docker-dev.sh up
+./scripts/docker/dev.sh up
 
 # Check service status before starting any local servers
-./scripts/docker-dev.sh status
+./scripts/docker/dev.sh status
 
 # View logs
-./scripts/docker-dev.sh logs [service]
+./scripts/docker/dev.sh logs [service]
 
 # Stop all services
-./scripts/docker-dev.sh down
+./scripts/docker/dev.sh down
 
 # Access service shell
-./scripts/docker-dev.sh shell [service]
+./scripts/docker/dev.sh shell [service]
 ```
 
 ### Frontend Development
@@ -116,7 +116,7 @@ mypy app           # Type checking
 │   ├── docs/           # Schema documentation
 │   ├── scripts/        # Database scripts
 │   └── tests/          # Database tests
-├── scripts/            # Development utilities (docker-dev.sh, etc.)
+├── scripts/            # Development utilities (docker/, gcp/, lib/)
 ├── knowledge/          # Product management docs and backlogs
 └── archive/            # Archived documents and old implementations
 ```
@@ -143,8 +143,8 @@ See `knowledge/backlog/` for current sprint status, user stories, and sprint bac
 
 ## Development Workflow
 
-1. Check Docker status: `./scripts/docker-dev.sh status`
-2. Start services: `./scripts/docker-dev.sh up`
+1. Check Docker status: `./scripts/docker/dev.sh status`
+2. Start services: `./scripts/docker/dev.sh up`
 3. Create feature branch from sprint branch: `git checkout -b feature/STORY-ID-description`
 4. Run tests before committing
 5. Ensure linting passes

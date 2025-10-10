@@ -85,8 +85,8 @@ prompt_language: str = "ja"  # "en" or "ja"
 
 **To switch languages:**
 1. Edit `settings.py` and change `prompt_language` value
-2. Rebuild Docker: `./scripts/docker-dev.sh build`
-3. Restart: `./scripts/docker-dev.sh up`
+2. Rebuild Docker: `./scripts/docker/dev.sh build`
+3. Restart: `./scripts/docker/dev.sh up`
 
 **Available prompt files:**
 - English: `prompts/*_prompt_v1_en.yaml`

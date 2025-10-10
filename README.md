@@ -29,7 +29,7 @@ git clone <repository-url>
 cd ai-resume-review-v2
 
 # 2. Start all services with Docker
-./scripts/docker-dev.sh up
+./scripts/docker/dev.sh up
 
 # 3. Access the application
 # Frontend: http://localhost:3000
@@ -112,7 +112,7 @@ That's it! The platform is now running locally with all services.
 │   ├── models/         # SQLAlchemy models
 │   ├── migrations/     # Alembic migrations
 │   └── ...
-├── scripts/            # Development utilities (docker-dev.sh, etc.)
+├── scripts/            # Development utilities (docker/, gcp/, lib/)
 ├── knowledge/          # Product management docs and backlogs
 └── archive/            # Archived documents and old implementations
 ```
@@ -123,20 +123,20 @@ That's it! The platform is now running locally with all services.
 
 ```bash
 # Start all services
-./scripts/docker-dev.sh up
+./scripts/docker/dev.sh up
 
 # Check service status
-./scripts/docker-dev.sh status
+./scripts/docker/dev.sh status
 
 # View logs
-./scripts/docker-dev.sh logs [service]
+./scripts/docker/dev.sh logs [service]
 
 # Access service shell
-./scripts/docker-dev.sh shell frontend
-./scripts/docker-dev.sh shell backend
+./scripts/docker/dev.sh shell frontend
+./scripts/docker/dev.sh shell backend
 
 # Stop all services
-./scripts/docker-dev.sh down
+./scripts/docker/dev.sh down
 ```
 
 ### Frontend Development
@@ -219,10 +219,10 @@ git push origin feature/STORY-ID-description
 
 ```bash
 # Run all tests
-./scripts/docker-dev.sh shell frontend
+./scripts/docker/dev.sh shell frontend
 npm run test
 
-./scripts/docker-dev.sh shell backend
+./scripts/docker/dev.sh shell backend
 pytest
 ```
 
@@ -279,23 +279,23 @@ kill -9 <PID>
 ### Docker Issues
 ```bash
 # Clean restart
-./scripts/docker-dev.sh down
-./scripts/docker-dev.sh clean
-./scripts/docker-dev.sh up
+./scripts/docker/dev.sh down
+./scripts/docker/dev.sh clean
+./scripts/docker/dev.sh up
 ```
 
 ### Database Connection Issues
 ```bash
 # Ensure PostgreSQL is running
-./scripts/docker-dev.sh status
+./scripts/docker/dev.sh status
 
 # Access database directly
-./scripts/docker-dev.sh shell postgres
+./scripts/docker/dev.sh shell postgres
 psql -U postgres -d ai_resume_review_dev
 ```
 
 ### Frontend Can't Connect to Backend
-- Ensure both services are running: `./scripts/docker-dev.sh status`
+- Ensure both services are running: `./scripts/docker/dev.sh status`
 - Frontend uses `http://backend:8000` internally (Docker network)
 - Browser uses `http://localhost:8000` externally
 

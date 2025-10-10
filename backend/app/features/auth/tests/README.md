@@ -177,7 +177,7 @@ Potential test improvements:
 ### Common Issues
 
 **Integration tests fail with database errors**
-- Ensure PostgreSQL is running: `./scripts/docker-dev.sh status`
+- Ensure PostgreSQL is running: `./scripts/docker/dev.sh status`
 - Check database connection in `.env`
 - Run with `SKIP_INTEGRATION_TESTS=true` to skip DB tests
 

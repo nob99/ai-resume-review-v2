@@ -18,21 +18,31 @@
 
 set -e
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+# Source common functions to get PROJECT_ID and .env.scripts
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../utils/common-functions.sh"
 
-# Configuration
-PROJECT_ID="ytgrs-464303"
-SLACK_WEBHOOK_URL="${SLACK_WEBHOOK_URL:-}"  # Set via environment variable
-EMAIL_ADDRESS="${EMAIL_ADDRESS:-nobu.fukumoto.99@gmail.com}"
+# Colors for output (use common-functions colors)
+RED="$COLOR_RED"
+GREEN="$COLOR_GREEN"
+YELLOW="$COLOR_YELLOW"
+NC="$COLOR_RESET"
+
+# Configuration (with .env.scripts override support)
+SLACK_WEBHOOK_URL="${SLACK_WEBHOOK_URL:-}"  # Set via environment variable or .env.scripts
+EMAIL_ADDRESS="${ALERT_EMAIL:-nobu.fukumoto.99@gmail.com}"
 
 # Check if Slack webhook URL is provided
 if [ -z "$SLACK_WEBHOOK_URL" ]; then
   echo -e "${RED}Error: SLACK_WEBHOOK_URL environment variable not set${NC}"
-  echo "Usage: SLACK_WEBHOOK_URL='your-webhook-url' ./1-setup-notification-channels.sh"
+  echo ""
+  echo "Options to set it:"
+  echo "  1. Set in .env.scripts file (recommended):"
+  echo "     cp .env.scripts.example .env.scripts"
+  echo "     # Edit .env.scripts and set SLACK_WEBHOOK_URL"
+  echo ""
+  echo "  2. Or set as environment variable:"
+  echo "     SLACK_WEBHOOK_URL='your-webhook-url' ./1-setup-notification-channels.sh"
   exit 1
 fi
 

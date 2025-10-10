@@ -96,8 +96,8 @@ backend/
 
 ```bash
 # Using the project's docker development script (recommended)
-./scripts/docker-dev.sh up
-./scripts/docker-dev.sh shell backend
+./scripts/docker/dev.sh up
+./scripts/docker/dev.sh shell backend
 pytest
 
 # Run specific test categories
@@ -173,7 +173,7 @@ GET  /docs                        # Swagger documentation
 ### 1. Environment Setup
 ```bash
 # Use the project development script (recommended)
-./scripts/docker-dev.sh up
+./scripts/docker/dev.sh up
 
 # Or manual setup:
 cp backend/.env.example backend/.env
@@ -193,14 +193,14 @@ docker-compose up --build
 ### 3. Development Process
 ```bash
 # Check Docker services status
-./scripts/docker-dev.sh status
+./scripts/docker/dev.sh status
 
 # Start development environment
-./scripts/docker-dev.sh up
+./scripts/docker/dev.sh up
 
 # Make code changes
 # Run tests and linting
-./scripts/docker-dev.sh shell backend
+./scripts/docker/dev.sh shell backend
 pytest
 black app tests
 flake8 app tests
@@ -247,7 +247,7 @@ git checkout -b feature/UPLOAD-001-file-validation
 ## 🐛 Troubleshooting
 
 ### Common Issues
-1. **Port conflicts**: Use `./scripts/docker-dev.sh status` to check services
+1. **Port conflicts**: Use `./scripts/docker/dev.sh status` to check services
 2. **Environment setup**: Copy `.env.example` to `.env` and configure
 3. **Docker issues**: Use development script for consistent environment
 4. **Database connection**: Ensure PostgreSQL is running before backend
@@ -256,8 +256,8 @@ git checkout -b feature/UPLOAD-001-file-validation
 ### Logs and Debugging
 ```bash
 # Using development script (recommended)
-./scripts/docker-dev.sh logs backend
-./scripts/docker-dev.sh logs
+./scripts/docker/dev.sh logs backend
+./scripts/docker/dev.sh logs
 
 # Direct Docker commands
 docker-compose logs backend

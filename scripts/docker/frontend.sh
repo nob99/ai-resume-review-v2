@@ -6,25 +6,14 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+# Source shared Docker utilities
+source "$SCRIPT_DIR/../lib/docker.sh"
 
-# Function to print colored output
+# Override print_status to show [Frontend] prefix
 print_status() {
-    echo -e "${GREEN}[Frontend]${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}[Error]${NC} $1"
-}
-
-print_warning() {
-    echo -e "${YELLOW}[Warning]${NC} $1"
+    echo -e "${DOCKER_GREEN}[Frontend]${DOCKER_NC} $1"
 }
 
 # Change to project root

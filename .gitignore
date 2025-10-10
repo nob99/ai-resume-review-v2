@@ -7,6 +7,10 @@
 .env.test.local
 .env.production.local
 
+# Scripts configuration (ACTUAL VALUES - DO NOT COMMIT)
+.env.scripts
+# Note: .env.scripts.example is safe to commit
+
 # GCP Deployment configs (ACTUAL VALUES - DO NOT COMMIT)
 deployment/configs/.env.staging
 deployment/configs/.env.production
@@ -134,3 +138,6 @@ service-account-key.json
 
 # Local development overrides
 docker-compose.override.yml
+
+# Downloaded binaries (auto-downloaded by scripts)
+scripts/gcp/deploy/cloud-sql-proxy
