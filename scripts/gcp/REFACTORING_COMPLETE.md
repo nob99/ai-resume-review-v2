@@ -38,10 +38,10 @@
 |----------|--------|-------|-----------|
 | **Monitoring** | 7 scripts | 2 scripts | 71% |
 | **Deployment** | 5 scripts | 1 script | 80% |
-| **Setup** | 4 scripts | 2 scripts | 50% |
+| **Setup** | 3 scripts | 1 script | 67% |
 | **Verify** | 2 scripts | 2 scripts | 0% (kept as-is) |
 | **Utils** | 2 scripts | 2 scripts | 0% (kept as-is) |
-| **TOTAL** | **21 scripts** | **8 scripts** | **62%** |
+| **TOTAL** | **19 scripts** | **8 scripts** | **58%** |
 
 ### Code Reduction
 
@@ -123,15 +123,13 @@ deploy.sh                       # Consolidates all 5 scripts
 ### Setup (`scripts/gcp/setup/`)
 
 ```bash
-# Old (4 scripts)
+# Old (3 scripts)
 setup-gcp-project.sh
 setup-cloud-sql.sh
 setup-secrets.sh
-cleanup-old-resources.sh
 
-# New (2 scripts)
-setup.sh                        # Consolidates first 3 scripts
-cleanup.sh                      # Renamed cleanup (kept separate)
+# New (1 script)
+setup.sh                        # Consolidates all 3 scripts
 ```
 
 **Usage:**
@@ -139,7 +137,6 @@ cleanup.sh                      # Renamed cleanup (kept separate)
 ./setup.sh                      # Complete infrastructure setup
 ./setup.sh --step=database      # Cloud SQL only
 ./setup.sh --dry-run            # Preview
-./cleanup.sh --dry-run          # Preview cleanup (dangerous!)
 ```
 
 ---
@@ -222,7 +219,6 @@ cleanup.sh                      # Renamed cleanup (kept separate)
 | `./setup/setup-gcp-project.sh` | `./setup/setup.sh --step=project` |
 | `./setup/setup-cloud-sql.sh` | `./setup/setup.sh --step=database` |
 | `./setup/setup-secrets.sh` | `./setup/setup.sh --step=secrets` |
-| `./setup/cleanup-old-resources.sh` | `./setup/cleanup.sh` |
 
 ### Backward Compatibility
 
@@ -264,9 +260,8 @@ Old scripts are retained temporarily for backward compatibility. They will be ma
 - `scripts/gcp/setup/setup-gcp-project.sh`
 - `scripts/gcp/setup/setup-cloud-sql.sh`
 - `scripts/gcp/setup/setup-secrets.sh`
-- `scripts/gcp/setup/cleanup-old-resources.sh`
 
-**Total:** 16 files to remove
+**Total:** 15 files to remove
 
 ---
 

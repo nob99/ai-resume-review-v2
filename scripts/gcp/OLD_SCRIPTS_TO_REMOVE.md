@@ -51,26 +51,24 @@ scripts/gcp/deploy/deploy-all.sh
 
 ---
 
-### Setup Scripts (4 files)
+### Setup Scripts (3 files)
 
 ```bash
 scripts/gcp/setup/setup-gcp-project.sh
 scripts/gcp/setup/setup-cloud-sql.sh
 scripts/gcp/setup/setup-secrets.sh
-scripts/gcp/setup/cleanup-old-resources.sh
 ```
 
 **Replaced by:**
 - `scripts/gcp/setup/setup.sh`
-- `scripts/gcp/setup/cleanup.sh`
 
 ---
 
 ## 📊 Summary
 
-**Total files to remove:** 16 files
-**Total new files:** 5 files
-**Net reduction:** 11 files (52% fewer files after cleanup)
+**Total files to remove:** 15 files
+**Total new files:** 4 files
+**Net reduction:** 11 files (58% fewer files after cleanup)
 
 ---
 
@@ -136,7 +134,6 @@ rm scripts/gcp/deploy/deploy-all.sh
 rm scripts/gcp/setup/setup-gcp-project.sh
 rm scripts/gcp/setup/setup-cloud-sql.sh
 rm scripts/gcp/setup/setup-secrets.sh
-rm scripts/gcp/setup/cleanup-old-resources.sh
 
 # Commit the cleanup
 git add -A
@@ -145,10 +142,10 @@ git commit -m "chore: remove deprecated GCP scripts after validation period
 Remove old scripts that have been replaced by consolidated versions.
 All functionality has been tested and validated in production.
 
-Removed 16 deprecated scripts:
+Removed 15 deprecated scripts:
 - Monitoring: 7 scripts → 2 scripts
 - Deployment: 5 scripts → 1 script
-- Setup: 4 scripts → 2 scripts
+- Setup: 3 scripts → 1 script
 
 See scripts/gcp/REFACTORING_COMPLETE.md for details.
 "
