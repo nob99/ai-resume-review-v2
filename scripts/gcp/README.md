@@ -1,7 +1,7 @@
 # GCP Deployment Scripts
 
-**Version**: 2.0
-**Last Updated**: 2025-10-07
+**Version**: 3.0 (Refactored)
+**Last Updated**: 2025-10-10
 **Project**: AI Resume Review Platform v2
 
 ---
@@ -14,18 +14,17 @@ scripts/gcp/
 │
 ├── setup/                 ← Phase 1 & 2: One-time infrastructure setup
 │   ├── README.md
-│   ├── cleanup-old-resources.sh
-│   ├── setup-gcp-project.sh
-│   ├── setup-cloud-sql.sh
-│   └── setup-secrets.sh
+│   ├── setup.sh           ✨ NEW: All-in-one setup (replaces 3 scripts)
+│   └── cleanup.sh         ← Cleanup old resources (dangerous!)
 │
 ├── deploy/                ← Phase 3: Application deployment (repeatable)
 │   ├── README.md
-│   ├── 1-verify-prerequisites.sh
-│   ├── 2-run-migrations.sh
-│   ├── 3-deploy-backend.sh
-│   ├── 4-deploy-frontend.sh
-│   └── deploy-all.sh
+│   └── deploy.sh          ✨ NEW: Complete deployment pipeline (replaces 5 scripts)
+│
+├── monitoring/            ← Cloud Monitoring setup
+│   ├── README.md
+│   ├── setup.sh           ✨ NEW: Complete monitoring setup (replaces 6 scripts)
+│   └── verify.sh          ← Verify monitoring configuration
 │
 ├── verify/                ← Post-deployment testing
 │   ├── README.md
@@ -37,6 +36,8 @@ scripts/gcp/
     └── rollback.sh
 ```
 
+**Note:** Old scripts retained for backward compatibility (marked as deprecated).
+
 ---
 
 ## 🚀 Quick Start
@@ -46,16 +47,27 @@ scripts/gcp/
 If this is your first time deploying the application:
 
 ```bash
-# 1. Review what was already done (Phase 1 & 2)
-cat setup/README.md
+# 1. Set up infrastructure (one-time)
+cd setup/
+./setup.sh                    # Complete GCP infrastructure setup
+# Or step-by-step:
+./setup.sh --step=project     # GCP project setup
+./setup.sh --step=database    # Cloud SQL setup
+./setup.sh --step=secrets     # Secrets setup
 
-# 2. Start deployment (Phase 3)
-cd deploy/
-cat README.md                 # Read deployment guide
-./1-verify-prerequisites.sh   # Check everything is ready
-./2-run-migrations.sh         # Initialize database
-./3-deploy-backend.sh         # Deploy backend
-./4-deploy-frontend.sh        # Deploy frontend
+# 2. Deploy application
+cd ../deploy/
+./deploy.sh                   # Complete deployment pipeline
+# Or step-by-step:
+./deploy.sh --step=verify     # Prerequisites check
+./deploy.sh --step=migrate    # Database migrations
+./deploy.sh --step=backend    # Backend deployment
+./deploy.sh --step=frontend   # Frontend deployment
+
+# 3. Set up monitoring (recommended)
+cd ../monitoring/
+./setup.sh                    # Complete monitoring setup
+./verify.sh                   # Verify setup
 ```
 
 ### **For Subsequent Deployments**
@@ -65,7 +77,14 @@ If infrastructure is already set up and you just want to redeploy:
 ```bash
 # Quick redeploy
 cd deploy/
-./deploy-all.sh            # Runs all steps automatically
+./deploy.sh                   # Complete deployment pipeline
+
+# Or deploy specific components:
+./deploy.sh --step=backend    # Backend only
+./deploy.sh --step=frontend   # Frontend only
+
+# Skip health checks for faster deployment:
+./deploy.sh --skip-tests
 ```
 
 ---
@@ -148,7 +167,18 @@ Contains shared utilities used by other scripts.
 
 ```bash
 cd deploy/
-./deploy-all.sh
+./deploy.sh                   # Complete deployment
+./deploy.sh --dry-run         # Preview what would happen
+./deploy.sh --skip-tests      # Faster deployment
+```
+
+### Set Up Monitoring
+
+```bash
+cd monitoring/
+./setup.sh                    # Complete monitoring setup
+./setup.sh --step=alerts      # Just alerts
+./verify.sh                   # Verify configuration
 ```
 
 ### Check if Deployment is Healthy
@@ -292,6 +322,26 @@ Plus variable costs:
 
 ---
 
-**Version**: 2.0
-**Last Updated**: 2025-10-07
+**Version**: 3.0 (Refactored)
+**Last Updated**: 2025-10-10
 **Maintained By**: Cloud Engineering Team
+
+---
+
+## ✨ What's New in Version 3.0
+
+**Major Refactoring (Oct 2025):**
+- Consolidated 21 scripts → 8 scripts (62% reduction!)
+- All scripts now support `--dry-run` mode
+- All scripts have `--step=<name>` for granular control
+- All scripts have `--help` documentation
+- 40-61% code reduction (removed duplication)
+- Better error handling and consistency
+
+**Benefits:**
+- Easier to use (one command vs many)
+- Safer (dry-run before execution)
+- More flexible (step-by-step or all-at-once)
+- Better documented (built-in help)
+
+See [REFACTORING_PLAN.md](REFACTORING_PLAN.md) for full details.

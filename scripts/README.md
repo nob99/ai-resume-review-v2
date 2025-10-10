@@ -1,6 +1,19 @@
 # Scripts Directory
 
+**Version:** 3.0 (Refactored - Oct 2025)
+
 This directory contains utility scripts for local development and GCP deployment management.
+
+## ✨ Recent Updates (v3.0 - Oct 2025)
+
+**Major GCP scripts consolidation:**
+- **Before:** 21 GCP scripts
+- **After:** 8 GCP scripts (62% reduction!)
+- All scripts support `--dry-run`, `--step=<name>`, `--help`
+- 40-61% code reduction (removed duplication)
+- Better error handling and consistency
+
+See [gcp/REFACTORING_PLAN.md](gcp/REFACTORING_PLAN.md) for full details.
 
 ## Directory Structure
 
@@ -105,67 +118,84 @@ Scripts for deploying and managing the application on Google Cloud Platform.
 
 ### Deployment Scripts (`gcp/deploy/`)
 
-#### One-Command Deployment
+**✨ NEW: Consolidated into one script**
+
+#### Complete Deployment
 ```bash
-# Deploy everything (migrations + backend + frontend)
-./scripts/gcp/deploy/deploy-all.sh
+# Deploy everything (verify + migrate + backend + frontend)
+./scripts/gcp/deploy/deploy.sh
+
+# Preview what would happen
+./scripts/gcp/deploy/deploy.sh --dry-run
+
+# Skip health checks (faster)
+./scripts/gcp/deploy/deploy.sh --skip-tests
 ```
 
 #### Step-by-Step Deployment
 ```bash
-# Step 1: Verify prerequisites
-./scripts/gcp/deploy/1-verify-prerequisites.sh
+# Individual steps
+./scripts/gcp/deploy/deploy.sh --step=verify      # Prerequisites check
+./scripts/gcp/deploy/deploy.sh --step=migrate     # Database migrations
+./scripts/gcp/deploy/deploy.sh --step=backend     # Backend only
+./scripts/gcp/deploy/deploy.sh --step=frontend    # Frontend only
 
-# Step 2: Run database migrations
-./scripts/gcp/deploy/2-run-migrations.sh
-
-# Step 3: Deploy backend to Cloud Run
-./scripts/gcp/deploy/3-deploy-backend.sh
-
-# Step 4: Deploy frontend to Cloud Run
-./scripts/gcp/deploy/4-deploy-frontend.sh
+# Preview individual steps
+./scripts/gcp/deploy/deploy.sh --step=backend --dry-run
 ```
 
-**What these scripts do:**
-1. Build Docker images for production
-2. Push images to Google Artifact Registry
-3. Deploy containers to Cloud Run
-4. Configure secrets, environment variables, VPC
-5. Run health checks
+**What it does:**
+1. Verifies prerequisites (gcloud, Docker, GCP resources)
+2. Runs database migrations
+3. Builds Docker images for production
+4. Pushes images to Google Artifact Registry
+5. Deploys containers to Cloud Run
+6. Configures secrets, environment variables, VPC
+7. Runs health checks
 
 ### Setup Scripts (`gcp/setup/`)
+
+**✨ NEW: Consolidated into one script**
 
 Initial infrastructure setup (run once per environment):
 
 ```bash
-# Complete GCP project setup
-./scripts/gcp/setup/setup-gcp-project.sh
+# Complete infrastructure setup
+./scripts/gcp/setup/setup.sh
 
-# Setup Cloud SQL database
-./scripts/gcp/setup/setup-cloud-sql.sh
+# Preview what would be created
+./scripts/gcp/setup/setup.sh --dry-run
 
-# Configure secrets in Secret Manager
-./scripts/gcp/setup/setup-secrets.sh
+# Step-by-step setup
+./scripts/gcp/setup/setup.sh --step=project      # Service accounts, IAM, VPC
+./scripts/gcp/setup/setup.sh --step=database     # Cloud SQL
+./scripts/gcp/setup/setup.sh --step=secrets      # Secret Manager
 
-# Clean up old resources
-./scripts/gcp/setup/cleanup-old-resources.sh
+# Clean up old resources (dangerous!)
+./scripts/gcp/setup/cleanup.sh --dry-run
+./scripts/gcp/setup/cleanup.sh
 ```
 
 ### Monitoring Scripts (`gcp/monitoring/`)
 
+**✨ NEW: Consolidated into one script**
+
 ```bash
 # Setup all monitoring at once
-./scripts/gcp/monitoring/run-all-setup.sh
+./scripts/gcp/monitoring/setup.sh
 
-# Or setup individually:
-./scripts/gcp/monitoring/1-setup-notification-channels.sh
-./scripts/gcp/monitoring/2-setup-uptime-checks.sh
-./scripts/gcp/monitoring/3-setup-critical-alerts.sh
-./scripts/gcp/monitoring/4-setup-log-metrics.sh
-./scripts/gcp/monitoring/5-setup-budget-alert.sh
+# Preview what would be created
+./scripts/gcp/monitoring/setup.sh --dry-run
+
+# Step-by-step setup
+./scripts/gcp/monitoring/setup.sh --step=channels    # Slack + Email
+./scripts/gcp/monitoring/setup.sh --step=uptime      # Uptime checks
+./scripts/gcp/monitoring/setup.sh --step=alerts      # Alert policies
+./scripts/gcp/monitoring/setup.sh --step=logs        # Log metrics
+./scripts/gcp/monitoring/setup.sh --step=budget      # Budget alert
 
 # Verify monitoring setup
-./scripts/gcp/monitoring/verify-setup.sh
+./scripts/gcp/monitoring/verify.sh
 ```
 
 ### Verification Scripts (`gcp/verify/`)
