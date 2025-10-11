@@ -4,7 +4,7 @@ import React from 'react'
 import { Button } from '@/components/ui'
 import { UploadFile } from '@/types'
 import FileStatusBadge from './FileStatusBadge'
-import { FileUploadStatus } from '../constants'
+import { FileUploadStatus } from '../../constants'
 
 export interface FileListProps {
   files: UploadFile[]

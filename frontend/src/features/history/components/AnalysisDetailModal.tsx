@@ -82,8 +82,7 @@ const AnalysisDetailModal: React.FC<AnalysisDetailModalProps> = ({
                 <AnalysisResults
                   analysis={analysisData}
                   industryOptions={INDUSTRY_OPTIONS}
-                  onAnalyzeAgain={() => {}} // Not needed in history view
-                  onUploadNew={() => {}}    // Not needed in history view
+                  // Action buttons omitted - they won't render in history view
                 />
               ) : (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">

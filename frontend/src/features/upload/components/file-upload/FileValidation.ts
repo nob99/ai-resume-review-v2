@@ -4,7 +4,7 @@ import {
   ACCEPTED_EXTENSIONS,
   MAX_FILE_SIZE,
   MIN_FILE_SIZE
-} from '../constants'
+} from '../../constants'
 
 export interface FileValidationConfig {
   allowedTypes: string[]

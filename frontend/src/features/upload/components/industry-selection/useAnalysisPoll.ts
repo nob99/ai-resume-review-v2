@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { AnalysisStatusResponse } from '@/types'
 import { analysisApi } from '@/lib/api'
-import { ANALYSIS_POLL_INTERVAL_MS, AnalysisStatus } from '../constants'
+import { ANALYSIS_POLL_INTERVAL_MS, AnalysisStatus } from '../../constants'
 
 /**
  * Analysis Poll State

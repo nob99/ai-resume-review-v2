@@ -1,20 +1,18 @@
-// Upload components barrel export
-export { default as FileUpload } from './FileUpload'
-export { default as FileList } from './FileList'
-export { default as FileStatusBadge } from './FileStatusBadge'
-export { default as IndustrySelector } from './IndustrySelector'
+/**
+ * Upload Feature Components
+ * Barrel exports for all upload workflow sections
+ */
 
-// Analysis components (moved from components/analysis)
+// Section components (main workflow steps)
+export * from './candidate-selection'
+export * from './file-upload'
+export * from './industry-selection'
+export * from './analysis-results'
+
+// Legacy exports (for backward compatibility - can be removed later)
+export { default as FileUpload } from './file-upload/FileUpload'
+export { default as FileList } from './file-upload/FileList'
+export { default as FileStatusBadge } from './file-upload/FileStatusBadge'
+export { default as IndustrySelector } from './industry-selection/IndustrySelector'
 export { default as AnalysisResults } from './AnalysisResults'
-export { default as DetailedScores } from './DetailedScores'
-export { default as FeedbackSection } from './FeedbackSection'
-
-// Export validation
-export * from './FileValidation'
-
-// Export types
-export type { FileUploadProps, UploadFile, FileValidationResult } from '@/types'
-export type { FileValidationConfig } from './FileValidation'
-export type { FileListProps } from './FileList'
-export type { FileStatusBadgeProps } from './FileStatusBadge'
-export type { IndustrySelectorProps } from './IndustrySelector'
+export * from './file-upload/FileValidation'

@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { UploadFile, FileUploadError } from '@/types'
 import { uploadApi } from '@/lib/api'
-import { FileUploadStatus } from '../constants'
+import { FileUploadStatus } from '../../constants'
 
 /**
  * File Upload State

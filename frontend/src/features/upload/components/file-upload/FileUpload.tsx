@@ -5,7 +5,7 @@ import { useDropzone } from 'react-dropzone'
 import { Card, CardContent } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { FileUploadProps, FileValidationResult, FileUploadError } from '@/types'
-import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE } from '../constants'
+import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE } from '../../constants'
 import { formatFileSize } from './FileValidation'
 
 const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(

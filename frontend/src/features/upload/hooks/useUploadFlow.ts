@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { UploadPageState, FileUploadHandlers, AnalysisHandlers } from '../types'
-import useFileUpload from './useFileUpload'
-import useAnalysisPoll from './useAnalysisPoll'
+import useFileUpload from '../components/file-upload/useFileUpload'
+import useAnalysisPoll from '../components/industry-selection/useAnalysisPoll'
 
 /**
  * Custom hook for managing complete upload and analysis flow
