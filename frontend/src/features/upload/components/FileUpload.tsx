@@ -166,7 +166,7 @@ const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
                   isDragActive ? 'text-primary-700' : 'text-neutral-700',
                   disabled && 'text-neutral-400'
                 )}>
-                  {isDragActive ? 'Drop files here to upload' : 'ファイルのドラッグ&ドロップ / Drag & drop resume files here'}
+                  {isDragActive ? 'Drop files here to upload' : 'ファイルのドラッグ&ドロップ'}
                 </p>
                 <p className={cn(
                   'text-base',
@@ -178,7 +178,7 @@ const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
                     'font-semibold underline text-blue-600',
                     !disabled && 'hover:text-blue-700 cursor-pointer'
                   )}>
-                    ファイルの選択 / click here to browse files
+                    ファイルの選択
                   </span>
                 </p>
               </div>
@@ -189,9 +189,9 @@ const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
                 'text-neutral-400',
                 disabled && 'text-neutral-300'
               )}>
-                <p>サポートされるファイル形式: Supported formats: PDF, DOC, DOCX</p>
-                <p>最大ファイルサイズ: Maximum file size: {formatFileSize(maxFileSize)}</p>
-                {multiple && <p>最大ファイル数: Maximum files: {maxFiles}</p>}
+                <p>サポートされるファイル形式: PDF, DOC, DOCX</p>
+                <p>最大ファイルサイズ: {formatFileSize(maxFileSize)}</p>
+                {multiple && <p>最大ファイル数: {maxFiles}</p>}
               </div>
 
               {/* Drag state indicators */}

@@ -52,7 +52,7 @@ const UploadPage: React.FC = () => {
                 <Card>
                   <CardHeader>
                     <h2 className="text-xl font-semibold text-neutral-900">
-                      Step 1: 候補者の選択 / Select Candidate
+                      Step 1: 候補者の選択
                     </h2>
                   </CardHeader>
                   <CardContent className="pt-6 space-y-4">
@@ -71,7 +71,7 @@ const UploadPage: React.FC = () => {
                           onClick={() => router.push('/register-candidate')}
                           className="font-medium text-blue-600 hover:text-blue-700 underline"
                         >
-                          [候補者登録ページ / Register Candidate]
+                          [候補者登録ページ]
                         </button>
                       </p>
                     </div>
@@ -83,11 +83,11 @@ const UploadPage: React.FC = () => {
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <h2 className="text-xl font-semibold text-neutral-900">
-                        Step 2: レジュメの選択 / Select Resume Files
+                        Step 2: レジュメの選択
                       </h2>
                       {!state.selectedCandidate && (
                         <span className="text-sm text-neutral-500 bg-neutral-100 px-3 py-1 rounded-full">
-                          Step 1を完了してください / Complete Step 1 first
+                          Step 1を完了してください
                         </span>
                       )}
                     </div>
@@ -103,7 +103,7 @@ const UploadPage: React.FC = () => {
                     {!state.selectedCandidate && (
                       <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                         <p className="text-sm text-yellow-800">
-                          候補者を選択してからレジュメをアップロードしてください / Please select a candidate first before uploading files.
+                          候補者を選択してからレジュメをアップロードしてください
                         </p>
                       </div>
                     )}
@@ -149,11 +149,11 @@ const UploadPage: React.FC = () => {
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <h2 className="text-xl font-semibold text-neutral-900">
-                        Step 3: 応募する業界の選択 & AI分析 / Select Industry & Analyze
+                        Step 3: 応募する業界の選択 & AI分析
                       </h2>
                       {successFiles.length === 0 && (
                         <span className="text-sm text-neutral-500 bg-neutral-100 px-3 py-1 rounded-full">
-                          Step 2を完了してください / Complete Step 2 first
+                          Step 2を完了してください
                         </span>
                       )}
                     </div>
@@ -163,10 +163,10 @@ const UploadPage: React.FC = () => {
                       <div className="p-8 text-center bg-neutral-50 rounded-lg border-2 border-dashed border-neutral-200">
                         <div className="text-4xl mb-3">📊</div>
                         <p className="text-neutral-600 font-medium mb-1">
-                          業界の選択 / Industry Selection
+                          業界の選択
                         </p>
                         <p className="text-sm text-neutral-500">
-                          レジュメをアップロードしてStep 2を完了してください / Upload and complete Step 2 to select industry and analyze your resume
+                          レジュメをアップロードしてStep 2を完了してください
                         </p>
                       </div>
                     ) : (
