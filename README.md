@@ -315,10 +315,7 @@ See [terraform/README.md](terraform/README.md) for complete infrastructure docum
 - **[Backend README](backend/README.md)** - Detailed backend architecture and API docs
 - **[Terraform README](terraform/README.md)** - Infrastructure setup and management
 - **[Configuration Guide](config/README.md)** - Environment configuration documentation
-- **[Knowledge Base](knowledge/)** - Product management, backlogs, and sprint planning
 
-### Current Sprint Status
-See `knowledge/backlog/` for current sprint status, user stories, and sprint backlogs.
 
 ## Common Issues & Troubleshooting
 
@@ -355,25 +352,9 @@ psql -U postgres -d ai_resume_review_dev
 - Frontend uses `http://backend:8000` internally (Docker network)
 - Browser uses `http://localhost:8000` externally
 
-## Contributing
-
-1. Check the current sprint backlog in `knowledge/backlog/`
-2. Pick a user story or create a feature branch
-3. Follow the coding standards in [CLAUDE.md](CLAUDE.md)
-4. Write tests (80% coverage minimum)
-5. Ensure linting passes
-6. Create a pull request
-
-## Team & Support
-
-For questions or issues:
-1. Check the documentation in `knowledge/` and `docs/`
-2. Review [CLAUDE.md](CLAUDE.md) for coding patterns
-3. Check existing issues and PRs
-4. Contact the team lead
 
 ---
 
 **Built with ❤️ for recruitment consultants**
 
-*Last Updated: October 2024*
+*Last Updated: October 2025*
