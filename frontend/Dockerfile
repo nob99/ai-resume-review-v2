@@ -21,9 +21,11 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copy source code
 COPY . .
 
-# Accept build argument for API URL
+# Accept build arguments
 ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_ENV_NAME
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_ENV_NAME=${NEXT_PUBLIC_ENV_NAME}
 
 # Set environment variable for build
 ENV NEXT_TELEMETRY_DISABLED=1

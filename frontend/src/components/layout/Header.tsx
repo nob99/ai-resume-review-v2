@@ -7,6 +7,7 @@ import { useToastActions } from '@/components/ui/Toast'
 import { cn } from '@/lib/utils'
 import Button from '@/components/ui/Button'
 import Container from './Container'
+import EnvironmentBadge from './EnvironmentBadge'
 
 export interface HeaderProps {
   className?: string
@@ -256,7 +257,7 @@ const Header: React.FC<HeaderProps> = ({ className, showUserMenu = true }) => {
       <Container size="full">
         <div className="flex items-center justify-between h-16">
           {/* Logo and brand */}
-          <div className="flex items-center">
+          <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center">
               {/* Brand text */}
               <div className="flex flex-col">
@@ -268,6 +269,7 @@ const Header: React.FC<HeaderProps> = ({ className, showUserMenu = true }) => {
                 </span>
               </div>
             </Link>
+            <EnvironmentBadge />
           </div>
 
           {/* Navigation and user menu */}

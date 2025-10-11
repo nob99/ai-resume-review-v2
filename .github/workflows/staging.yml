@@ -137,6 +137,7 @@ jobs:
           docker build \
             -f frontend/Dockerfile \
             --build-arg NEXT_PUBLIC_API_URL=https://ai-resume-review-v2-backend-staging-wnjxxf534a-uc.a.run.app \
+            --build-arg NEXT_PUBLIC_ENV_NAME=staging \
             -t ${{ env.ARTIFACT_REGISTRY }}/frontend:${{ github.sha }}-staging \
             -t ${{ env.ARTIFACT_REGISTRY }}/frontend:staging-latest \
             frontend

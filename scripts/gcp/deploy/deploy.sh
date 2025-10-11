@@ -549,11 +549,19 @@ step_deploy_frontend() {
         die "Backend service not found. Deploy backend first."
     fi
 
+    # Determine environment name from service name
+    local env_name="prod"
+    if [[ "$FRONTEND_SERVICE_NAME" == *"-staging"* ]]; then
+        env_name="staging"
+    fi
+
     if [ "$DRY_RUN" = true ]; then
         log_info "[DRY-RUN] Backend URL: $backend_url"
+        log_info "[DRY-RUN] Environment: $env_name"
         log_info "[DRY-RUN] Would build frontend Docker image"
         log_info "  Context: $PROJECT_ROOT/frontend"
         log_info "  Build arg: NEXT_PUBLIC_API_URL=$backend_url"
+        log_info "  Build arg: NEXT_PUBLIC_ENV_NAME=$env_name"
         log_info "  Platform: linux/amd64"
         log_info "[DRY-RUN] Would push to: $FRONTEND_IMAGE_REMOTE"
         log_info "[DRY-RUN] Would deploy to Cloud Run: $FRONTEND_SERVICE_NAME"
@@ -583,12 +591,15 @@ step_deploy_frontend() {
     # Build frontend image
     log_info "Building frontend Docker image..."
     log_info "Backend URL: $backend_url"
+    log_info "Environment: $env_name"
+
     cd "$PROJECT_ROOT"
 
     docker build \
         --no-cache \
         --platform linux/amd64 \
         --build-arg "NEXT_PUBLIC_API_URL=$backend_url" \
+        --build-arg "NEXT_PUBLIC_ENV_NAME=$env_name" \
         -t "$FRONTEND_IMAGE_LOCAL" \
         "./frontend"
 

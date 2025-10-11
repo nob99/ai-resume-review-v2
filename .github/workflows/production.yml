@@ -74,6 +74,7 @@ jobs:
           docker build \
             -f frontend/Dockerfile \
             --build-arg NEXT_PUBLIC_API_URL=https://ai-resume-review-v2-backend-prod-wnjxxf534a-uc.a.run.app \
+            --build-arg NEXT_PUBLIC_ENV_NAME=prod \
             -t ${{ env.ARTIFACT_REGISTRY }}/frontend:${{ github.sha }}-production \
             -t ${{ env.ARTIFACT_REGISTRY }}/frontend:production-latest \
             frontend
