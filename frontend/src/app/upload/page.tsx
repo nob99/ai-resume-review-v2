@@ -66,7 +66,7 @@ const UploadPage: React.FC = () => {
                     {/* Helper: Register new candidate */}
                     <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-md">
                       <p className="text-sm text-neutral-700 mb-2">
-                        候補者が見つからない場合は、まず候補者を登録してください  {' '}
+                        候補者が見つからない場合は、まず候補者を登録してください{' '}
                         <button
                           onClick={() => router.push('/register-candidate')}
                           className="font-medium text-blue-600 hover:text-blue-700 underline"
