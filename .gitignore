@@ -141,3 +141,25 @@ docker-compose.override.yml
 
 # Downloaded binaries (auto-downloaded by scripts)
 scripts/gcp/deploy/cloud-sql-proxy
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars.backup
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Terraform variable files (if they contain sensitive values)
+# Note: terraform.tfvars with non-sensitive values can be committed
+# Uncomment if you store sensitive values in tfvars:
+# *.tfvars
+# *.tfvars.json

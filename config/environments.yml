@@ -1,0 +1,158 @@
+# ============================================================================
+# GCP Environment Configuration
+# ============================================================================
+# This file defines all GCP resources for staging and production environments.
+# Used by: scripts/gcp/**, .github/workflows/**, terraform/**
+#
+# Single source of truth for ALL infrastructure configuration.
+# Changes to this file should be reviewed carefully and tested in staging first.
+
+# ----------------------------------------------------------------------------
+# Global Settings (shared across all environments)
+# ----------------------------------------------------------------------------
+global:
+  project_id: ytgrs-464303
+  project_number: 864523342928
+  region: us-central1
+  zone: us-central1-c
+
+  # Artifact Registry
+  artifact_registry:
+    location: us-central1
+    repository: ai-resume-review-v2
+    url: us-central1-docker.pkg.dev/ytgrs-464303/ai-resume-review-v2
+
+  # GitHub Actions (Workload Identity Federation)
+  github_actions:
+    workload_identity_pool: projects/864523342928/locations/global/workloadIdentityPools/github-actions/providers/github
+    service_account: github-actions-deployer@ytgrs-464303.iam.gserviceaccount.com
+
+# ----------------------------------------------------------------------------
+# Staging Environment
+# ----------------------------------------------------------------------------
+staging:
+  # Cloud Run Services
+  backend:
+    name: ai-resume-review-v2-backend-staging
+    service_account: arr-v2-backend-staging@ytgrs-464303.iam.gserviceaccount.com
+    url: https://ai-resume-review-v2-backend-staging-wnjxxf534a-uc.a.run.app
+    memory: 2Gi
+    cpu: 2
+    min_instances: 0
+    max_instances: 3
+    timeout: 600
+    concurrency: 20
+
+  frontend:
+    name: ai-resume-review-v2-frontend-staging
+    service_account: arr-v2-frontend-staging@ytgrs-464303.iam.gserviceaccount.com
+    url: https://ai-resume-review-v2-frontend-staging-wnjxxf534a-uc.a.run.app
+    memory: 512Mi
+    cpu: 1
+    min_instances: 0
+    max_instances: 3
+    timeout: 300
+    concurrency: 80
+
+  # Database (Cloud SQL)
+  database:
+    instance_name: ai-resume-review-v2-db-staging
+    database_name: ai_resume_review_staging
+    user: postgres
+    version: POSTGRES_15
+    tier: db-f1-micro
+    storage_size_gb: 10
+    storage_type: PD_SSD
+    availability_type: ZONAL
+    backup_enabled: true
+    backup_retention_days: 7
+    backup_start_time: "02:00"
+    deletion_protection: false  # Allow deletion in staging
+
+  # Networking
+  network:
+    vpc_name: ai-resume-review-v2-vpc
+    subnet_name: ai-resume-review-v2-subnet
+    subnet_cidr: 10.0.0.0/24
+    vpc_connector: ai-resume-connector-v2-staging
+    vpc_connector_cidr: 10.8.0.0/28
+    vpc_connector_min_instances: 2
+    vpc_connector_max_instances: 3
+    vpc_connector_machine_type: f1-micro
+
+  # Secrets (Secret Manager - names only, not values!)
+  secrets:
+    openai_api_key: openai-api-key-staging
+    jwt_secret_key: jwt-secret-key-staging
+    db_password: db-password-staging
+
+  # Monitoring & Alerts
+  monitoring:
+    alert_email: dev-alerts@example.com
+    slack_webhook_secret: slack-webhook-staging
+    uptime_check_enabled: true
+
+# ----------------------------------------------------------------------------
+# Production Environment
+# ----------------------------------------------------------------------------
+production:
+  # Cloud Run Services
+  backend:
+    name: ai-resume-review-v2-backend-prod
+    service_account: arr-v2-backend-prod@ytgrs-464303.iam.gserviceaccount.com
+    url: https://ai-resume-review-v2-backend-prod-wnjxxf534a-uc.a.run.app
+    memory: 2Gi
+    cpu: 2
+    min_instances: 1    # Keep at least 1 instance warm in production
+    max_instances: 5
+    timeout: 600
+    concurrency: 20
+
+  frontend:
+    name: ai-resume-review-v2-frontend-prod
+    service_account: arr-v2-frontend-prod@ytgrs-464303.iam.gserviceaccount.com
+    url: https://ai-resume-review-v2-frontend-prod-wnjxxf534a-uc.a.run.app
+    memory: 512Mi
+    cpu: 1
+    min_instances: 1    # Keep at least 1 instance warm in production
+    max_instances: 5
+    timeout: 300
+    concurrency: 80
+
+  # Database (Cloud SQL)
+  database:
+    instance_name: ai-resume-review-v2-db-prod
+    database_name: ai_resume_review_prod
+    user: postgres
+    version: POSTGRES_15
+    tier: db-f1-micro
+    storage_size_gb: 10
+    storage_type: PD_SSD
+    availability_type: ZONAL
+    backup_enabled: true
+    backup_retention_days: 7
+    backup_start_time: "02:00"
+    deletion_protection: true   # Protect production database from accidental deletion
+
+  # Networking (shared VPC with staging)
+  network:
+    vpc_name: ai-resume-review-v2-vpc
+    subnet_name: ai-resume-review-v2-subnet
+    subnet_cidr: 10.0.0.0/24
+    vpc_connector: ai-resume-connector-v2
+    vpc_connector_cidr: 10.8.0.0/28
+    vpc_connector_min_instances: 2
+    vpc_connector_max_instances: 3
+    vpc_connector_machine_type: f1-micro
+
+  # Secrets (Secret Manager - names only, not values!)
+  secrets:
+    openai_api_key: openai-api-key-prod
+    jwt_secret_key: jwt-secret-key-prod
+    db_password: db-password-prod
+
+  # Monitoring & Alerts
+  monitoring:
+    alert_email: ops@example.com
+    slack_webhook_secret: slack-webhook-prod
+    uptime_check_enabled: true
