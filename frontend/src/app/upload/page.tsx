@@ -65,15 +65,15 @@ const UploadPage: React.FC = () => {
 
                     {/* Helper: Register new candidate */}
                     <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-md">
-                      <p className="text-sm text-neutral-700 mb-2">
-                        候補者が見つからない場合は、まず候補者を登録してください{' '}
+                      <div className="flex items-center gap-1 text-sm text-neutral-700">
+                        <span>候補者が見つからない場合は、まず候補者を登録してください</span>
                         <button
                           onClick={() => router.push('/register-candidate')}
                           className="font-medium text-blue-600 hover:text-blue-700 underline"
                         >
                           [候補者登録ページ]
                         </button>
-                      </p>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
