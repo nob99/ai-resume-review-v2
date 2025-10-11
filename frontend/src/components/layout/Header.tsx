@@ -115,28 +115,28 @@ const NavigationItems: React.FC = () => {
     <nav className="hidden md:flex items-center space-x-8">
       <a
         href="/upload"
-        className="text-neutral-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+        className="text-neutral-700 hover:text-blue-700 hover:bg-blue-50 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200"
       >
-        Upload Resume
+        アップロード/分析
       </a>
       <a
         href="/history"
-        className="text-neutral-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+        className="text-neutral-700 hover:text-blue-700 hover:bg-blue-50 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200"
       >
-        Review History
+        分析履歴
       </a>
       <a
         href="/register-candidate"
-        className="text-neutral-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+        className="text-neutral-700 hover:text-blue-700 hover:bg-blue-50 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200"
       >
-        Register Candidate
+        候補者登録
       </a>
       {user?.role === 'admin' && (
         <a
           href="/admin"
-          className="text-neutral-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+          className="text-neutral-700 hover:text-blue-700 hover:bg-blue-50 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200"
         >
-          User Management
+          ユーザー管理
         </a>
       )}
     </nav>
@@ -188,21 +188,21 @@ const MobileMenu: React.FC<{ isOpen: boolean; onToggle: () => void }> = ({ isOpe
           <div className="px-2 pt-2 pb-3 space-y-1">
             <a
               href="/upload"
-              className="block px-3 py-2 text-base font-medium text-neutral-700 hover:text-primary-600 hover:bg-neutral-50 rounded-md"
+              className="block px-3 py-2 text-base font-medium text-neutral-700 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-all duration-200"
               onClick={onToggle}
             >
               Upload Resume
             </a>
             <a
               href="/history"
-              className="block px-3 py-2 text-base font-medium text-neutral-700 hover:text-primary-600 hover:bg-neutral-50 rounded-md"
+              className="block px-3 py-2 text-base font-medium text-neutral-700 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-all duration-200"
               onClick={onToggle}
             >
               Review History
             </a>
             <a
               href="/register-candidate"
-              className="block px-3 py-2 text-base font-medium text-neutral-700 hover:text-primary-600 hover:bg-neutral-50 rounded-md"
+              className="block px-3 py-2 text-base font-medium text-neutral-700 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-all duration-200"
               onClick={onToggle}
             >
               Register Candidate
@@ -210,7 +210,7 @@ const MobileMenu: React.FC<{ isOpen: boolean; onToggle: () => void }> = ({ isOpe
             {user?.role === 'admin' && (
               <a
                 href="/admin"
-                className="block px-3 py-2 text-base font-medium text-neutral-700 hover:text-primary-600 hover:bg-neutral-50 rounded-md"
+                className="block px-3 py-2 text-base font-medium text-neutral-700 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-all duration-200"
                 onClick={onToggle}
               >
                 User Management
