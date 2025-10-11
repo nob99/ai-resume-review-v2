@@ -116,8 +116,21 @@ mypy app           # Type checking
 │   ├── docs/           # Schema documentation
 │   ├── scripts/        # Database scripts
 │   └── tests/          # Database tests
-├── scripts/            # Development utilities (docker/, gcp/, lib/)
-├── knowledge/          # Product management docs and backlogs
+├── config/             # Environment configuration
+│   ├── environments.yml # Single source of truth for all environments
+│   └── README.md       # Configuration guide
+├── terraform/          # Infrastructure as Code
+│   ├── bootstrap/      # GCS state bucket setup
+│   ├── modules/        # Reusable Terraform modules
+│   ├── environments/   # Staging and production configs
+│   └── README.md       # Terraform setup and usage guide
+├── scripts/            # Development utilities
+│   ├── docker/         # Docker development scripts
+│   ├── gcp/            # GCP deployment scripts (deploy, setup, monitoring)
+│   └── lib/            # Shared utilities (config loader)
+├── .github/workflows/  # CI/CD pipelines
+│   ├── staging.yml     # Auto-deploy to staging
+│   └── production.yml  # Manual deploy to production
 └── archive/            # Archived documents and old implementations
 ```
 
@@ -125,14 +138,44 @@ mypy app           # Type checking
 
 The platform uses LangChain/LangGraph to orchestrate multiple specialized agents:
 - **Base Agent**: Common resume quality checks
-- **Structure Agent**: General resume structure evaluation  
+- **Structure Agent**: General resume structure evaluation
 - **Appeal Agent**: Industry-specific appeal evaluation
 
 Prompts are database-driven for easy updates without code changes.
 
-## Current Sprint Status
+## Cloud Deployment
 
-See `knowledge/backlog/` for current sprint status, user stories, and sprint backlogs.
+### Production Environments
+- **Staging**: https://ai-resume-review-v2-frontend-staging-wnjxxf534a-uc.a.run.app
+- **Production**: https://ai-resume-review-v2-frontend-prod-wnjxxf534a-uc.a.run.app
+
+### Infrastructure Management
+
+**Terraform** (Infrastructure as Code):
+```bash
+# Bootstrap (one-time)
+cd terraform/bootstrap
+terraform init && terraform apply
+
+# Deploy infrastructure changes
+cd terraform/environments/staging
+terraform plan
+terraform apply
+```
+
+**Deployment Scripts** (Application deployments):
+```bash
+# Deploy to staging
+./scripts/gcp/deploy/deploy.sh staging
+
+# Deploy to production
+./scripts/gcp/deploy/deploy.sh production
+```
+
+See [terraform/README.md](terraform/README.md) for complete infrastructure documentation.
+
+### Configuration Management
+All environment configuration is managed through `config/environments.yml`. See [config/README.md](config/README.md) for details.
 
 ## Testing Standards
 
@@ -145,7 +188,7 @@ See `knowledge/backlog/` for current sprint status, user stories, and sprint bac
 
 1. Check Docker status: `./scripts/docker/dev.sh status`
 2. Start services: `./scripts/docker/dev.sh up`
-3. Create feature branch from sprint branch: `git checkout -b feature/STORY-ID-description`
+3. Create feature branch: `git checkout -b feature/STORY-ID-description`
 4. Run tests before committing
 5. Ensure linting passes
 6. Update documentation if needed
