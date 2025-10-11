@@ -54,7 +54,7 @@ export default function DetailedScores({
       <CardHeader>
         <h3 className="text-xl font-semibold text-neutral-900 flex items-center">
           <span className="text-2xl mr-2">📊</span>
-          スコア詳細 / Detailed Score Breakdown
+          スコア詳細
         </h3>
       </CardHeader>
       <CardContent className="space-y-8">
@@ -62,26 +62,26 @@ export default function DetailedScores({
         <div>
           <h4 className="text-lg font-medium text-neutral-800 mb-4 flex items-center">
             <span className="text-xl mr-2">🏗️</span>
-            レジュメ構造分析 / Resume Structure Analysis
+            レジュメ構造分析
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <ScoreItem
-              label="フォーマット / Format"
+              label="フォーマット"
               score={structureScores.format}
               description="Professional formatting and layout"
             />
             <ScoreItem
-              label="整理 / Organization"
+              label="整理n"
               score={structureScores.organization}
               description="Logical flow and section structure"
             />
             <ScoreItem
-              label="トーン / Tone"
+              label="トーン"
               score={structureScores.tone}
               description="Professional language and style"
             />
             <ScoreItem
-              label="完全性 / Completeness"
+              label="完全性"
               score={structureScores.completeness}
               description="Required sections and information"
             />
@@ -96,22 +96,22 @@ export default function DetailedScores({
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <ScoreItem
-              label="成果の関連性 / Achievement Relevance"
+              label="成果の関連性"
               score={appealScores.achievement_relevance}
               description="How well achievements align with industry"
             />
             <ScoreItem
-              label="スキルの整合性 / Skills Alignment"
+              label="スキルの整合性"
               score={appealScores.skills_alignment}
               description="Match with required skills for industry"
             />
             <ScoreItem
-              label="経験の適合性 / Experience Fit"
+              label="経験の適合性"
               score={appealScores.experience_fit}
               description="Relevance of work experience"
             />
             <ScoreItem
-              label="競合優位性 / Competitive Positioning"
+              label="競合優位性"
               score={appealScores.competitive_positioning}
               description="Differentiation from other candidates"
             />

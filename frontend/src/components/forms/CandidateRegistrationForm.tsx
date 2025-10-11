@@ -289,7 +289,7 @@ const CandidateRegistrationForm: React.FC<CandidateRegistrationFormProps> = ({
               loading={isSubmitting}
               disabled={isSubmitting}
             >
-              {isSubmitting ? '登録中... / Registering...' : '登録 / Register Candidate'}
+              {isSubmitting ? '登録中...' : '登録'}
             </Button>
           </div>
         </form>

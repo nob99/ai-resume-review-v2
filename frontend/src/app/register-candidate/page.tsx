@@ -16,10 +16,10 @@ const RegisterCandidatePage: React.FC = () => {
             {/* Page Header */}
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-neutral-900 mb-4">
-                候補者の登録 / Register New Candidate
+                候補者の登録
               </h1>
               <p className="text-lg text-neutral-600">
-                新しい候補者をシステムに登録してレジュメを分析できます / Add a new candidate to the system for resume analysis
+                新しい候補者をシステムに登録してレジュメを分析できます
               </p>
             </div>
 

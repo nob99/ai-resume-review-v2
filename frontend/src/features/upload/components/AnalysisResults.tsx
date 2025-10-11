@@ -58,15 +58,15 @@ function FeedbackItemCard({ item }: { item: SpecificFeedbackItem }) {
           </div>
           {item.target_text && (
             <div className="text-sm text-gray-700 bg-white p-2 rounded border border-gray-200">
-              <span className="font-medium">対象テキスト / Target:</span> "{item.target_text}"
+              <span className="font-medium">対象テキスト:</span> "{item.target_text}"
             </div>
           )}
           <div className="text-sm">
-            <span className="font-semibold text-gray-900">問題点 / Issue:</span>
+            <span className="font-semibold text-gray-900">改善点:</span>
             <p className="text-gray-700 mt-1">{item.issue}</p>
           </div>
           <div className="text-sm">
-            <span className="font-semibold text-gray-900">提案 / Suggestion:</span>
+            <span className="font-semibold text-gray-900">提案:</span>
             <p className="text-gray-700 mt-1">{item.suggestion}</p>
           </div>
         </div>
@@ -111,7 +111,7 @@ export default function AnalysisResults({
     return (
       <Card className={`border-2 border-gray-300 ${className}`}>
         <CardContent className="p-6 text-center">
-          <p className="text-gray-500">閲覧可能な分析結果がありません / No analysis result available</p>
+          <p className="text-gray-500">閲覧可能な分析結果がありません</p>
         </CardContent>
       </Card>
     )
@@ -138,7 +138,7 @@ export default function AnalysisResults({
         <CardHeader className="bg-green-50">
           <h2 className="text-xl font-bold text-neutral-900 flex items-center">
             <span className="text-2xl mr-2">🎯</span>
-            AI分析結果 / AI Resume Analysis Results
+            AI分析結果
           </h2>
         </CardHeader>
         <CardContent className="p-6 space-y-6">
@@ -146,19 +146,19 @@ export default function AnalysisResults({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-primary-50 rounded-lg">
               <div className="text-3xl font-bold text-primary-600">{formatScore(result.overall_score)}</div>
-              <div className="text-xs text-gray-600 mt-1">総合 / Overall</div>
+              <div className="text-xs text-gray-600 mt-1">総合</div>
             </div>
             <div className="text-center p-4 bg-blue-50 rounded-lg">
               <div className="text-3xl font-bold text-blue-600">{formatScore(structureAvg)}</div>
-              <div className="text-xs text-gray-600 mt-1">構造 / Structure</div>
+              <div className="text-xs text-gray-600 mt-1">基本構造</div>
             </div>
             <div className="text-center p-4 bg-purple-50 rounded-lg">
               <div className="text-3xl font-bold text-purple-600">{formatScore(appealAvg)}</div>
-              <div className="text-xs text-gray-600 mt-1">魅力 / Appeal</div>
+              <div className="text-xs text-gray-600 mt-1">魅力の伝わりやすさ</div>
             </div>
             <div className="text-center p-4 bg-amber-50 rounded-lg">
               <div className="text-lg font-bold text-amber-700 uppercase">{formatMarketTier(marketTier)}</div>
-              <div className="text-xs text-gray-600 mt-1">ティア / Tier</div>
+              <div className="text-xs text-gray-600 mt-1">ティア(参考)</div>
             </div>
           </div>
 
@@ -167,7 +167,7 @@ export default function AnalysisResults({
             <div className="pt-4 border-t border-gray-200">
               <h3 className="font-semibold text-neutral-900 mb-3 flex items-center">
                 <span className="text-lg mr-2">📋</span>
-                要約 / Executive Summary
+                サマリ
               </h3>
               <p className="text-neutral-700 leading-relaxed bg-gray-50 p-4 rounded-lg">{result.executive_summary}</p>
             </div>
@@ -179,28 +179,28 @@ export default function AnalysisResults({
               <div className="font-semibold text-gray-900">
                 {industryOptions.find(i => i.value === result.industry)?.label || result.industry}
               </div>
-              <div className="text-xs text-gray-500">業界 / Industry</div>
+              <div className="text-xs text-gray-500">業界</div>
             </div>
             {metadata && (
               <>
                 <div className="text-center">
                   <div className="font-semibold text-gray-900">{metadata.total_sections}</div>
-                  <div className="text-xs text-gray-500">セクション / Sections</div>
+                  <div className="text-xs text-gray-500">セクション</div>
                 </div>
                 <div className="text-center">
                   <div className="font-semibold text-gray-900">{metadata.word_count}</div>
-                  <div className="text-xs text-gray-500">単語 / Words</div>
+                  <div className="text-xs text-gray-500">単語数</div>
                 </div>
                 <div className="text-center">
                   <div className="font-semibold text-gray-900">{metadata.reading_time}min</div>
-                  <div className="text-xs text-gray-500">読了時間 / Reading</div>
+                  <div className="text-xs text-gray-500">読了時間</div>
                 </div>
               </>
             )}
             {elapsedTime > 0 && (
               <div className="text-center col-span-2 md:col-span-4">
                 <div className="font-semibold text-green-600">{formatElapsedTime(elapsedTime)}</div>
-                <div className="text-xs text-gray-500">処理時間 / Processing Time</div>
+                <div className="text-xs text-gray-500">処理時間</div>
               </div>
             )}
           </div>
@@ -213,7 +213,7 @@ export default function AnalysisResults({
           <CardHeader className="bg-blue-50">
             <h2 className="text-xl font-bold text-neutral-900 flex items-center">
               <span className="text-2xl mr-2">🏗️</span>
-              レジュメ構造分析 / Resume Structure Analysis
+              レジュメ構造分析
             </h2>
           </CardHeader>
           <CardContent className="p-6 space-y-6">
@@ -221,10 +221,10 @@ export default function AnalysisResults({
             <div>
               <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">📊 4つのスコア / Scores</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <ScoreBar label="フォーマット / Format" score={structureScores.format} />
-                <ScoreBar label="整理 / Organization" score={structureScores.organization} />
-                <ScoreBar label="トーン / Tone" score={structureScores.tone} />
-                <ScoreBar label="完全性 / Completeness" score={structureScores.completeness} />
+                <ScoreBar label="フォーマット" score={structureScores.format} />
+                <ScoreBar label="整理" score={structureScores.organization} />
+                <ScoreBar label="トーン" score={structureScores.tone} />
+                <ScoreBar label="完全性" score={structureScores.completeness} />
               </div>
             </div>
 
@@ -233,7 +233,7 @@ export default function AnalysisResults({
               <div className="pt-4 border-t border-gray-200">
                 <h3 className="text-sm font-semibold text-green-700 mb-3 flex items-center">
                   <span className="mr-2">✅</span>
-                  強み / Strengths ({structureFeedback.strengths.length})
+                  強み ({structureFeedback.strengths.length})
                 </h3>
                 <ul className="space-y-2">
                   {structureFeedback.strengths.map((item, idx) => (
@@ -251,7 +251,7 @@ export default function AnalysisResults({
               <div className="pt-4 border-t border-gray-200">
                 <h3 className="text-sm font-semibold text-orange-700 mb-3 flex items-center">
                   <span className="mr-2">⚠️</span>
-                  改善点 / Improvement Areas ({structureFeedback.improvement_areas.length})
+                  改善点 ({structureFeedback.improvement_areas.length})
                 </h3>
                 <ul className="space-y-2">
                   {structureFeedback.improvement_areas.map((item, idx) => (
@@ -269,7 +269,7 @@ export default function AnalysisResults({
               <div className="pt-4 border-t border-gray-200">
                 <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center">
                   <span className="mr-2">📝</span>
-                  具体的なフィードバック / Specific Feedback ({structureFeedback.specific_feedback.length})
+                  具体的なフィードバック ({structureFeedback.specific_feedback.length})
                 </h3>
                 <div className="space-y-3">
                   {(() => {
@@ -298,7 +298,7 @@ export default function AnalysisResults({
           <CardHeader className="bg-purple-50">
             <h2 className="text-xl font-bold text-neutral-900 flex items-center">
               <span className="text-2xl mr-2">🎯</span>
-              業界魅力分析 / Industry Appeal Analysis
+              業界魅力分析
             </h2>
           </CardHeader>
           <CardContent className="p-6 space-y-6">
@@ -306,10 +306,10 @@ export default function AnalysisResults({
             <div>
               <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">📊 4つのスコア / Scores</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <ScoreBar label="成果関連性 / Achievement Relevance" score={appealScores.achievement_relevance} />
-                <ScoreBar label="スキル整合性 / Skills Alignment" score={appealScores.skills_alignment} />
-                <ScoreBar label="経験適合性 / Experience Fit" score={appealScores.experience_fit} />
-                <ScoreBar label="競合優位性 / Competitive Positioning" score={appealScores.competitive_positioning} />
+                <ScoreBar label="成果関連性" score={appealScores.achievement_relevance} />
+                <ScoreBar label="スキル整合性" score={appealScores.skills_alignment} />
+                <ScoreBar label="経験適合性" score={appealScores.experience_fit} />
+                <ScoreBar label="競合優位性" score={appealScores.competitive_positioning} />
               </div>
             </div>
 
@@ -388,7 +388,7 @@ export default function AnalysisResults({
                   onClick={onAnalyzeAgain}
                   className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors"
                 >
-                  異なる業界で分析 / Analyze Different Industry
+                  異なる業界で分析
                 </button>
               )}
               {onUploadNew && (
@@ -396,7 +396,7 @@ export default function AnalysisResults({
                   onClick={onUploadNew}
                   className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-md font-medium transition-colors"
                 >
-                  新しいレジュメをアップロード / Upload New Resume
+                  新しいレジュメをアップロード
                 </button>
               )}
             </div>

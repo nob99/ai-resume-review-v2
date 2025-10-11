@@ -61,19 +61,19 @@ const HistoryTable: React.FC<HistoryTableProps> = ({
             <thead className="bg-neutral-50 border-b border-neutral-200">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                  候補者 / Candidate
+                  候補者
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                  業界 / Industry
+                  業界
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                  スコア / Score
+                  スコア
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                  日付 / Date
+                  日付
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                  アクション / Actions
+                  アクション
                 </th>
               </tr>
             </thead>
@@ -141,19 +141,19 @@ const HistoryTable: React.FC<HistoryTableProps> = ({
           <thead className="bg-neutral-50 border-b border-neutral-200">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                候補者 / Candidate
+                候補者
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                業界 / Industry
+                業界
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                スコア / Overall Score
+                スコア
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                日付 / Date
+                日付
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                アクション / Actions
+                アクション
               </th>
             </tr>
           </thead>

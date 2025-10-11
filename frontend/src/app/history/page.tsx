@@ -53,10 +53,10 @@ const HistoryPage: React.FC = () => {
             {/* Page Header */}
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-neutral-900 mb-4">
-                AI分析履歴 / Review History
+                AI分析履歴
               </h1>
               <p className="text-lg text-neutral-600">
-                過去のAI分析結果を確認できます / View and manage all past resume analyses
+                過去のAI分析結果を確認できます
               </p>
             </div>
 
@@ -64,14 +64,14 @@ const HistoryPage: React.FC = () => {
             <Card className="mb-6">
                 <CardHeader>
                   <h2 className="text-lg font-semibold text-neutral-900">
-                    分析結果をフィルタリング / Filter Reviews
+                    分析結果をフィルタリング
                   </h2>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-neutral-700 mb-2">
-                        候補者をフィルタリング / Filter by Candidate
+                        候補者をフィルタリング
                       </label>
                       <CandidateSelector
                         value={selectedCandidate || undefined}
@@ -86,7 +86,7 @@ const HistoryPage: React.FC = () => {
                           onClick={() => handleCandidateChange(null)}
                           className="px-4 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 underline"
                         >
-                          フィルタリング解除 / Clear filter
+                          フィルタリング解除
                         </button>
                       )}
                     </div>
