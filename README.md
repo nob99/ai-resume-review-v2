@@ -58,6 +58,9 @@ That's it! The platform is now running locally with all services.
 
 ### Infrastructure
 - **Docker & Docker Compose** - Containerized development
+- **Google Cloud Platform** - Production hosting (Cloud Run, Cloud SQL, VPC)
+- **Terraform** - Infrastructure as code
+- **GitHub Actions** - CI/CD automation
 - **pytest** - Backend testing
 - **Alembic** - Database migrations
 
@@ -96,6 +99,7 @@ That's it! The platform is now running locally with all services.
 │   │   ├── lib/        # Utilities and API client
 │   │   └── types/      # TypeScript type definitions
 │   └── __tests__/      # Jest tests mirroring src structure
+│
 ├── backend/            # FastAPI Python API
 │   ├── app/
 │   │   ├── core/       # Core utilities (config, security, database, cache)
@@ -106,13 +110,32 @@ That's it! The platform is now running locally with all services.
 │       ├── config/     # Industry configurations
 │       ├── prompts/    # Prompt templates
 │       ├── services/   # Agent orchestration services
-│       ├── workflows/  # LangGraph workflows
-│       └── ...
+│       └── workflows/  # LangGraph workflows
+│
 ├── database/           # Database layer
 │   ├── models/         # SQLAlchemy models
 │   ├── migrations/     # Alembic migrations
 │   └── ...
-├── scripts/            # Development utilities (docker/, gcp/, lib/)
+│
+├── config/             # Environment configuration
+│   ├── environments.yml # Single source of truth for all environments
+│   └── README.md       # Configuration guide
+│
+├── terraform/          # Infrastructure as Code
+│   ├── bootstrap/      # GCS state bucket setup
+│   ├── modules/        # Reusable Terraform modules
+│   ├── environments/   # Staging and production configs
+│   └── README.md       # Terraform setup and usage guide
+│
+├── scripts/            # Deployment and utilities
+│   ├── docker/         # Docker development scripts
+│   ├── gcp/            # GCP deployment scripts (deploy, setup, monitoring)
+│   └── lib/            # Shared utilities (config loader)
+│
+├── .github/workflows/  # CI/CD pipelines
+│   ├── staging.yml     # Auto-deploy to staging
+│   └── production.yml  # Manual deploy to production
+│
 ├── knowledge/          # Product management docs and backlogs
 └── archive/            # Archived documents and old implementations
 ```
@@ -253,12 +276,45 @@ Prompts are **database-driven**, allowing non-technical updates without code cha
 - **CORS Protection**: Configured for specific origins only
 - **No Secrets in Code**: All configuration via environment variables
 
+## Cloud Deployment
+
+### Production Environments
+- **Staging**: https://ai-resume-review-v2-frontend-staging-wnjxxf534a-uc.a.run.app
+- **Production**: https://ai-resume-review-v2-frontend-prod-wnjxxf534a-uc.a.run.app
+
+### Infrastructure Management
+
+**Terraform** (Infrastructure as Code):
+```bash
+# Bootstrap (one-time)
+cd terraform/bootstrap
+terraform init && terraform apply
+
+# Deploy infrastructure changes
+cd terraform/environments/staging
+terraform plan
+terraform apply
+```
+
+**Deployment Scripts** (Application deployments):
+```bash
+# Deploy to staging
+./scripts/gcp/deploy/deploy.sh staging
+
+# Deploy to production
+./scripts/gcp/deploy/deploy.sh production
+```
+
+See [terraform/README.md](terraform/README.md) for complete infrastructure documentation.
+
 ## Additional Resources
 
 ### Documentation
 - **[CLAUDE.md](CLAUDE.md)** - AI coding assistant instructions (for Claude Code)
 - **[Frontend README](frontend/README.md)** - Detailed frontend architecture and patterns
 - **[Backend README](backend/README.md)** - Detailed backend architecture and API docs
+- **[Terraform README](terraform/README.md)** - Infrastructure setup and management
+- **[Configuration Guide](config/README.md)** - Environment configuration documentation
 - **[Knowledge Base](knowledge/)** - Product management, backlogs, and sprint planning
 
 ### Current Sprint Status
@@ -321,7 +377,3 @@ For questions or issues:
 **Built with ❤️ for recruitment consultants**
 
 *Last Updated: October 2024*
-# CI/CD Test
-Trigger staging deployment
-# IAM Permissions Fix
-Granted proper permissions to GitHub Actions deployer
