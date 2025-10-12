@@ -110,7 +110,6 @@ class AppealAgent(BaseAgent):
             # Generate summary using SummaryGenerator service
             state["summary"] = self.summary_generator.generate_summary(
                 overall_score=state["overall_score"],
-                market_tier=state["market_tier"],
                 industry_name=industry_name,
                 structure_feedback=state.get("structure_feedback", {}),
                 appeal_feedback=state["appeal_feedback"]

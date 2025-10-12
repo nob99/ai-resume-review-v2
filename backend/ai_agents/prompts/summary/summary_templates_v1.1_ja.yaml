@@ -5,7 +5,6 @@ metadata:
   language: ja
 
 templates:
-  main_score: "このレジュメは{overall_score}/100点で、{industry_name}における{category}を示しています。"
-  market_tier: "候補者は{market_tier}レベルと思われます。"
+  main_score: "このレジュメは{overall_score}/100点です。主な強みと改善点は以下になります。"
   key_strengths: "主な強み: {strengths}。"
   priority_improvements: "優先改善点: {improvements}。"

@@ -40,13 +40,13 @@ export default function AppealAnalysisCard({ analysis, className = '' }: BaseAna
       <CardHeader className="bg-purple-50">
         <h2 className="text-xl font-bold text-neutral-900 flex items-center">
           <span className="text-2xl mr-2">🎯</span>
-          業界魅力分析
+          応募業界へのアピール度分析
         </h2>
       </CardHeader>
       <CardContent className="p-6 space-y-6">
         {/* 4 Appeal Scores */}
         <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">📊 4つのスコア / Scores</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">📊 4つのスコア</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <ScoreBar label="成果関連性" score={appealScores.achievement_relevance} />
             <ScoreBar label="スキル整合性" score={appealScores.skills_alignment} />
@@ -60,7 +60,7 @@ export default function AppealAnalysisCard({ analysis, className = '' }: BaseAna
           <div className="pt-4 border-t border-gray-200">
             <h3 className="text-sm font-semibold text-green-700 mb-3 flex items-center">
               <span className="mr-2">✅</span>
-              強み / Strengths ({appealFeedback.strengths.length})
+              強み ({appealFeedback.strengths.length})
             </h3>
             <ul className="space-y-2">
               {appealFeedback.strengths.map((item, idx) => (
@@ -78,7 +78,7 @@ export default function AppealAnalysisCard({ analysis, className = '' }: BaseAna
           <div className="pt-4 border-t border-gray-200">
             <h3 className="text-sm font-semibold text-orange-700 mb-3 flex items-center">
               <span className="mr-2">⚠️</span>
-              改善点 / Improvement Areas ({appealFeedback.improvement_areas.length})
+              改善点 ({appealFeedback.improvement_areas.length})
             </h3>
             <ul className="space-y-2">
               {appealFeedback.improvement_areas.map((item, idx) => (
@@ -96,7 +96,7 @@ export default function AppealAnalysisCard({ analysis, className = '' }: BaseAna
           <div className="pt-4 border-t border-gray-200">
             <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center">
               <span className="mr-2">📝</span>
-              具体的なフィードバック / Specific Feedback ({sortedFeedback.length})
+              具体的なフィードバック ({sortedFeedback.length})
             </h3>
             <div className="space-y-3">
               {sortedFeedback.map((item, idx) => (

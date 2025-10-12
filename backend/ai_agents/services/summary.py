@@ -51,7 +51,6 @@ class SummaryGenerator:
     def generate_summary(
         self,
         overall_score: float,
-        market_tier: str,
         industry_name: str,
         structure_feedback: Dict[str, List[str]],
         appeal_feedback: Dict[str, List[str]]
@@ -60,7 +59,6 @@ class SummaryGenerator:
 
         Args:
             overall_score: Overall score (0-100)
-            market_tier: Market tier (entry/mid/senior/executive)
             industry_name: Display name of the industry
             structure_feedback: Structure analysis feedback
             appeal_feedback: Appeal analysis feedback
@@ -85,8 +83,7 @@ class SummaryGenerator:
                 overall_score=overall_score,
                 category=category,
                 industry_name=industry_name
-            ),
-            self.templates["market_tier"].format(market_tier=market_tier)
+            )
         ]
 
         if strengths:

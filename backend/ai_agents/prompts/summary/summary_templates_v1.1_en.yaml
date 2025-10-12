@@ -5,7 +5,6 @@ metadata:
   language: en
 
 templates:
-  main_score: "This resume scores {overall_score}/100, indicating a {category} candidate for {industry_name} roles."
-  market_tier: "The candidate appears to be at the {market_tier} level."
+  main_score: "This resume scores {overall_score}/100."
   key_strengths: "Key strengths include: {strengths}."
   priority_improvements: "Priority improvements: {improvements}."

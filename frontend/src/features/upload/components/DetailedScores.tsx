@@ -92,7 +92,7 @@ export default function DetailedScores({
         <div className="pt-6 border-t border-gray-200">
           <h4 className="text-lg font-medium text-neutral-800 mb-4 flex items-center">
             <span className="text-xl mr-2">🎯</span>
-            業界の魅力分析 / Industry Appeal Analysis
+            応募業界へのアピール度
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <ScoreItem

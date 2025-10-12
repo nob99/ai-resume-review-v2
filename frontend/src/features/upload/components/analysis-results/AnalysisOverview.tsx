@@ -3,7 +3,7 @@
 import React from 'react'
 import { Card, CardHeader, CardContent } from '@/components/ui'
 import { AnalysisOverviewProps } from './types'
-import { formatScore, formatMarketTier } from '@/features/upload/utils/analysisParser'
+import { formatScore } from '@/features/upload/utils/analysisParser'
 
 /**
  * AnalysisOverview Component
@@ -41,7 +41,6 @@ export default function AnalysisOverview({
   const structureScores = detailedScores?.structure_analysis?.scores
   const appealScores = detailedScores?.appeal_analysis?.scores
   const metadata = detailedScores?.structure_analysis?.metadata
-  const marketTier = detailedScores?.market_tier || 'unknown'
 
   // Calculate averages
   const structureAvg = structureScores
@@ -61,7 +60,7 @@ export default function AnalysisOverview({
       </CardHeader>
       <CardContent className="p-6 space-y-6">
         {/* Main Scores Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="text-center p-4 bg-primary-50 rounded-lg">
             <div className="text-3xl font-bold text-primary-600">{formatScore(result.overall_score)}</div>
             <div className="text-xs text-gray-600 mt-1">総合</div>
@@ -73,10 +72,6 @@ export default function AnalysisOverview({
           <div className="text-center p-4 bg-purple-50 rounded-lg">
             <div className="text-3xl font-bold text-purple-600">{formatScore(appealAvg)}</div>
             <div className="text-xs text-gray-600 mt-1">魅力の伝わりやすさ</div>
-          </div>
-          <div className="text-center p-4 bg-amber-50 rounded-lg">
-            <div className="text-lg font-bold text-amber-700 uppercase">{formatMarketTier(marketTier)}</div>
-            <div className="text-xs text-gray-600 mt-1">ティア(参考)</div>
           </div>
         </div>
 

@@ -26,7 +26,7 @@ export default function RootLayout({
   ██║  ██║███████╗███████╗███████╗╚██████╔╝
   ╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝ ╚═════╝
 
-%cWELCOME TO YATAGARASU - AI Resume Review AI Multi Agents System
+%cWELCOME TO YATAGARASU - Resume Review AI Multi Agents System
 `,
       'color: #3B82F6; font-weight: bold;',
       'color: #000000; font-size: 16px; font-weight: bold;'

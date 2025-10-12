@@ -23,6 +23,20 @@ function getCategoryStyle(category: string) {
   return styles[category as keyof typeof styles] || { icon: '💡', color: 'text-gray-600', bg: 'bg-gray-50', border: 'border-gray-200' }
 }
 
+/**
+ * Get Japanese label for category
+ */
+function getCategoryLabel(category: string): string {
+  const labels: Record<string, string> = {
+    grammar: '体言止め/文法',
+    structure: '基本構造',
+    scr_framework: 'SCRフレームワーク',
+    quantitative_impact: '定量的インパクト',
+    appeal_point: 'アピールポイント'
+  }
+  return labels[category] || category.replace('_', ' ').toUpperCase()
+}
+
 interface FeedbackItemCardProps {
   item: SpecificFeedbackItem
 }
@@ -35,8 +49,8 @@ export default function FeedbackItemCard({ item }: FeedbackItemCardProps) {
       <div className="flex items-start space-x-3">
         <span className="text-2xl flex-shrink-0">{style.icon}</span>
         <div className="flex-1 space-y-2">
-          <div className={`text-xs font-bold uppercase tracking-wide ${style.color}`}>
-            {item.category.replace('_', ' ')}
+          <div className={`text-xs font-bold tracking-wide ${style.color}`}>
+            {getCategoryLabel(item.category)}
           </div>
           {item.target_text && (
             <div className="text-sm text-gray-700 bg-white p-2 rounded border border-gray-200">

@@ -4,6 +4,7 @@ import React from 'react'
 import { Button } from '@/components/ui'
 import { AnalysisHistoryItem } from '../hooks/useHistoryData'
 import { formatDistanceToNow } from 'date-fns'
+import { INDUSTRY_OPTIONS } from '@/features/upload/constants'
 
 interface HistoryTableProps {
   analyses: AnalysisHistoryItem[]
@@ -37,8 +38,9 @@ const HistoryTable: React.FC<HistoryTableProps> = ({
     return colors[industry] || 'bg-gray-100 text-gray-800'
   }
 
-  const formatIndustryName = (industry: string) => {
-    return industry
+  const getIndustryLabel = (industry: string) => {
+    const option = INDUSTRY_OPTIONS.find(i => i.value === industry)
+    return option?.label || industry
       .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ')
@@ -176,7 +178,7 @@ const HistoryTable: React.FC<HistoryTableProps> = ({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getIndustryBadgeColor(analysis.industry)}`}>
-                    {formatIndustryName(analysis.industry)}
+                    {getIndustryLabel(analysis.industry)}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
