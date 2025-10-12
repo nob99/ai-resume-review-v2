@@ -77,6 +77,14 @@ mypy app           # Type checking
 - File upload virus scanning required
 - No secrets in code - use environment variables
 
+### CORS Configuration
+- **Dynamic Configuration**: CORS origins loaded from `ALLOWED_ORIGINS` environment variable
+- **Single Source of Truth**: Defined in `config/environments.yml` under each environment's `cors.allowed_origins`
+- **Automatic Deployment**: GitHub Actions and deployment scripts read from config and set environment variable
+- **Local Development**: Set in `docker-compose.dev.yml` or `.env` file
+- **Format**: Comma-separated list (e.g., `"https://example.com,https://www.example.com"`)
+- **Never hardcode**: CORS origins should never be hardcoded in `backend/app/main.py`
+
 ## Project Structure
 
 ```

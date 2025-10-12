@@ -92,6 +92,14 @@ staging:
     slack_webhook_secret: slack-webhook-staging
     uptime_check_enabled: true
 
+  # CORS Configuration
+  cors:
+    allowed_origins:
+      - https://ai-resume-review-v2-frontend-staging-wnjxxf534a-uc.a.run.app
+      - https://ai-resume-review-v2-backend-staging-wnjxxf534a-uc.a.run.app
+      - http://localhost:3000
+      - http://localhost:8000
+
 # ----------------------------------------------------------------------------
 # Production Environment
 # ----------------------------------------------------------------------------
@@ -156,3 +164,12 @@ production:
     alert_email: ops@example.com
     slack_webhook_secret: slack-webhook-prod
     uptime_check_enabled: true
+
+  # CORS Configuration
+  cors:
+    allowed_origins:
+      - https://ai-resume-review-v2-frontend-prod-wnjxxf534a-uc.a.run.app
+      - https://ai-resume-review-v2-backend-prod-wnjxxf534a-uc.a.run.app
+      - https://airesumereview.com
+      - https://www.airesumereview.com
+      - https://api.airesumereview.com

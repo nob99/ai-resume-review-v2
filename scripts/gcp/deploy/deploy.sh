@@ -483,6 +483,26 @@ step_deploy_backend() {
     # Deploy to Cloud Run
     log_info "Deploying to Cloud Run..."
 
+    # Load CORS origins from config (fallback to hardcoded if not available)
+    if [ -z "$ALLOWED_ORIGINS" ]; then
+        log_warning "ALLOWED_ORIGINS not set, using fallback configuration"
+        # Try to load from config
+        CONFIG_FILE="$PROJECT_ROOT/config/environments.yml"
+        if command -v yq &> /dev/null && [ -f "$CONFIG_FILE" ]; then
+            # Determine environment from service name
+            if [[ "$BACKEND_SERVICE_NAME" == *"-staging"* ]]; then
+                ALLOWED_ORIGINS=$(yq ".staging.cors.allowed_origins | join(\",\")" "$CONFIG_FILE" 2>/dev/null || echo "")
+            else
+                ALLOWED_ORIGINS=$(yq ".production.cors.allowed_origins | join(\",\")" "$CONFIG_FILE" 2>/dev/null || echo "")
+            fi
+        fi
+        # Final fallback if config loading failed
+        if [ -z "$ALLOWED_ORIGINS" ]; then
+            ALLOWED_ORIGINS="http://localhost:3000,http://localhost:8000"
+        fi
+    fi
+    log_info "CORS origins: $ALLOWED_ORIGINS"
+
     gcloud run deploy "$BACKEND_SERVICE_NAME" \
         --image="$BACKEND_IMAGE_REMOTE" \
         --region="$REGION" \
@@ -492,7 +512,7 @@ step_deploy_backend() {
         --vpc-egress=private-ranges-only \
         --add-cloudsql-instances="$SQL_INSTANCE_CONNECTION" \
         --set-secrets="DB_PASSWORD=$SECRET_DB_PASSWORD:latest,SECRET_KEY=$SECRET_JWT_KEY:latest,OPENAI_API_KEY=$SECRET_OPENAI_KEY:latest" \
-        --set-env-vars="DB_HOST=/cloudsql/$SQL_INSTANCE_CONNECTION,DB_PORT=5432,DB_NAME=$DB_NAME,DB_USER=$DB_USER,PROJECT_ID=$PROJECT_ID,ENVIRONMENT=production,REDIS_HOST=none" \
+        --set-env-vars="DB_HOST=/cloudsql/$SQL_INSTANCE_CONNECTION,DB_PORT=5432,DB_NAME=$DB_NAME,DB_USER=$DB_USER,PROJECT_ID=$PROJECT_ID,ENVIRONMENT=production,REDIS_HOST=none,ALLOWED_ORIGINS=$ALLOWED_ORIGINS" \
         --memory=2Gi \
         --cpu=2 \
         --min-instances=0 \

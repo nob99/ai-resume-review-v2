@@ -282,6 +282,11 @@ Prompts are **database-driven**, allowing non-technical updates without code cha
 - **Staging**: https://ai-resume-review-v2-frontend-staging-wnjxxf534a-uc.a.run.app
 - **Production**: https://ai-resume-review-v2-frontend-prod-wnjxxf534a-uc.a.run.app
 
+### Deployment Status
+- **GitHub Actions**: https://github.com/stellar-aiz/ai-resume-review-v2/actions
+  - Staging deploys automatically on push to `main`
+  - Production deploys manually via workflow dispatch
+
 ### Infrastructure Management
 
 **Terraform** (Infrastructure as Code):

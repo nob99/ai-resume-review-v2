@@ -96,11 +96,16 @@ jobs:
       # Deploy Backend to Production
       - name: Deploy Backend to Production
         run: |
+          # Read CORS origins from config
+          CORS_ORIGINS=$(yq eval '.production.cors.allowed_origins | join(",")' config/environments.yml)
+          echo "CORS origins: $CORS_ORIGINS"
+
           echo "Deploying backend image: ${{ env.ARTIFACT_REGISTRY }}/backend:${{ inputs.backend_image_tag }}"
           gcloud run deploy ${{ env.BACKEND_SERVICE }} \
             --image=${{ env.ARTIFACT_REGISTRY }}/backend:${{ inputs.backend_image_tag }} \
             --region=${{ env.GCP_REGION }} \
             --platform=managed \
+            --update-env-vars=ALLOWED_ORIGINS="$CORS_ORIGINS" \
             --quiet
 
       # Deploy Frontend to Production

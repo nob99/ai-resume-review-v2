@@ -88,6 +88,8 @@ services:
       ENVIRONMENT: development
       DEBUG: "True"
       LOG_LEVEL: INFO
+      # CORS configuration
+      ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:8000,http://frontend:3000"
       # Override command for development with hot reload
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     env_file:

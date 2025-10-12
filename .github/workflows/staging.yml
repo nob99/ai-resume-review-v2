@@ -150,10 +150,15 @@ jobs:
       # Deploy Backend to Cloud Run
       - name: Deploy Backend to Staging
         run: |
+          # Read CORS origins from config
+          CORS_ORIGINS=$(yq eval '.staging.cors.allowed_origins | join(",")' config/environments.yml)
+          echo "CORS origins: $CORS_ORIGINS"
+
           gcloud run deploy ${{ env.BACKEND_SERVICE }} \
             --image=${{ env.ARTIFACT_REGISTRY }}/backend:${{ github.sha }} \
             --region=${{ env.GCP_REGION }} \
             --platform=managed \
+            --update-env-vars=ALLOWED_ORIGINS="$CORS_ORIGINS" \
             --quiet
 
       # Deploy Frontend to Cloud Run

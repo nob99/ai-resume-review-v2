@@ -136,18 +136,24 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS configuration
+# CORS configuration - dynamically loaded from environment variable
+import os
+
+# Read allowed origins from environment variable
+# Fallback to localhost for local development if not set
+allowed_origins_str = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:3000,http://localhost:8000"
+)
+allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",") if origin.strip()]
+
+# Log CORS configuration for debugging
+logger.info(f"CORS enabled for {len(allowed_origins)} origins")
+logger.debug(f"Allowed CORS origins: {allowed_origins}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # React dev server
-        "http://localhost:8000",  # Local development
-        "https://ai-resume-review-v2-frontend-prod-864523342928.us-central1.run.app",  # Cloud Run frontend
-        "https://ai-resume-review-v2-backend-prod-wnjxxf534a-uc.a.run.app",  # Cloud Run backend
-        "https://airesumereview.com",  # Future production domain
-        "https://www.airesumereview.com",  # Future production www domain
-        "https://api.airesumereview.com",  # Future production API domain
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],

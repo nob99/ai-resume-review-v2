@@ -29,6 +29,7 @@
 #     SQL_INSTANCE_NAME, SQL_CONNECTION_NAME, DB_NAME, DB_USER
 #     VPC_NAME, VPC_CONNECTOR
 #     SECRET_OPENAI_KEY, SECRET_JWT_KEY, SECRET_DB_PASSWORD
+#     ALLOWED_ORIGINS (comma-separated CORS origins)
 
 set -e
 
@@ -114,6 +115,10 @@ export VPC_CONNECTOR=$(yq ".$ENV.network.vpc_connector" "$CONFIG_FILE")
 export SECRET_OPENAI_KEY=$(yq ".$ENV.secrets.openai_api_key" "$CONFIG_FILE")
 export SECRET_JWT_KEY=$(yq ".$ENV.secrets.jwt_secret_key" "$CONFIG_FILE")
 export SECRET_DB_PASSWORD=$(yq ".$ENV.secrets.db_password" "$CONFIG_FILE")
+
+# Export environment-specific settings - CORS
+# Read CORS origins as an array and join with commas
+export ALLOWED_ORIGINS=$(yq ".$ENV.cors.allowed_origins | join(\",\")" "$CONFIG_FILE")
 
 # Derived values
 export SQL_CONNECTION_NAME="$PROJECT_ID:$REGION:$SQL_INSTANCE_NAME"
