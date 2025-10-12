@@ -6,6 +6,8 @@ import { BaseAnalysisCardProps } from './types'
 import { getStructureFeedback } from '@/features/upload/utils/analysisParser'
 import ScoreBar from './ScoreBar'
 import FeedbackItemCard from './FeedbackItemCard'
+import CopyButton from './CopyButton'
+import { formatStructureCard, formatListSection, formatAllFeedback } from '@/features/upload/utils/copyFormatters'
 
 /**
  * StructureAnalysisCard Component
@@ -37,9 +39,17 @@ export default function StructureAnalysisCard({ analysis, className = '' }: Base
   return (
     <Card className={`border-2 border-blue-300 ${className}`}>
       <CardHeader className="bg-blue-50">
-        <h2 className="text-xl font-bold text-neutral-900 flex items-center">
-          <span className="text-2xl mr-2">🏗️</span>
-          レジュメ構造分析
+        <h2 className="text-xl font-bold text-neutral-900 flex items-center justify-between">
+          <span className="flex items-center">
+            <span className="text-2xl mr-2">🏗️</span>
+            レジュメ構造分析
+          </span>
+          <CopyButton
+            text={formatStructureCard(analysis)}
+            variant="text"
+            size="sm"
+            label="Copy All"
+          />
         </h2>
       </CardHeader>
       <CardContent className="p-6 space-y-6">
@@ -57,9 +67,17 @@ export default function StructureAnalysisCard({ analysis, className = '' }: Base
         {/* Strengths */}
         {structureFeedback.strengths && structureFeedback.strengths.length > 0 && (
           <div className="pt-4 border-t border-gray-200">
-            <h3 className="text-sm font-semibold text-green-700 mb-3 flex items-center">
-              <span className="mr-2">✅</span>
-              強み ({structureFeedback.strengths.length})
+            <h3 className="text-sm font-semibold text-green-700 mb-3 flex items-center justify-between">
+              <span className="flex items-center">
+                <span className="mr-2">✅</span>
+                強み ({structureFeedback.strengths.length})
+              </span>
+              <CopyButton
+                text={formatListSection('✅ 強み / Strengths', structureFeedback.strengths)}
+                variant="text"
+                size="sm"
+                label="Copy Section"
+              />
             </h3>
             <ul className="space-y-2">
               {structureFeedback.strengths.map((item, idx) => (
@@ -75,9 +93,17 @@ export default function StructureAnalysisCard({ analysis, className = '' }: Base
         {/* Improvement Areas */}
         {structureFeedback.improvement_areas && structureFeedback.improvement_areas.length > 0 && (
           <div className="pt-4 border-t border-gray-200">
-            <h3 className="text-sm font-semibold text-orange-700 mb-3 flex items-center">
-              <span className="mr-2">⚠️</span>
-              改善点 ({structureFeedback.improvement_areas.length})
+            <h3 className="text-sm font-semibold text-orange-700 mb-3 flex items-center justify-between">
+              <span className="flex items-center">
+                <span className="mr-2">⚠️</span>
+                改善点 ({structureFeedback.improvement_areas.length})
+              </span>
+              <CopyButton
+                text={formatListSection('⚠️ 改善点 / Improvement Areas', structureFeedback.improvement_areas)}
+                variant="text"
+                size="sm"
+                label="Copy Section"
+              />
             </h3>
             <ul className="space-y-2">
               {structureFeedback.improvement_areas.map((item, idx) => (
@@ -93,9 +119,17 @@ export default function StructureAnalysisCard({ analysis, className = '' }: Base
         {/* Specific Feedback */}
         {sortedFeedback.length > 0 && (
           <div className="pt-4 border-t border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center">
-              <span className="mr-2">📝</span>
-              具体的なフィードバック ({sortedFeedback.length})
+            <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center justify-between">
+              <span className="flex items-center">
+                <span className="mr-2">📝</span>
+                具体的なフィードバック ({sortedFeedback.length})
+              </span>
+              <CopyButton
+                text={formatAllFeedback(sortedFeedback)}
+                variant="text"
+                size="sm"
+                label="Copy All"
+              />
             </h3>
             <div className="space-y-3">
               {sortedFeedback.map((item, idx) => (

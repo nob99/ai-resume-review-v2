@@ -4,6 +4,8 @@ import React from 'react'
 import { Card, CardHeader, CardContent } from '@/components/ui'
 import { AnalysisOverviewProps } from './types'
 import { formatScore } from '@/features/upload/utils/analysisParser'
+import CopyButton from './CopyButton'
+import { formatExecutiveSummary } from '@/features/upload/utils/copyFormatters'
 
 /**
  * AnalysisOverview Component
@@ -78,9 +80,17 @@ export default function AnalysisOverview({
         {/* Executive Summary */}
         {result.executive_summary && (
           <div className="pt-4 border-t border-gray-200">
-            <h3 className="font-semibold text-neutral-900 mb-3 flex items-center">
-              <span className="text-lg mr-2">📋</span>
-              サマリ
+            <h3 className="font-semibold text-neutral-900 mb-3 flex items-center justify-between">
+              <span className="flex items-center">
+                <span className="text-lg mr-2">📋</span>
+                サマリ
+              </span>
+              <CopyButton
+                text={formatExecutiveSummary(result.executive_summary)}
+                variant="text"
+                size="sm"
+                label="Copy Section"
+              />
             </h3>
             <p className="text-neutral-700 leading-relaxed bg-gray-50 p-4 rounded-lg">{result.executive_summary}</p>
           </div>
