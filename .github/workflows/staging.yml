@@ -147,28 +147,22 @@ jobs:
           docker push ${{ env.ARTIFACT_REGISTRY }}/frontend:${{ github.sha }}-staging
           docker push ${{ env.ARTIFACT_REGISTRY }}/frontend:staging-latest
 
-      # Deploy Backend to Cloud Run
+      # Deploy Backend to Cloud Run using deployment script
       - name: Deploy Backend to Staging
         run: |
-          # Read CORS origins from config
-          CORS_ORIGINS=$(yq eval '.staging.cors.allowed_origins | join(",")' config/environments.yml)
-          echo "CORS origins: $CORS_ORIGINS"
+          # Make script executable
+          chmod +x scripts/gcp/deploy/deploy.sh
 
-          # Create env vars YAML file for gcloud
-          # This approach properly handles values with special characters (commas, colons, slashes)
-          cat > /tmp/backend-env-vars.yaml <<EOF
-          ALLOWED_ORIGINS: "${CORS_ORIGINS}"
-          EOF
-
-          echo "Environment variables file created:"
-          cat /tmp/backend-env-vars.yaml
-
-          gcloud run deploy ${{ env.BACKEND_SERVICE }} \
-            --image=${{ env.ARTIFACT_REGISTRY }}/backend:${{ github.sha }} \
-            --region=${{ env.GCP_REGION }} \
-            --platform=managed \
-            --env-vars-file=/tmp/backend-env-vars.yaml \
-            --quiet
+          # Use deployment script with CI/CD flags
+          # --skip-build: GitHub Actions already built the image
+          # --backend-image: Use the image we just built
+          # --skip-frontend: Frontend is deployed separately
+          # --skip-tests: Health checks done in separate step
+          scripts/gcp/deploy/deploy.sh \
+            --step=backend \
+            --skip-build \
+            --backend-image=${{ env.ARTIFACT_REGISTRY }}/backend:${{ github.sha }} \
+            --skip-tests
 
       # Deploy Frontend to Cloud Run
       - name: Deploy Frontend to Staging

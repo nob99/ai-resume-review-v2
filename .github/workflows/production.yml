@@ -93,29 +93,23 @@ jobs:
             ${{ env.ARTIFACT_REGISTRY }}/backend:${{ inputs.backend_image_tag }} || \
             (echo "::error::Backend image not found" && exit 1)
 
-      # Deploy Backend to Production
+      # Deploy Backend to Production using deployment script
       - name: Deploy Backend to Production
         run: |
-          # Read CORS origins from config
-          CORS_ORIGINS=$(yq eval '.production.cors.allowed_origins | join(",")' config/environments.yml)
-          echo "CORS origins: $CORS_ORIGINS"
+          # Make script executable
+          chmod +x scripts/gcp/deploy/deploy.sh
 
-          # Create env vars YAML file for gcloud
-          # This approach properly handles values with special characters (commas, colons, slashes)
-          cat > /tmp/backend-env-vars.yaml <<EOF
-          ALLOWED_ORIGINS: "${CORS_ORIGINS}"
-          EOF
-
-          echo "Environment variables file created:"
-          cat /tmp/backend-env-vars.yaml
-
+          # Use deployment script with CI/CD flags
+          # --skip-build: Using existing image from staging or specific tag
+          # --backend-image: Use the specified image tag
+          # --skip-frontend: Frontend is deployed separately
+          # --skip-tests: Health checks done in separate step
           echo "Deploying backend image: ${{ env.ARTIFACT_REGISTRY }}/backend:${{ inputs.backend_image_tag }}"
-          gcloud run deploy ${{ env.BACKEND_SERVICE }} \
-            --image=${{ env.ARTIFACT_REGISTRY }}/backend:${{ inputs.backend_image_tag }} \
-            --region=${{ env.GCP_REGION }} \
-            --platform=managed \
-            --env-vars-file=/tmp/backend-env-vars.yaml \
-            --quiet
+          scripts/gcp/deploy/deploy.sh \
+            --step=backend \
+            --skip-build \
+            --backend-image=${{ env.ARTIFACT_REGISTRY }}/backend:${{ inputs.backend_image_tag }} \
+            --skip-tests
 
       # Deploy Frontend to Production
       - name: Deploy Frontend to Production

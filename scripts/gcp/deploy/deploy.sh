@@ -3,10 +3,13 @@
 #
 # Usage: ./deploy.sh [options]
 # Options:
-#   --step=<step>    Run specific step only (verify, migrate, backend, frontend, all)
-#   --dry-run        Show what would be executed
-#   --skip-tests     Skip health checks and tests
-#   --help           Show this help message
+#   --step=<step>        Run specific step only (verify, migrate, backend, frontend, all)
+#   --dry-run            Show what would be executed
+#   --skip-tests         Skip health checks and tests
+#   --skip-build         Skip building Docker images (use existing image)
+#   --skip-frontend      Skip frontend deployment
+#   --backend-image=URL  Use specific backend image URL (requires --skip-build)
+#   --help               Show this help message
 #
 # Examples:
 #   ./deploy.sh                      # Run all steps
@@ -42,6 +45,9 @@ PROJECT_ROOT="$SCRIPT_DIR/../../.."
 DRY_RUN=false
 STEP=""
 SKIP_TESTS=false
+SKIP_BUILD=false
+SKIP_FRONTEND=false
+BACKEND_IMAGE_OVERRIDE=""
 
 # Cloud SQL Proxy configuration
 PROXY_BINARY="$SCRIPT_DIR/cloud-sql-proxy"
@@ -424,11 +430,15 @@ step_deploy_backend() {
     log_section "Step 3/4: Deploy Backend"
 
     if [ "$DRY_RUN" = true ]; then
-        log_info "[DRY-RUN] Would build backend Docker image"
-        log_info "  Context: $PROJECT_ROOT"
-        log_info "  Dockerfile: backend/Dockerfile"
-        log_info "  Platform: linux/amd64"
-        log_info "[DRY-RUN] Would push to: $BACKEND_IMAGE_REMOTE"
+        if [ "$SKIP_BUILD" = true ]; then
+            log_info "[DRY-RUN] Would skip building (using existing image)"
+        else
+            log_info "[DRY-RUN] Would build backend Docker image"
+            log_info "  Context: $PROJECT_ROOT"
+            log_info "  Dockerfile: backend/Dockerfile"
+            log_info "  Platform: linux/amd64"
+            log_info "[DRY-RUN] Would push to: $BACKEND_IMAGE_REMOTE"
+        fi
         log_info "[DRY-RUN] Would deploy to Cloud Run: $BACKEND_SERVICE_NAME"
         log_info "  Memory: 2GB"
         log_info "  CPU: 2"
@@ -437,23 +447,36 @@ step_deploy_backend() {
         return 0
     fi
 
-    # Verify Docker is running
-    check_docker || die "Docker is required"
+    # Check if using existing image
+    if [ "$SKIP_BUILD" = true ]; then
+        log_info "Skipping build (using existing image)"
 
-    # Build backend image
-    log_info "Building backend Docker image..."
-    cd "$PROJECT_ROOT"
+        # Use override image if provided, otherwise use default remote image
+        if [ -n "$BACKEND_IMAGE_OVERRIDE" ]; then
+            BACKEND_IMAGE_REMOTE="$BACKEND_IMAGE_OVERRIDE"
+            log_info "Using provided image: $BACKEND_IMAGE_REMOTE"
+        else
+            log_info "Using default remote image: $BACKEND_IMAGE_REMOTE"
+        fi
+    else
+        # Verify Docker is running
+        check_docker || die "Docker is required"
 
-    docker build --platform linux/amd64 -f backend/Dockerfile -t "$BACKEND_IMAGE_LOCAL" .
-    check_status "Docker build failed"
-    log_success "Backend image built"
+        # Build backend image
+        log_info "Building backend Docker image..."
+        cd "$PROJECT_ROOT"
 
-    # Configure Docker auth
-    configure_docker_auth
+        docker build --platform linux/amd64 -f backend/Dockerfile -t "$BACKEND_IMAGE_LOCAL" .
+        check_status "Docker build failed"
+        log_success "Backend image built"
 
-    # Tag and push
-    tag_docker_image "$BACKEND_IMAGE_LOCAL" "$BACKEND_IMAGE_REMOTE"
-    push_docker_image "$BACKEND_IMAGE_REMOTE"
+        # Configure Docker auth
+        configure_docker_auth
+
+        # Tag and push
+        tag_docker_image "$BACKEND_IMAGE_LOCAL" "$BACKEND_IMAGE_REMOTE"
+        push_docker_image "$BACKEND_IMAGE_REMOTE"
+    fi
 
     # Ensure VPC connector exists (create if needed)
     log_info "Checking VPC Connector..."
@@ -711,6 +734,18 @@ main() {
                 SKIP_TESTS=true
                 shift
                 ;;
+            --skip-build)
+                SKIP_BUILD=true
+                shift
+                ;;
+            --skip-frontend)
+                SKIP_FRONTEND=true
+                shift
+                ;;
+            --backend-image=*)
+                BACKEND_IMAGE_OVERRIDE="${1#*=}"
+                shift
+                ;;
             --step=*)
                 STEP="${1#*=}"
                 shift
@@ -762,7 +797,11 @@ main() {
                 echo ""
                 step_deploy_backend || die "Backend deployment failed"
                 echo ""
-                step_deploy_frontend || die "Frontend deployment failed"
+                if [ "$SKIP_FRONTEND" = false ]; then
+                    step_deploy_frontend || die "Frontend deployment failed"
+                else
+                    log_info "Skipping frontend deployment (--skip-frontend)"
+                fi
                 ;;
             *)
                 log_error "Unknown step: $STEP"
@@ -785,7 +824,11 @@ main() {
         echo ""
         step_deploy_backend || die "Backend deployment failed"
         echo ""
-        step_deploy_frontend || die "Frontend deployment failed"
+        if [ "$SKIP_FRONTEND" = false ]; then
+            step_deploy_frontend || die "Frontend deployment failed"
+        else
+            log_info "Skipping frontend deployment (--skip-frontend)"
+        fi
         echo ""
 
         # Final summary

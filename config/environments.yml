@@ -74,7 +74,7 @@ staging:
     vpc_name: ai-resume-review-v2-vpc
     subnet_name: ai-resume-review-v2-subnet
     subnet_cidr: 10.0.0.0/24
-    vpc_connector: ai-resume-connector-v2-staging
+    vpc_connector: ai-resume-connector-v2
     vpc_connector_cidr: 10.8.0.0/28
     vpc_connector_min_instances: 2
     vpc_connector_max_instances: 3
