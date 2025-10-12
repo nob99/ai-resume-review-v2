@@ -776,33 +776,33 @@ main() {
     init_checks || die "Environment checks failed"
 
     # Auto-detect and load environment configuration
-    # This ensures VPC_CONNECTOR, BACKEND_SERVICE_NAME, etc. are set
-    if [ -z "$VPC_CONNECTOR" ] || [ -z "$BACKEND_SERVICE_NAME" ]; then
-        log_info "Loading environment configuration..."
+    # This ensures correct VPC_CONNECTOR, BACKEND_SERVICE_NAME, etc. are set
+    log_info "Loading environment configuration..."
 
-        # Determine environment from GitHub ref or default to staging
-        ENV_NAME="staging"
-        if [ -n "$GITHUB_REF" ]; then
-            if [[ "$GITHUB_REF" == *"production"* ]] || [[ "$GITHUB_REF" == *"prod"* ]]; then
-                ENV_NAME="production"
-            fi
+    # Determine environment from GitHub ref or backend image
+    ENV_NAME="staging"
+
+    # Check if we're deploying to production based on image tag
+    if [ -n "$BACKEND_IMAGE_OVERRIDE" ]; then
+        if [[ "$BACKEND_IMAGE_OVERRIDE" == *"-prod"* ]] || [[ "$BACKEND_IMAGE_OVERRIDE" == *"production"* ]]; then
+            ENV_NAME="production"
         fi
+    fi
 
-        # Check if we're deploying to production based on image tag
-        if [ -n "$BACKEND_IMAGE_OVERRIDE" ]; then
-            if [[ "$BACKEND_IMAGE_OVERRIDE" == *"-prod"* ]] || [[ "$BACKEND_IMAGE_OVERRIDE" == *"production"* ]]; then
-                ENV_NAME="production"
-            fi
+    # Check GitHub environment variable
+    if [ -n "$GITHUB_REF" ]; then
+        if [[ "$GITHUB_REF" == *"production"* ]] || [[ "$GITHUB_REF" == *"prod"* ]]; then
+            ENV_NAME="production"
         fi
+    fi
 
-        log_info "Detected environment: $ENV_NAME"
+    log_info "Detected environment: $ENV_NAME"
 
-        # Source config loader
-        if [ -f "$SCRIPT_DIR/../lib/load-config.sh" ]; then
-            source "$SCRIPT_DIR/../lib/load-config.sh" "$ENV_NAME"
-        else
-            log_warning "Config loader not found, using defaults"
-        fi
+    # Always load config to override defaults from common-functions.sh
+    if [ -f "$SCRIPT_DIR/../lib/load-config.sh" ]; then
+        source "$SCRIPT_DIR/../lib/load-config.sh" "$ENV_NAME"
+    else
+        log_warning "Config loader not found, using defaults from common-functions.sh"
     fi
 
     # Execute requested step or all steps
