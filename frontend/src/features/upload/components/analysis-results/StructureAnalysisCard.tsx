@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { Card, CardHeader, CardContent } from '@/components/ui'
 import { BaseAnalysisCardProps } from './types'
 import { getStructureFeedback } from '@/features/upload/utils/analysisParser'
@@ -16,6 +16,7 @@ import { formatStructureCard, formatListSection, formatAllFeedback } from '@/fea
  */
 
 export default function StructureAnalysisCard({ analysis, className = '' }: BaseAnalysisCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
   const structureFeedback = getStructureFeedback(analysis)
   const structureScores = analysis.result?.detailed_scores?.structure_analysis?.scores
 
@@ -36,11 +37,21 @@ export default function StructureAnalysisCard({ analysis, className = '' }: Base
       )
     : []
 
+  const handleToggle = () => {
+    setIsExpanded(!isExpanded)
+  }
+
   return (
     <Card className={`border-2 border-blue-300 ${className}`}>
-      <CardHeader className="bg-blue-50">
+      <CardHeader
+        className="bg-blue-50 cursor-pointer hover:bg-blue-100 transition-colors"
+        onClick={handleToggle}
+      >
         <h2 className="text-xl font-bold text-neutral-900 flex items-center justify-between">
           <span className="flex items-center">
+            <span className="mr-3 text-gray-600">
+              {isExpanded ? '▼' : '▶'}
+            </span>
             <span className="text-2xl mr-2">🏗️</span>
             レジュメ構造分析
           </span>
@@ -49,10 +60,17 @@ export default function StructureAnalysisCard({ analysis, className = '' }: Base
             variant="text"
             size="sm"
             label="Copy All"
+            className="relative z-10"
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
           />
         </h2>
       </CardHeader>
-      <CardContent className="p-6 space-y-6">
+      <div
+        className={`transition-all duration-300 ease-in-out overflow-hidden ${
+          isExpanded ? 'max-h-[10000px] opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <CardContent className="p-6 space-y-6">
         {/* 4 Structure Scores */}
         <div>
           <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">📊 4つのスコア / Scores</h3>
@@ -138,7 +156,8 @@ export default function StructureAnalysisCard({ analysis, className = '' }: Base
             </div>
           </div>
         )}
-      </CardContent>
+        </CardContent>
+      </div>
     </Card>
   )
 }
