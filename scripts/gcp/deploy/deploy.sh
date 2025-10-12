@@ -799,8 +799,8 @@ main() {
     log_info "Detected environment: $ENV_NAME"
 
     # Always load config to override defaults from common-functions.sh
-    if [ -f "$SCRIPT_DIR/../lib/load-config.sh" ]; then
-        source "$SCRIPT_DIR/../lib/load-config.sh" "$ENV_NAME"
+    if [ -f "$SCRIPT_DIR/../../lib/load-config.sh" ]; then
+        source "$SCRIPT_DIR/../../lib/load-config.sh" "$ENV_NAME"
     else
         log_warning "Config loader not found, using defaults from common-functions.sh"
     fi
