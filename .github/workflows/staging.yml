@@ -158,7 +158,7 @@ jobs:
             --image=${{ env.ARTIFACT_REGISTRY }}/backend:${{ github.sha }} \
             --region=${{ env.GCP_REGION }} \
             --platform=managed \
-            --update-env-vars=ALLOWED_ORIGINS="$CORS_ORIGINS" \
+            --update-env-vars="ALLOWED_ORIGINS=${CORS_ORIGINS}" \
             --quiet
 
       # Deploy Frontend to Cloud Run

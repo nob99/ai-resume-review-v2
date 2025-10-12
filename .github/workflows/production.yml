@@ -105,7 +105,7 @@ jobs:
             --image=${{ env.ARTIFACT_REGISTRY }}/backend:${{ inputs.backend_image_tag }} \
             --region=${{ env.GCP_REGION }} \
             --platform=managed \
-            --update-env-vars=ALLOWED_ORIGINS="$CORS_ORIGINS" \
+            --update-env-vars="ALLOWED_ORIGINS=${CORS_ORIGINS}" \
             --quiet
 
       # Deploy Frontend to Production
