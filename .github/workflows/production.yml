@@ -96,17 +96,25 @@ jobs:
       # Deploy Backend to Production
       - name: Deploy Backend to Production
         run: |
-          # Read CORS origins from config and escape for gcloud
-          # Use ^ as delimiter instead of , to avoid gcloud parsing issues
+          # Read CORS origins from config
           CORS_ORIGINS=$(yq eval '.production.cors.allowed_origins | join(",")' config/environments.yml)
           echo "CORS origins: $CORS_ORIGINS"
+
+          # Create env vars YAML file for gcloud
+          # This approach properly handles values with special characters (commas, colons, slashes)
+          cat > /tmp/backend-env-vars.yaml <<EOF
+          ALLOWED_ORIGINS: "${CORS_ORIGINS}"
+          EOF
+
+          echo "Environment variables file created:"
+          cat /tmp/backend-env-vars.yaml
 
           echo "Deploying backend image: ${{ env.ARTIFACT_REGISTRY }}/backend:${{ inputs.backend_image_tag }}"
           gcloud run deploy ${{ env.BACKEND_SERVICE }} \
             --image=${{ env.ARTIFACT_REGISTRY }}/backend:${{ inputs.backend_image_tag }} \
             --region=${{ env.GCP_REGION }} \
             --platform=managed \
-            --set-env-vars=^@^ALLOWED_ORIGINS="${CORS_ORIGINS}" \
+            --env-vars-file=/tmp/backend-env-vars.yaml \
             --quiet
 
       # Deploy Frontend to Production
