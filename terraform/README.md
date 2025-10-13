@@ -18,8 +18,8 @@ This directory contains Terraform configurations for managing GCP infrastructure
 - ✅ Both environments reproducible from code
 
 **Documentation:**
-- [HANDOVER_TERRAFORM_MIGRATION_V5.md](../HANDOVER_TERRAFORM_MIGRATION_V5.md) - Staging import
-- [HANDOVER_TERRAFORM_COMPLETE_V6.md](../HANDOVER_TERRAFORM_COMPLETE_V6.md) - Production import & complete journey
+- [HANDOVER_TERRAFORM_MIGRATION_V5.md](../archive/20251013/HANDOVER_TERRAFORM_MIGRATION_V5.md) - Staging import
+- [HANDOVER_TERRAFORM_COMPLETE_V6.md](../archive/20251013/HANDOVER_TERRAFORM_COMPLETE_V6.md) - Production import & complete journey
 
 ---
 

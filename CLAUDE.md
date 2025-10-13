@@ -189,8 +189,8 @@ Prompts are database-driven for easy updates without code changes.
 - **Migration**: Zero downtime, complete documentation available
 
 See handover documents:
-- [HANDOVER_TERRAFORM_MIGRATION_V5.md](HANDOVER_TERRAFORM_MIGRATION_V5.md) - Staging import
-- [HANDOVER_TERRAFORM_COMPLETE_V6.md](HANDOVER_TERRAFORM_COMPLETE_V6.md) - Production import & journey
+- [HANDOVER_TERRAFORM_MIGRATION_V5.md](archive/20251013/HANDOVER_TERRAFORM_MIGRATION_V5.md) - Staging import
+- [HANDOVER_TERRAFORM_COMPLETE_V6.md](archive/20251013/HANDOVER_TERRAFORM_COMPLETE_V6.md) - Production import & journey
 
 #### Working with Terraform
 
