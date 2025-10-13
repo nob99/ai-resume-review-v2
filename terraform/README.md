@@ -2,6 +2,27 @@
 
 This directory contains Terraform configurations for managing GCP infrastructure as code.
 
+## Status: ✅ Migration Complete
+
+**Both staging and production environments are now fully managed by Terraform.**
+
+| Environment | Status | Resources | Imported | Last Updated |
+|-------------|--------|-----------|----------|--------------|
+| **Staging** | ✅ Complete | 11 resources | Oct 13, 2025 | V5 |
+| **Production** | ✅ Complete | 11 resources | Oct 13, 2025 | V6 |
+
+**Achievements:**
+- ✅ Zero downtime migration
+- ✅ Drift detection enabled (`terraform plan`)
+- ✅ Single source of truth established
+- ✅ Both environments reproducible from code
+
+**Documentation:**
+- [HANDOVER_TERRAFORM_MIGRATION_V5.md](../HANDOVER_TERRAFORM_MIGRATION_V5.md) - Staging import
+- [HANDOVER_TERRAFORM_COMPLETE_V6.md](../HANDOVER_TERRAFORM_COMPLETE_V6.md) - Production import & complete journey
+
+---
+
 ## Overview
 
 Our Terraform setup follows a **minimal, pragmatic approach** to avoid over-engineering:
@@ -100,80 +121,25 @@ terraform apply
 # Expected output: bucket created at gs://ytgrs-464303-terraform-state
 ```
 
-### Step 2: Set Up Staging Environment
+### Step 2: Working with Existing Infrastructure
+
+**Note:** Both staging and production have already been imported (Oct 13, 2025). You can start using Terraform immediately:
 
 ```bash
-cd ../environments/staging
-
-# Initialize (downloads providers, configures remote state)
+# Staging
+cd terraform/environments/staging
 terraform init
+terraform plan  # Should show "No changes"
 
-# Preview what will be created
-terraform plan
-
-# IMPORTANT: First run will fail because resources already exist
-# You need to IMPORT existing resources first (see Import Guide below)
-```
-
-### Step 3: Import Existing Resources
-
-**Do NOT run `terraform apply` yet!** Your infrastructure already exists. You must import it first:
-
-```bash
-# Still in environments/staging/
-
-# Import VPC
-terraform import module.staging_environment.google_compute_network.vpc \
-  projects/ytgrs-464303/global/networks/ai-resume-review-v2-vpc
-
-# Import Subnet
-terraform import module.staging_environment.google_compute_subnetwork.subnet \
-  projects/ytgrs-464303/regions/us-central1/subnetworks/ai-resume-review-v2-subnet
-
-# Import Cloud SQL
-terraform import module.staging_environment.google_sql_database_instance.postgres \
-  ai-resume-review-v2-db-staging
-
-# Import Database
-terraform import module.staging_environment.google_sql_database.database \
-  projects/ytgrs-464303/instances/ai-resume-review-v2-db-staging/databases/ai_resume_review_staging
-
-# Import Service Accounts
-terraform import module.staging_environment.google_service_account.backend \
-  projects/ytgrs-464303/serviceAccounts/arr-v2-backend-staging@ytgrs-464303.iam.gserviceaccount.com
-
-terraform import module.staging_environment.google_service_account.frontend \
-  projects/ytgrs-464303/serviceAccounts/arr-v2-frontend-staging@ytgrs-464303.iam.gserviceaccount.com
-
-# Import Artifact Registry
-terraform import module.staging_environment.google_artifact_registry_repository.docker \
-  projects/ytgrs-464303/locations/us-central1/repositories/ai-resume-review-v2
-
-# Import VPC Connector (if exists)
-terraform import module.staging_environment.google_vpc_access_connector.connector \
-  projects/ytgrs-464303/locations/us-central1/connectors/ai-resume-connector-v2-staging
-
-# ... (continue for other resources)
-```
-
-### Step 4: Verify No Changes
-
-After importing all resources:
-
-```bash
-terraform plan
-
-# Expected output: "No changes. Your infrastructure matches the configuration."
-```
-
-### Step 5: Repeat for Production
-
-```bash
-cd ../production
+# Production
+cd terraform/environments/production
 terraform init
-# Repeat import process for production resources
-terraform plan
+terraform plan  # Should show "No changes"
 ```
+
+If you need to import new resources in the future, use the import scripts:
+- [scripts/terraform/import-staging.sh](../scripts/terraform/import-staging.sh)
+- [scripts/terraform/import-production.sh](../scripts/terraform/import-production.sh)
 
 ## What Terraform Manages
 

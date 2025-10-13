@@ -57,12 +57,14 @@ That's it! The platform is now running locally with all services.
 - **OpenAI & Anthropic** - LLM providers
 
 ### Infrastructure
-- **Docker & Docker Compose** - Containerized development
+- **Terraform** - Infrastructure as Code (manages all GCP resources)
 - **Google Cloud Platform** - Production hosting (Cloud Run, Cloud SQL, VPC)
-- **Terraform** - Infrastructure as code
+- **Docker & Docker Compose** - Containerized development
 - **GitHub Actions** - CI/CD automation
 - **pytest** - Backend testing
 - **Alembic** - Database migrations
+
+> **Note:** All GCP infrastructure is managed by Terraform. See [terraform/README.md](terraform/README.md) for details.
 
 ## Architecture Overview
 
@@ -289,28 +291,69 @@ Prompts are **database-driven**, allowing non-technical updates without code cha
 
 ### Infrastructure Management
 
-**Terraform** (Infrastructure as Code):
-```bash
-# Bootstrap (one-time)
-cd terraform/bootstrap
-terraform init && terraform apply
+> **Important:** All GCP infrastructure (VPC, Cloud SQL, Service Accounts, IAM, etc.) is managed by **Terraform**. Both staging and production environments are fully managed as Infrastructure as Code.
 
-# Deploy infrastructure changes
+#### Single Source of Truth
+
+All infrastructure configuration is centralized in:
+- **[config/environments.yml](config/environments.yml)** - Environment settings
+- **[terraform/](terraform/)** - Infrastructure definitions
+
+#### Managing Infrastructure (Terraform)
+
+**Check infrastructure state:**
+```bash
+cd terraform/environments/staging  # or production
+terraform plan
+# Should show: "No changes" if everything matches
+```
+
+**Make infrastructure changes:**
+```bash
+# 1. Edit config/environments.yml
+# 2. Preview changes
 cd terraform/environments/staging
 terraform plan
+
+# 3. Apply changes
 terraform apply
+
+# 4. Commit to Git
+git add config/environments.yml
+git commit -m "feat: update infrastructure"
+git push
 ```
 
-**Deployment Scripts** (Application deployments):
+**What Terraform manages:**
+- ✅ VPC Networks, Subnets, VPC Connectors
+- ✅ Cloud SQL Instances and Databases
+- ✅ Service Accounts and IAM Bindings
+- ✅ Artifact Registry Repositories
+- ✅ Secret Manager References
+
+**What Terraform does NOT manage:**
+- ❌ Cloud Run Services (use deployment scripts)
+- ❌ Docker Images (application artifacts)
+- ❌ Secret Values (set manually/scripted)
+- ❌ Database Data (use migrations)
+
+#### Deploying Applications (Scripts)
+
+For application deployments (code changes, env vars, etc.):
+
 ```bash
 # Deploy to staging
-./scripts/gcp/deploy/deploy.sh staging
+./scripts/gcp/deploy/deploy.sh --environment=staging
 
 # Deploy to production
-./scripts/gcp/deploy/deploy.sh production
+./scripts/gcp/deploy/deploy.sh --environment=production
 ```
 
-See [terraform/README.md](terraform/README.md) for complete infrastructure documentation.
+#### Documentation
+
+- **[terraform/README.md](terraform/README.md)** - Complete Terraform guide
+- **[config/README.md](config/README.md)** - Configuration documentation
+- **[scripts/gcp/README.md](scripts/gcp/README.md)** - Deployment scripts guide
 
 ## Additional Resources
 

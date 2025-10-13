@@ -2,6 +2,18 @@
 
 This directory contains centralized configuration for all GCP environments.
 
+## Single Source of Truth
+
+**`environments.yml`** is the single source of truth for all infrastructure and application configuration.
+
+**Who uses this file:**
+- ✅ **Terraform** - Manages all GCP infrastructure (VPC, Cloud SQL, IAM, etc.)
+- ✅ **Deployment Scripts** - Deploys applications (Cloud Run, migrations, etc.)
+- ✅ **GitHub Actions** - CI/CD pipelines
+- ✅ **Documentation** - Reference for all settings
+
+**Important:** Changes to this file affect both infrastructure (Terraform) and application deployments (scripts).
+
 ## Files
 
 - **`environments.yml`** - Single source of truth for all environment settings (staging, production)
@@ -103,6 +115,47 @@ environments.yml
    yq '.development' config/environments.yml
    ```
 
+## Making Changes
+
+### Workflow for Configuration Changes
+
+```bash
+# 1. Edit config/environments.yml
+vim config/environments.yml
+
+# 2. Validate YAML syntax
+yq '.' config/environments.yml > /dev/null && echo "Valid YAML"
+
+# 3. Preview infrastructure changes (if applicable)
+cd terraform/environments/staging
+terraform plan
+
+# 4. Apply Terraform changes (if needed)
+terraform apply
+
+# 5. Redeploy applications (if needed)
+cd ../../..
+./scripts/gcp/deploy/deploy.sh --environment=staging --step=backend
+
+# 6. Test in staging
+
+# 7. Commit changes
+git add config/environments.yml
+git commit -m "feat: update configuration"
+git push
+```
+
+### What Requires What
+
+| Change Type | Terraform Apply? | App Redeploy? |
+|-------------|------------------|---------------|
+| Database size | ✅ Yes | ❌ No |
+| VPC settings | ✅ Yes | ❌ No |
+| Service Account | ✅ Yes | ❌ No |
+| Environment variables | ❌ No | ✅ Yes |
+| CORS origins | ❌ No | ✅ Yes (backend) |
+| Service names | ❌ No | ✅ Yes |
+
 ## Important Notes
 
 - **Secrets:** This file contains secret **names** only, not values
@@ -110,6 +163,7 @@ environments.yml
 - **Sensitive Values:** Never commit actual passwords, API keys, or tokens
 - **Changes:** Test changes in staging before applying to production
 - **Validation:** Use `yq` to validate YAML syntax before committing
+- **Infrastructure:** Changes may require `terraform apply` - always run `terraform plan` first
 
 ## See Also
 
