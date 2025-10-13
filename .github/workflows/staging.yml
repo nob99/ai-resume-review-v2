@@ -159,6 +159,7 @@ jobs:
           # --skip-frontend: Frontend is deployed separately
           # --skip-tests: Health checks done in separate step
           scripts/gcp/deploy/deploy.sh \
+            --environment=staging \
             --step=backend \
             --skip-build \
             --backend-image=${{ env.ARTIFACT_REGISTRY }}/backend:${{ github.sha }} \

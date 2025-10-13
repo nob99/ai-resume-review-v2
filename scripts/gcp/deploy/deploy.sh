@@ -4,6 +4,7 @@
 # Usage: ./deploy.sh [options]
 # Options:
 #   --step=<step>        Run specific step only (verify, migrate, backend, frontend, all)
+#   --environment=<env>  Explicitly set environment (staging or production)
 #   --dry-run            Show what would be executed
 #   --skip-tests         Skip health checks and tests
 #   --skip-build         Skip building Docker images (use existing image)
@@ -50,6 +51,7 @@ SKIP_BUILD=false
 SKIP_FRONTEND=false
 SKIP_VALIDATION=false
 BACKEND_IMAGE_OVERRIDE=""
+ENVIRONMENT_OVERRIDE=""
 
 # Cloud SQL Proxy configuration
 PROXY_BINARY="$SCRIPT_DIR/cloud-sql-proxy"
@@ -769,6 +771,10 @@ main() {
                 STEP="${1#*=}"
                 shift
                 ;;
+            --environment=*)
+                ENVIRONMENT_OVERRIDE="${1#*=}"
+                shift
+                ;;
             --help|-h)
                 show_help
                 exit 0
@@ -798,24 +804,37 @@ main() {
     # This ensures correct VPC_CONNECTOR, BACKEND_SERVICE_NAME, etc. are set
     log_info "Loading environment configuration..."
 
-    # Determine environment from GitHub ref or backend image
+    # Determine environment (priority: explicit flag > GitHub ref > image tag > default)
     ENV_NAME="staging"
 
-    # Check if we're deploying to production based on image tag
-    if [ -n "$BACKEND_IMAGE_OVERRIDE" ]; then
-        if [[ "$BACKEND_IMAGE_OVERRIDE" == *"-prod"* ]] || [[ "$BACKEND_IMAGE_OVERRIDE" == *"production"* ]]; then
-            ENV_NAME="production"
+    # First: Check if environment was explicitly set via --environment flag (highest priority)
+    if [ -n "$ENVIRONMENT_OVERRIDE" ]; then
+        ENV_NAME="$ENVIRONMENT_OVERRIDE"
+        log_info "Using explicit environment: $ENV_NAME (from --environment flag)"
+    else
+        # Second: Check GitHub environment variable
+        if [ -n "$GITHUB_REF" ]; then
+            if [[ "$GITHUB_REF" == *"production"* ]] || [[ "$GITHUB_REF" == *"prod"* ]]; then
+                ENV_NAME="production"
+            fi
         fi
+
+        # Third: Check if we're deploying to production based on image tag
+        # (only if not already set by GitHub ref)
+        if [ "$ENV_NAME" = "staging" ] && [ -n "$BACKEND_IMAGE_OVERRIDE" ]; then
+            if [[ "$BACKEND_IMAGE_OVERRIDE" == *"-prod"* ]] || [[ "$BACKEND_IMAGE_OVERRIDE" == *"production"* ]]; then
+                ENV_NAME="production"
+            fi
+        fi
+
+        log_info "Detected environment: $ENV_NAME"
     fi
 
-    # Check GitHub environment variable
-    if [ -n "$GITHUB_REF" ]; then
-        if [[ "$GITHUB_REF" == *"production"* ]] || [[ "$GITHUB_REF" == *"prod"* ]]; then
-            ENV_NAME="production"
-        fi
+    # Validate environment value
+    if [ "$ENV_NAME" != "staging" ] && [ "$ENV_NAME" != "production" ]; then
+        log_error "Invalid environment: $ENV_NAME (must be 'staging' or 'production')"
+        exit 1
     fi
-
-    log_info "Detected environment: $ENV_NAME"
 
     # Always load config to override defaults from common-functions.sh
     if [ -f "$SCRIPT_DIR/../../lib/load-config.sh" ]; then

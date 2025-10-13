@@ -106,6 +106,7 @@ jobs:
           # --skip-tests: Health checks done in separate step
           echo "Deploying backend image: ${{ env.ARTIFACT_REGISTRY }}/backend:${{ inputs.backend_image_tag }}"
           scripts/gcp/deploy/deploy.sh \
+            --environment=production \
             --step=backend \
             --skip-build \
             --backend-image=${{ env.ARTIFACT_REGISTRY }}/backend:${{ inputs.backend_image_tag }} \
