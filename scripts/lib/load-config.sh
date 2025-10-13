@@ -26,7 +26,7 @@
 #   Environment-specific:
 #     BACKEND_SERVICE_NAME, FRONTEND_SERVICE_NAME
 #     BACKEND_SERVICE_ACCOUNT, FRONTEND_SERVICE_ACCOUNT
-#     SQL_INSTANCE_NAME, SQL_CONNECTION_NAME, DB_NAME, DB_USER
+#     SQL_INSTANCE_NAME, SQL_INSTANCE_CONNECTION, DB_NAME, DB_USER
 #     VPC_NAME, VPC_CONNECTOR
 #     SECRET_OPENAI_KEY, SECRET_JWT_KEY, SECRET_DB_PASSWORD
 #     ALLOWED_ORIGINS (comma-separated CORS origins)
@@ -121,7 +121,7 @@ export SECRET_DB_PASSWORD=$(yq ".$ENV.secrets.db_password" "$CONFIG_FILE")
 export ALLOWED_ORIGINS=$(yq ".$ENV.cors.allowed_origins | join(\",\")" "$CONFIG_FILE")
 
 # Derived values
-export SQL_CONNECTION_NAME="$PROJECT_ID:$REGION:$SQL_INSTANCE_NAME"
+export SQL_INSTANCE_CONNECTION="$PROJECT_ID:$REGION:$SQL_INSTANCE_NAME"
 export ARTIFACT_REGISTRY=$(yq '.global.artifact_registry.url' "$CONFIG_FILE")
 
 # ----------------------------------------------------------------------------

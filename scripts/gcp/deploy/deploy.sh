@@ -8,6 +8,7 @@
 #   --skip-tests         Skip health checks and tests
 #   --skip-build         Skip building Docker images (use existing image)
 #   --skip-frontend      Skip frontend deployment
+#   --skip-validation    Skip pre-deployment environment validation (not recommended)
 #   --backend-image=URL  Use specific backend image URL (requires --skip-build)
 #   --help               Show this help message
 #
@@ -47,6 +48,7 @@ STEP=""
 SKIP_TESTS=false
 SKIP_BUILD=false
 SKIP_FRONTEND=false
+SKIP_VALIDATION=false
 BACKEND_IMAGE_OVERRIDE=""
 
 # Cloud SQL Proxy configuration
@@ -755,6 +757,10 @@ main() {
                 SKIP_FRONTEND=true
                 shift
                 ;;
+            --skip-validation)
+                SKIP_VALIDATION=true
+                shift
+                ;;
             --backend-image=*)
                 BACKEND_IMAGE_OVERRIDE="${1#*=}"
                 shift
@@ -814,10 +820,18 @@ main() {
     # Always load config to override defaults from common-functions.sh
     if [ -f "$SCRIPT_DIR/../../lib/load-config.sh" ]; then
         source "$SCRIPT_DIR/../../lib/load-config.sh" "$ENV_NAME"
-        # Update SQL_INSTANCE_CONNECTION from loaded config (load-config.sh exports SQL_CONNECTION_NAME)
-        export SQL_INSTANCE_CONNECTION="$SQL_CONNECTION_NAME"
     else
         log_warning "Config loader not found, using defaults from common-functions.sh"
+    fi
+
+    # Validate environment before deployment (unless skipping)
+    if [ "$SKIP_VALIDATION" != "true" ] && [ -f "$SCRIPT_DIR/validate-environment.sh" ]; then
+        log_info "Running pre-deployment validation..."
+        if ! "$SCRIPT_DIR/validate-environment.sh" "$ENV_NAME"; then
+            log_error "Environment validation failed. Use --skip-validation to bypass (not recommended)"
+            exit 1
+        fi
+        echo ""
     fi
 
     # Execute requested step or all steps

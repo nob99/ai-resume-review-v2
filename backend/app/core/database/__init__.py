@@ -5,7 +5,8 @@ from .connection import (
     get_postgres_connection,
     init_postgres,
     close_postgres,
-    get_async_session
+    get_async_session,
+    validate_database_environment
 )
 from .repository import BaseRepository
 
@@ -15,5 +16,6 @@ __all__ = [
     "init_postgres",
     "close_postgres",
     "get_async_session",
+    "validate_database_environment",
     "BaseRepository",
 ]

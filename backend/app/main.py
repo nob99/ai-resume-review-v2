@@ -54,10 +54,14 @@ async def lifespan(app: FastAPI):
             logger.warning("  Continuing without rate limiting (acceptable for MVP)")
 
         # Initialize async infrastructure
-        from app.core.database import init_postgres
+        from app.core.database import init_postgres, validate_database_environment
         await init_postgres()
         logger.info("PostgreSQL async connection initialized")
-        
+
+        # Critical safety check: validate environment matches database
+        await validate_database_environment()
+        logger.info("Database environment validation completed")
+
         logger.info("Application startup completed successfully")
         
     except Exception as e:

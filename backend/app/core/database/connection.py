@@ -198,6 +198,110 @@ async def init_postgres():
     await connection.initialize()
 
 
+async def validate_database_environment():
+    """
+    Critical safety check: Ensure we're connected to the correct database.
+
+    This prevents catastrophic issues like:
+    - Staging environment connecting to production database
+    - Production environment connecting to staging database
+
+    The check is based on database naming conventions:
+    - Staging databases must contain 'staging' in their name
+    - Production databases must NOT contain 'staging' in their name
+
+    If a mismatch is detected, the application will immediately shut down
+    to prevent data corruption or security issues.
+
+    Raises:
+        RuntimeError: If environment doesn't match database
+    """
+    import os
+    from sqlalchemy import text
+
+    expected_env = os.getenv("ENVIRONMENT", "unknown")
+
+    # Skip validation for development environment
+    if expected_env in ["development", "dev", "local", "unknown"]:
+        logger.info(
+            "Skipping database environment validation for development environment",
+            extra={"environment": expected_env}
+        )
+        return
+
+    connection = get_postgres_connection()
+
+    if not connection.is_initialized:
+        logger.warning("Database not initialized, cannot validate environment")
+        return
+
+    try:
+        # Query the actual database name
+        async with connection.engine.connect() as conn:
+            result = await conn.execute(text("SELECT current_database()"))
+            actual_db_name = result.scalar()
+
+        # Validation logic
+        if expected_env == "staging":
+            if "staging" not in actual_db_name.lower():
+                logger.critical(
+                    "CRITICAL: Environment mismatch detected!",
+                    extra={
+                        "expected_environment": expected_env,
+                        "actual_database": actual_db_name,
+                        "issue": "Staging environment connected to non-staging database",
+                        "risk": "HIGH - Could corrupt production data"
+                    }
+                )
+                raise RuntimeError(
+                    f"Environment mismatch: Expected {expected_env} environment "
+                    f"but connected to database '{actual_db_name}'. "
+                    f"This is a critical safety check to prevent data corruption. "
+                    f"Shutting down immediately."
+                )
+
+        elif expected_env == "production":
+            if "staging" in actual_db_name.lower():
+                logger.critical(
+                    "CRITICAL: Environment mismatch detected!",
+                    extra={
+                        "expected_environment": expected_env,
+                        "actual_database": actual_db_name,
+                        "issue": "Production environment connected to staging database",
+                        "risk": "HIGH - Production using test data"
+                    }
+                )
+                raise RuntimeError(
+                    f"Environment mismatch: Expected {expected_env} environment "
+                    f"but connected to database '{actual_db_name}'. "
+                    f"This is a critical safety check. Shutting down immediately."
+                )
+
+        # Log success
+        logger.info(
+            "Database environment validated successfully",
+            extra={
+                "environment": expected_env,
+                "database": actual_db_name,
+                "status": "VALIDATED"
+            }
+        )
+
+    except RuntimeError:
+        # Re-raise RuntimeError (our validation failures)
+        raise
+    except Exception as e:
+        # Log but don't fail on unexpected errors (e.g., query failures)
+        logger.error(
+            "Failed to validate database environment",
+            extra={
+                "error": str(e),
+                "environment": expected_env
+            }
+        )
+        # Don't raise - we don't want to block startup on query failures
+
+
 async def close_postgres():
     """Close the global PostgreSQL connection."""
     connection = get_postgres_connection()
