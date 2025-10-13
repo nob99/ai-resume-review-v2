@@ -66,9 +66,11 @@ resource "google_vpc_access_connector" "connector" {
   ip_cidr_range = var.vpc_connector_cidr
   project       = var.project_id
 
-  min_instances = var.vpc_connector_min_instances
-  max_instances = var.vpc_connector_max_instances
-  machine_type  = var.vpc_connector_machine_type
+  # Use throughput-based configuration (matches actual GCP setup)
+  # GCP uses either instances OR throughput, not both
+  machine_type   = var.vpc_connector_machine_type
+  min_throughput = 200  # Mbps
+  max_throughput = 1000 # Mbps
 }
 
 # ----------------------------------------------------------------------------

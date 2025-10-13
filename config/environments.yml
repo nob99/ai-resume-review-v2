@@ -77,7 +77,7 @@ staging:
     vpc_connector: ai-resume-connector-v2
     vpc_connector_cidr: 10.8.0.0/28
     vpc_connector_min_instances: 2
-    vpc_connector_max_instances: 3
+    vpc_connector_max_instances: 10  # Updated to match actual GCP config
     vpc_connector_machine_type: f1-micro
 
   # Secrets (Secret Manager - names only, not values!)
