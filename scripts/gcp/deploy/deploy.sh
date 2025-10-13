@@ -526,10 +526,24 @@ step_deploy_backend() {
     fi
     log_info "CORS origins: $ALLOWED_ORIGINS"
 
-    # Create env vars YAML file for gcloud (handles special characters properly)
+    # Determine environment name for ENVIRONMENT variable
+    local env_name="production"
+    if [[ "$BACKEND_SERVICE_NAME" == *"-staging"* ]]; then
+        env_name="staging"
+    fi
+
+    # Create env vars YAML file with ALL environment variables
+    # This handles special characters properly (commas, colons, slashes in URLs)
     ENV_VARS_FILE="/tmp/backend-env-vars-$$.yaml"
     cat > "$ENV_VARS_FILE" <<EOF
-ALLOWED_ORIGINS: "${ALLOWED_ORIGINS}"
+DB_HOST: "/cloudsql/$SQL_INSTANCE_CONNECTION"
+DB_PORT: "5432"
+DB_NAME: "$DB_NAME"
+DB_USER: "$DB_USER"
+PROJECT_ID: "$PROJECT_ID"
+ENVIRONMENT: "$env_name"
+REDIS_HOST: "none"
+ALLOWED_ORIGINS: "$ALLOWED_ORIGINS"
 EOF
     log_info "Created environment variables file: $ENV_VARS_FILE"
 
@@ -542,7 +556,6 @@ EOF
         --vpc-egress=private-ranges-only \
         --add-cloudsql-instances="$SQL_INSTANCE_CONNECTION" \
         --set-secrets="DB_PASSWORD=$SECRET_DB_PASSWORD:latest,SECRET_KEY=$SECRET_JWT_KEY:latest,OPENAI_API_KEY=$SECRET_OPENAI_KEY:latest" \
-        --set-env-vars="DB_HOST=/cloudsql/$SQL_INSTANCE_CONNECTION,DB_PORT=5432,DB_NAME=$DB_NAME,DB_USER=$DB_USER,PROJECT_ID=$PROJECT_ID,ENVIRONMENT=production,REDIS_HOST=none" \
         --env-vars-file="$ENV_VARS_FILE" \
         --memory=2Gi \
         --cpu=2 \
