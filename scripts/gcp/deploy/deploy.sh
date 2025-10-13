@@ -814,6 +814,8 @@ main() {
     # Always load config to override defaults from common-functions.sh
     if [ -f "$SCRIPT_DIR/../../lib/load-config.sh" ]; then
         source "$SCRIPT_DIR/../../lib/load-config.sh" "$ENV_NAME"
+        # Update SQL_INSTANCE_CONNECTION from loaded config (load-config.sh exports SQL_CONNECTION_NAME)
+        export SQL_INSTANCE_CONNECTION="$SQL_CONNECTION_NAME"
     else
         log_warning "Config loader not found, using defaults from common-functions.sh"
     fi
