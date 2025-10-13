@@ -77,6 +77,28 @@ mypy app           # Type checking
 - File upload virus scanning required
 - No secrets in code - use environment variables
 
+### Infrastructure Management (Terraform)
+- **All GCP infrastructure is managed by Terraform** - Both staging and production environments
+- **Single Source of Truth**: `config/environments.yml` drives all infrastructure configuration
+- **What Terraform Manages**:
+  - ✅ VPC Networks, Subnets, VPC Connectors
+  - ✅ Cloud SQL Instances and Databases
+  - ✅ Service Accounts and IAM Bindings
+  - ✅ Artifact Registry Repositories
+  - ✅ Secret Manager References (not values)
+- **What Terraform does NOT manage**:
+  - ❌ Cloud Run Services (use deployment scripts)
+  - ❌ Docker Images (application artifacts)
+  - ❌ Secret Values (set manually/scripted)
+  - ❌ Database Data (use migrations)
+- **Making Infrastructure Changes**:
+  1. Edit `config/environments.yml`
+  2. Run `terraform plan` to preview changes
+  3. Run `terraform apply` to execute
+  4. Commit configuration to Git
+- **Never make manual changes in GCP Console** - Always use Terraform
+- **Check for drift**: Run `terraform plan` regularly to detect manual changes
+
 ### CORS Configuration
 - **Dynamic Configuration**: CORS origins loaded from `ALLOWED_ORIGINS` environment variable
 - **Single Source of Truth**: Defined in `config/environments.yml` under each environment's `cors.allowed_origins`
@@ -159,31 +181,68 @@ Prompts are database-driven for easy updates without code changes.
 
 ### Infrastructure Management
 
-**Terraform** (Infrastructure as Code):
-```bash
-# Bootstrap (one-time)
-cd terraform/bootstrap
-terraform init && terraform apply
+> **Important:** All GCP infrastructure is managed by Terraform. Both staging and production environments are fully under Infrastructure as Code control.
 
-# Deploy infrastructure changes
+#### Status: ✅ Complete
+- **Staging**: 11 resources imported and managed (Oct 13, 2025)
+- **Production**: 11 resources imported and managed (Oct 13, 2025)
+- **Migration**: Zero downtime, complete documentation available
+
+See handover documents:
+- [HANDOVER_TERRAFORM_MIGRATION_V5.md](HANDOVER_TERRAFORM_MIGRATION_V5.md) - Staging import
+- [HANDOVER_TERRAFORM_COMPLETE_V6.md](HANDOVER_TERRAFORM_COMPLETE_V6.md) - Production import & journey
+
+#### Working with Terraform
+
+**Check infrastructure state:**
+```bash
+cd terraform/environments/staging  # or production
+terraform plan
+# Should show: "No changes. Your infrastructure matches the configuration."
+```
+
+**Make infrastructure changes:**
+```bash
+# 1. Edit config/environments.yml
+vim config/environments.yml
+
+# 2. Preview changes
 cd terraform/environments/staging
 terraform plan
+
+# 3. Apply changes
 terraform apply
+
+# 4. Commit to Git
+git add config/environments.yml
+git commit -m "feat: update infrastructure"
+git push
 ```
 
-**Deployment Scripts** (Application deployments):
+**What Terraform manages vs what it doesn't:**
+
+| Managed by Terraform ✅ | NOT Managed (use scripts) ❌ |
+|-------------------------|------------------------------|
+| VPC, Subnets, Connectors | Cloud Run Services |
+| Cloud SQL Instances/DBs | Docker Images |
+| Service Accounts, IAM | Secret Values |
+| Artifact Registry | Database Migrations |
+
+#### Deploying Applications (Separate from Infrastructure)
+
+**Application deployments** (code changes, env vars):
 ```bash
 # Deploy to staging
-./scripts/gcp/deploy/deploy.sh staging
+./scripts/gcp/deploy/deploy.sh --environment=staging
 
 # Deploy to production
-./scripts/gcp/deploy/deploy.sh production
+./scripts/gcp/deploy/deploy.sh --environment=production
 ```
 
-See [terraform/README.md](terraform/README.md) for complete infrastructure documentation.
-
-### Configuration Management
-All environment configuration is managed through `config/environments.yml`. See [config/README.md](config/README.md) for details.
+#### Documentation
+- [terraform/README.md](terraform/README.md) - Complete Terraform guide
+- [config/README.md](config/README.md) - Configuration management
+- [scripts/gcp/README.md](scripts/gcp/README.md) - Deployment scripts
 
 ## Testing Standards
 
