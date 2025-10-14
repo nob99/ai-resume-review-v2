@@ -360,8 +360,8 @@ class AnalysisService:
         # Initialize resume upload repository for integration (simplified)
         self.resume_repository = ResumeUploadRepository(db)
 
-        # Initialize AI orchestrator from isolated module
-        self.ai_orchestrator = ResumeAnalysisOrchestrator()
+        # Note: AI orchestrator is created in background task when needed
+        # No need to initialize here as it's not used by any service methods
 
         logger.info("AnalysisService initialized successfully")
 
