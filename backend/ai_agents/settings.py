@@ -23,7 +23,7 @@ class LLMConfig(BaseSettings):
     # Default parameters (can be overridden per agent in agents.yaml)
     default_temperature: float = 0.3
     default_max_tokens: int = 2000
-    timeout_seconds: int = 120
+    timeout_seconds: int = 300  # 5 minutes timeout for OpenAI API calls
 
 
 class ResilienceConfig(BaseSettings):
