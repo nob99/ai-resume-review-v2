@@ -13,8 +13,8 @@ class LLMConfig(BaseSettings):
         case_sensitive=False
     )
 
-    # API settings
-    openai_api_key: str = ""  # Empty default, should be set via env var
+    # Note: openai_api_key is now sourced from app.core.config.ai_config.OPENAI_API_KEY
+    # to maintain a single source of truth for API keys
 
     # Model settings
     model: str = "gpt-5-mini-2025-08-07"

@@ -12,6 +12,7 @@ from openai import AsyncOpenAI
 from ai_agents.settings import get_settings
 from ai_agents.config import get_agent_config
 from ai_agents.utils import log_api_call, log_api_response, log_prompts
+from app.core.config import ai_config
 
 logger = logging.getLogger(__name__)
 
@@ -30,13 +31,14 @@ class BaseAgent:
         """Initialize the base agent.
 
         Args:
-            api_key: OpenAI API key (defaults to environment variable)
+            api_key: OpenAI API key (defaults to centralized config)
             agent_config: Optional AgentBehaviorConfig instance
         """
         self.settings = get_settings()
         self.agent_config = agent_config or get_agent_config()
 
-        self.client = AsyncOpenAI(api_key=api_key or self.settings.llm.openai_api_key)
+        # Use centralized OpenAI API key from app.core.config
+        self.client = AsyncOpenAI(api_key=api_key or ai_config.OPENAI_API_KEY)
         self.max_retries = self.settings.resilience.max_retries
         self.backoff_multiplier = self.settings.resilience.backoff_multiplier
 

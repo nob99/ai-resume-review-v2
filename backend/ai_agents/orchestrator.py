@@ -10,6 +10,7 @@ from .workflows import create_workflow, ResumeAnalysisState
 from .settings import get_settings
 from .config import get_agent_config
 from .utils import log_analysis_start, log_analysis_complete, log_analysis_error
+from app.core.config import ai_config
 
 logger = logging.getLogger(__name__)
 
@@ -21,19 +22,19 @@ class ResumeAnalysisOrchestrator:
         """Initialize the orchestrator with agents and workflow.
 
         Args:
-            api_key: Optional OpenAI API key (defaults to environment variable)
+            api_key: Optional OpenAI API key (defaults to centralized config)
         """
         # Get settings and config
         settings = get_settings()
         agent_config = get_agent_config()
 
-        # Initialize agents with config
+        # Initialize agents with config - use centralized OpenAI API key
         self.structure_agent = StructureAgent(
-            api_key=api_key or settings.llm.openai_api_key,
+            api_key=api_key or ai_config.OPENAI_API_KEY,
             agent_config=agent_config
         )
         self.appeal_agent = AppealAgent(
-            api_key=api_key or settings.llm.openai_api_key,
+            api_key=api_key or ai_config.OPENAI_API_KEY,
             agent_config=agent_config
         )
 
