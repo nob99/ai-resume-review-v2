@@ -144,6 +144,10 @@ That's it! The platform is now running locally with all services.
 
 ## Development Guide
 
+## Contributor Resources
+
+- See [`AGENTS.md`](AGENTS.md) for contributor guidelines, coding standards, and PR expectations specific to this repository.
+
 ### Running the Development Environment
 
 ```bash
