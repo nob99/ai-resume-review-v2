@@ -169,6 +169,7 @@ production:
   cors:
     allowed_origins:
       - https://ai-resume-review-v2-frontend-prod-wnjxxf534a-uc.a.run.app
+      - https://ai-resume-review-v2-frontend-prod-864523342928.us-central1.run.app
       - https://ai-resume-review-v2-backend-prod-wnjxxf534a-uc.a.run.app
       - https://airesumereview.com
       - https://www.airesumereview.com
